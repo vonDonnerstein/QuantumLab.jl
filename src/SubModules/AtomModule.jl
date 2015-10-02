@@ -1,8 +1,7 @@
 module AtomModule
 export Atom, Element
 
-include("Base.jl")
-using .Base
+using ..Base
 
 atomicNumbers = [
   "H" => 	1,
