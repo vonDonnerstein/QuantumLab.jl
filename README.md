@@ -1,4 +1,5 @@
-# QuantumLab
+
+# <img src="http://schurkus.com/wp-content/uploads/2015/10/QuantumLab.png" alt=Q width="55">uantumLab
 
 [![Build Status](https://travis-ci.org/vonDonnerstein/QuantumLab.svg)](https://travis-ci.org/vonDonnerstein/QuantumLab)
 
