@@ -1,6 +1,6 @@
 module BaseModule
 export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance
-import Base
+import Base.*, Base.+, Base./, Base.-
 
 immutable Position
 	x::Real
@@ -25,19 +25,19 @@ immutable MQuantumNumber
   z::Int
 end
 
-lqnExponent = [
+lqnExponent = Dict(
   "S" => 	0,
   "P" => 	1,
   "D" => 	2,
   "F" =>	3,
   "G" =>	4,
   "H" =>	5,
-]
+)
 immutable LQuantumNumber
-	symbol::String
+	symbol::AbstractString
 	exponent::Int
 
-	LQuantumNumber(sym::String) = new(sym,lqnExponent[sym])
+	LQuantumNumber(sym::AbstractString) = new(sym,lqnExponent[sym])
 end
 
 immutable MQuantumNumbers

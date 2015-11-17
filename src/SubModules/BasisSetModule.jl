@@ -18,7 +18,7 @@ immutable BasisSet
 end
 
 
-function readBasisSetTX93(filename::String)
+function readBasisSetTX93(filename::AbstractString)
   basSet = BasisSet(Dict())									# initialize return value
 
   elem = Element("H")										# functionglobal elem

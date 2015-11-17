@@ -8,7 +8,7 @@ type Geometry
 	atoms::Array{Atom,1}
 end
 
-function readGeometryXYZ(filename::String)
+function readGeometryXYZ(filename::AbstractString)
 	geo = Geometry([])
 	lines = open(readlines,filename)
 	for line in lines[3:end]	# line 1 is n. of atoms, line 2 is comment

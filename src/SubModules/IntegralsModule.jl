@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic
+export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!
 using ..BaseModule
 using ..BasisModule
 
@@ -64,9 +64,9 @@ function GaussProductFundamental(
 end
 
 type PolynomialFactors
-  x::Array{(Real,Int),1} # Real*x^Int
-  y::Array{(Real,Int),1} # Real*y^Int
-  z::Array{(Real,Int),1} # Real*z^Int
+  x::Array{Tuple{Real,Int},1} # Real*x^Int
+  y::Array{Tuple{Real,Int},1} # Real*y^Int
+  z::Array{Tuple{Real,Int},1} # Real*z^Int
 end
 
 function GaussProductPolynomialFactor(
@@ -132,7 +132,7 @@ end
 
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   mqn_t = [mqn.x,mqn.y,mqn.z]
-  xyznum = {:x => 1, :y => 2, :z => 3}
+  xyznum = Dict(:x => 1, :y => 2, :z => 3)
   num = xyznum[xyz]
   mqn_t[num] += inc
   return MQuantumNumber(mqn_t[1],mqn_t[2],mqn_t[3])

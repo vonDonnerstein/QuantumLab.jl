@@ -1,9 +1,10 @@
 module AtomModule
 export Atom, Element
+import Base.==
 
 using ..BaseModule
 
-atomicNumbers = [
+atomicNumbers = Dict(
   "H" => 	1,
   "He" => 	2,
   "Li" => 	3,
@@ -122,13 +123,13 @@ atomicNumbers = [
   "Uuh" =>	116,
   "Uus" =>	117,
   "Uuo" =>	118
-]
+)
 
 immutable Element
-	symbol::String
+	symbol::AbstractString
 	atomicNumber::Int
 
-	Element(sym::String) = new(sym,atomicNumbers[sym])
+	Element(sym::AbstractString) = new(sym,atomicNumbers[sym])
 end
 
 ==(el1::Element,el2::Element) = el1.symbol==el2.symbol && el1.atomicNumber==el2.atomicNumber
