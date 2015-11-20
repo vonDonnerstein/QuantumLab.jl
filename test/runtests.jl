@@ -29,3 +29,5 @@ bas = computeBasis(readBasisSetTX93("STO-3G.tx93"),readGeometryXYZ("h2o.xyz"))
 normalize!(bas)
 @test 0.30387 < computeMatrixOverlap(bas)[4,1] < 0.30388 # reference value not checked
 @test 1133.98 < computeMatrixKinetic(bas)[2,2] < 1134 # reference value not checked
+@test 0.16175843 < IntegralsModule.FIntegral(2,0.3) < 0.16175844
+@test -0.5235988 < IntegralsModule.NuclearAttractionIntegral(PrimitiveGaussianBasisFunction(Position(0,0,0),1,MQuantumNumber(1,0,0)),PrimitiveGaussianBasisFunction(Position(0,0,0),1,MQuantumNumber(1,0,0),Atom(Element("C"),Position(0,0,0))) < -0.5235987

@@ -1,7 +1,14 @@
 ﻿module IntegralsModule
-export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!
+export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!, computeMatrixNuclearAttraction
 using ..BaseModule
 using ..BasisModule
+using ..AtomModule
+using ..GeometryModule
+
+print("(GSL...")
+using GSL
+print("done.)...")
+
 
 doublefactorial(n::Int) = prod(n:-2:1)
 
@@ -103,20 +110,20 @@ function Overlap(
   Ix = sum([f*GaussianIntegral1D(i,γ) for (f,i) in factors.x])
   Iy = sum([f*GaussianIntegral1D(i,γ) for (f,i) in factors.y])
   Iz = sum([f*GaussianIntegral1D(i,γ) for (f,i) in factors.z])
-  return K*Ix*Iy*Iz
+  return K*Ix*Iy*Iz::Float64
 end
 
 function Overlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0
+  integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
       integral += coeff1*coeff2*Overlap(pgb1,pgb2)
     end
   end
-  return integral
+  return integral::Float64
 end
 
 function normalize!(cgb::ContractedGaussianBasisFunction)
@@ -145,7 +152,7 @@ function KineticIntegral(
   #Ix = 1/2 l1 l2 <-1|-1> + 2 α1 α2 <+1|+1> - α1 l2 <+1|-1> - α2 l1 <-1|+1>
   #(acc. to Fundamentals of Mol. Integr. Eval. by Fermann, Valeev (eq. 4.1 + 4.13))
 
-  integral = 0
+  integral = 0.::Float64
 
   for (xyz in (:x,:y,:z))
     pgb1decr = pgb1
@@ -169,20 +176,20 @@ function KineticIntegral(
 	(-α2*l1)    * Overlap(pgb1decr,pgb2incr)
   end
 
-  return integral
+  return integral::Float64
 end
 
 function KineticIntegral(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0
+  integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
       integral += coeff1*coeff2*KineticIntegral(pgb1,pgb2)
     end
   end
-  return integral
+  return integral::Float64
 end
 
 function computeMatrixKinetic(basis::GaussianBasis)
@@ -190,7 +197,7 @@ function computeMatrixKinetic(basis::GaussianBasis)
 end
 
 function computeMatrixOverlap(basis::GaussianBasis)
-return [Overlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+  return [Overlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
 function OverlapFundamental(
@@ -198,7 +205,175 @@ function OverlapFundamental(
   pgb2::PrimitiveGaussianBasisFunction)
   (K,P,γ) = GaussProductFundamental(pgb1,pgb2)
   # Overlap(s-type pgb1, s-type pgb2) (acc. to. Mathematica)
-  return K*(π/γ)^(3/2)
+  return K*(π/γ)^(3/2)::Float64
+end
+
+function FIntegral(m::Integer,x::Real,APPROX_ZERO::Float64=1e-5)
+  # F[m,x] = Integrate[u^2m Exp[-x u^2],{u,0,1}
+  #         = 1/2 x^(-0.5-m) ( Gamma[1/2 + m] - Gamma[1/2 + m, x] ) # acc. to Mathematica
+  x = max(x,APPROX_ZERO) # for x -> 0
+  if (x<=APPROX_ZERO) return 1/(1+2*m) end
+  return 1/2 * x^(-1/2-m) * ( GSL.sf_gamma(1/2+m) - GSL.sf_gamma_inc(1/2+m,x) )
+end
+
+function ASummand(
+  f::Real,
+  l1::Integer,
+  l2::Integer,
+  Ax::Real,
+  Bx::Real,
+  PCx::Real,
+  γ::Real,
+  l::Integer,
+  r::Integer,
+  i::Integer)
+  # A[l1,l2,Ax,Bx,Cx,γ] = (-1)^l f_l(l1,l2,PAx,PBx) ((-1)^i l! PCx^(l-2r-2i) (1/(4γ))^(r+i)) / (r! i! (l-2r-2i)!)
+  return (-1)^l * f * (-1)^i * factorial(l) * PCx^(l-2r-2i) * (1/(4γ))^(r+i) / (factorial(r) * factorial(i) * factorial(l - 2r - 2i))
+end
+
+function NuclearAttractionIntegral(
+  pgb1::PrimitiveGaussianBasisFunction,
+  pgb2::PrimitiveGaussianBasisFunction,
+  atom::Atom)
+  # V = K * A(l1,l2,Ax,Bx,Cx,γ) * A(m1,m2,Ay,By,Cy,γ) * A(n1,n2,Az,Bz,Cz,γ) * F[l+m+n-2(r+s+t) - (i+j+k),γ PC^2]
+  #acc. to. Handbook of Comput. Quant. Chem. by Cook, chap. 7.7.3 final formula
+  K,P,γ = GaussProductFundamental(pgb1,pgb2)
+  C = atom.position
+
+  result = 0
+  for ((fx,l) in GaussProductPolynomialFactor(pgb1,pgb2).x)
+    for (r in 0:floor(Integer,(l/2)))
+      for (i in 0:floor(Integer,((l-2r)/2)))
+	Ax = ASummand(fx,pgb1.mqn.x,pgb2.mqn.x,pgb1.center.x,pgb2.center.x,(P-C).x,γ,l,r,i)
+	for ((fy,m) in GaussProductPolynomialFactor(pgb1,pgb2).y)
+	  for (s in 0:floor(Integer,(m/2)))
+	    for (j in 0:floor(Integer,((m-2s)/2)))
+	      Ay = ASummand(fy,pgb1.mqn.y,pgb2.mqn.y,pgb1.center.y,pgb2.center.y,(P-C).y,γ,m,s,j)
+	      for ((fz,n) in GaussProductPolynomialFactor(pgb1,pgb2).z)
+		for (t in 0:floor(Integer,(n/2)))
+		  for (k in 0:floor(Integer,((n-2t)/2)))
+		    Az = ASummand(fz,pgb1.mqn.z,pgb2.mqn.z,pgb1.center.z,pgb2.center.z,(P-C).z,γ,n,t,k)
+		    result += 2π/γ * K * Ax * Ay * Az * FIntegral(l+m+n-2*(r+s+t)-(i+j+k),γ*distance(P,C)^2)
+		  end
+		end
+	      end
+	    end
+	  end
+	end
+      end
+    end
+  end
+  
+  return -atom.element.atomicNumber * result
+end
+
+function NuclearAttractionIntegral(
+  cgb1::ContractedGaussianBasisFunction,
+  cgb2::ContractedGaussianBasisFunction,
+  atom::Atom)
+  integral = 0.::Float64
+  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
+    for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
+      integral += coeff1*coeff2*NuclearAttractionIntegral(pgb1,pgb2,atom)
+    end
+  end
+  return integral::Float64
+end
+
+function computeMatrixNuclearAttraction(basis::GaussianBasis,geo::Geometry)
+  return [sum([NuclearAttractionIntegral(cgb1,cgb2,atom) for atom in geo.atoms]) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+end
+
+type θfactors
+  x::Array{Tuple{Real,Int,Int},1} # θ,l,r
+  y::Array{Tuple{Real,Int,Int},1} # θ,l,r
+  z::Array{Tuple{Real,Int,Int},1} # θ,l,r
+end
+
+function θFactors(
+  μ::PrimitiveGaussianBasisFunction,
+  ν::PrimitiveGaussianBasisFunction)
+
+  K,P,γ = IntegralsModule.GaussProductFundamental(μ,ν)
+
+  factors = θfactors([],[],[])
+  for (xyz in [:x,:y,:z])
+    for ((f,l) in IntegralsModule.GaussProductPolynomialFactor(μ,ν).(xyz))
+      for (r in 0:floor(Integer,(l/2)))
+	θ = f * (factorial(l)*γ^(r-l))/(factorial(r)*factorial(l-2r))
+	append!(factors.(xyz),[(θ,l,r)])
+      end
+    end
+  end
+  return factors
+end
+
+type Bfactors
+  x::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  y::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  z::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+end
+
+function BFactors(
+  μ::PrimitiveGaussianBasisFunction,
+  ν::PrimitiveGaussianBasisFunction,
+  λ::PrimitiveGaussianBasisFunction,
+  σ::PrimitiveGaussianBasisFunction)
+
+  K1,P,γ1 = IntegralsModule.GaussProductFundamental(μ,ν)
+  K2,Q,γ2 = IntegralsModule.GaussProductFundamental(λ,σ)
+  δ = 1/(4γ1) + 1/(4γ2)
+  p = (P-Q)
+
+  factors = Bfactors([],[],[])
+  for (xyz in (:x,:y,:z))
+    for ((θ12,l12,r12) in θFactors(μ,ν).(xyz))
+      for ((θ34,l34,r34) in θFactors(λ,σ).(xyz))
+	for (i in 0:floor(Integer,((l12-2r12)/2)))
+	  B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*p.(xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
+	  append!(factors.(xyz),[(B,l12,r12,i,l34,r34)])
+	end
+      end
+    end
+  end
+  return factors
+end
+
+
+function computeElectronRepulsionIntegral(
+  μ::PrimitiveGaussianBasisFunction,
+  ν::PrimitiveGaussianBasisFunction,
+  λ::PrimitiveGaussianBasisFunction,
+  σ::PrimitiveGaussianBasisFunction)
+  # compute (μν|λσ) (Mulliken notation) = Integrate[μ(1) ν(1) 1/Abs(1-2) λ(2) σ(2), d1 d2]
+  # in the most straightforward but primitive way (acc. to. Handbook of Comp. Quant. Chem. by Cook eq.7.1)
+  A = μ.center
+  B = ν.center
+  C = λ.center
+  D = σ.center
+  α1 = μ.exponent
+  α2 = ν.exponent
+  α3 = λ.exponent
+  α4 = σ.exponent
+  K1,P,γ1 = IntegralsModule.GaussProductFundamental(μ,ν)
+  K2,Q,γ2 = IntegralsModule.GaussProductFundamental(λ,σ)
+  δ = 1/(4γ1) + 1/(4γ2)
+  p = (P-Q)
+
+  Bfactors = BFactors(μ,ν,λ,σ)
+  Ω = 2π^2/(γ1 * γ2) * sqrt(π/(γ1 + γ2)) * exp(-α1*α2*distance(A,B)^2/γ1 - α3*α4*distance(C,D)^2/γ2)
+
+  result = 0.::Float64
+  for ((Bx,l12,r12,i,l34,r34) in Bfactors.x)
+    for ((By,m12,s12,j,m34,s34) in Bfactors.y)
+      for ((Bz,n12,t12,k,n34,t34) in Bfactors.z)
+	V = (l12+l34+m12+m34+n12+n34) - 2*(r12+r34+s12+s34+t12+t34) - (i+j+k)
+	result += Ω * Bx * By * Bz * IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ))
+      end
+    end
+  end
+  
+  return result
 end
 
 end # module
