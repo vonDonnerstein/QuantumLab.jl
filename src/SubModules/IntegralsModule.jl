@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!, computeMatrixNuclearAttraction
+export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!, computeMatrixNuclearAttraction, computeElectronRepulsionIntegral
 using ..BaseModule
 using ..BasisModule
 using ..AtomModule
@@ -374,6 +374,25 @@ function computeElectronRepulsionIntegral(
   end
   
   return result
+end
+
+function computeElectronRepulsionIntegral(
+  μ::ContractedGaussianBasisFunction,
+  ν::ContractedGaussianBasisFunction,
+  λ::ContractedGaussianBasisFunction,
+  σ::ContractedGaussianBasisFunction)
+
+  integral = 0.::Float64
+  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
+    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
+      for (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs)
+	for (coeff4,pgb4) in zip(σ.coefficients,σ.primitiveBFs)
+	  integral += coeff1*coeff2*coeff3*coeff4*computeElectronRepulsionIntegral(pgb1,pgb2,pgb3,pgb4)
+	end
+      end
+    end
+  end
+  return integral::Float64
 end
 
 end # module
