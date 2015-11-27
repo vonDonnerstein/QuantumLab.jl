@@ -1,13 +1,14 @@
 ﻿module IntegralsModule
-export Overlap, normalize!, doublefactorial, computeMatrixOverlap, computeMatrixKinetic, normalize!, computeMatrixNuclearAttraction, computeElectronRepulsionIntegral
+export Overlap, normalize!, doublefactorial, normalize!, computeElectronRepulsionIntegral
 using ..BaseModule
-using ..BasisModule
+using ..BasisFunctionsModule
 using ..AtomModule
 using ..GeometryModule
+using ProgressMeter
 
-print("(GSL...")
+ProgressMeter.printover(STDOUT," + (GSL........................")
 using GSL
-print("done.)...")
+ProgressMeter.printover(STDOUT," + IntegralsModule.............")
 
 
 doublefactorial(n::Int) = prod(n:-2:1)
@@ -91,7 +92,7 @@ function GaussProductPolynomialFactor(
     l2 = pgb2.mqn.(xyz)
     for k in 0:l1+l2
       ij = [((k+q) ÷ 2,(k-q) ÷ 2) for q in max(-k,k-2l2):2:min(k,2l1-k)]
-      f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).x^(l1-i) * (P-B).x^(l2-j) for(i,j) in ij])
+      f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j) for(i,j) in ij])
       append!(factors.(xyz),[(f,k)])
     end
   end
@@ -131,12 +132,6 @@ function normalize!(cgb::ContractedGaussianBasisFunction)
   scale!(cgb.coefficients,1/sqrt(N))
 end
 
-function normalize!(basis::GaussianBasis)
-  for (cgb in basis.contractedBFs)
-    normalize!(cgb)
-  end
-end
-
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   mqn_t = [mqn.x,mqn.y,mqn.z]
   xyznum = Dict(:x => 1, :y => 2, :z => 3)
@@ -155,13 +150,14 @@ function KineticIntegral(
   integral = 0.::Float64
 
   for (xyz in (:x,:y,:z))
-    pgb1decr = pgb1
+    pgb1decr = deepcopy(pgb1)
     pgb1decr.mqn = incrmqn(pgb1.mqn,xyz,-1)
-    pgb1incr = pgb1
+    pgb1incr = deepcopy(pgb1)
     pgb1incr.mqn = incrmqn(pgb1.mqn,xyz,1)
-    pgb2decr = pgb2
+
+    pgb2decr = deepcopy(pgb2)
     pgb2decr.mqn = incrmqn(pgb2.mqn,xyz,-1)
-    pgb2incr = pgb2
+    pgb2incr = deepcopy(pgb2)
     pgb2incr.mqn = incrmqn(pgb2.mqn,xyz,1)
 
     l1 = pgb1.mqn.(xyz)
@@ -169,11 +165,10 @@ function KineticIntegral(
     α1 = pgb1.exponent
     α2 = pgb2.exponent
 
-    integral +=
-  	(1/2*l1*l2) * Overlap(pgb1decr,pgb2decr) +
-	(2*α1*α2)   * Overlap(pgb1incr,pgb2incr) +
-	(-α1*l2)    * Overlap(pgb1incr,pgb2decr) +
-	(-α2*l1)    * Overlap(pgb1decr,pgb2incr)
+    if(l1*l2!=0) integral += (1/2*l1*l2) * Overlap(pgb1decr,pgb2decr) end
+                 integral += (2*α1*α2)   * Overlap(pgb1incr,pgb2incr)
+    if(l2   !=0) integral += (-α1*l2)    * Overlap(pgb1incr,pgb2decr) end
+    if(l1   !=0) integral += (-l1*α2)    * Overlap(pgb1decr,pgb2incr) end
   end
 
   return integral::Float64
@@ -190,14 +185,6 @@ function KineticIntegral(
     end
   end
   return integral::Float64
-end
-
-function computeMatrixKinetic(basis::GaussianBasis)
-  return [KineticIntegral(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
-end
-
-function computeMatrixOverlap(basis::GaussianBasis)
-  return [Overlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
 function OverlapFundamental(
@@ -280,9 +267,6 @@ function NuclearAttractionIntegral(
   return integral::Float64
 end
 
-function computeMatrixNuclearAttraction(basis::GaussianBasis,geo::Geometry)
-  return [sum([NuclearAttractionIntegral(cgb1,cgb2,atom) for atom in geo.atoms]) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
-end
 
 type θfactors
   x::Array{Tuple{Real,Int,Int},1} # θ,l,r
@@ -329,7 +313,8 @@ function BFactors(
   for (xyz in (:x,:y,:z))
     for ((θ12,l12,r12) in θFactors(μ,ν).(xyz))
       for ((θ34,l34,r34) in θFactors(λ,σ).(xyz))
-	for (i in 0:floor(Integer,((l12-2r12)/2)))
+	#for (i in 0:floor(Integer,((l12-2r12)/2)))    # this might be a typo in the book (otherwise e.g. ERI(s,s,px,px2) != ERI(px,px2,s,s) (where the 2 denotes a second center moved by 0.5 in x direction)
+	for (i in 0:floor(Integer,((l12+l34-2r12-2r34)/2)))
 	  B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*p.(xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
 	  append!(factors.(xyz),[(B,l12,r12,i,l34,r34)])
 	end
@@ -372,7 +357,6 @@ function computeElectronRepulsionIntegral(
       end
     end
   end
-  
   return result
 end
 

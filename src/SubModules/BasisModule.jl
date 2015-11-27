@@ -2,22 +2,13 @@ module BasisModule
 export GaussianBasis, PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, computeBasis
 
 using ..BaseModule
+using ..BasisFunctionsModule
 using ..BasisSetModule
 using ..GeometryModule
 using ..AtomModule
 
 abstract Basis
 
-type PrimitiveGaussianBasisFunction
-  center::Position
-  exponent::Real
-  mqn::MQuantumNumber
-end
-
-type ContractedGaussianBasisFunction
-  coefficients::Array{Real,1}
-  primitiveBFs::Array{PrimitiveGaussianBasisFunction,1}
-end
 
 type GaussianBasis <: Basis
   contractedBFs::Array{ContractedGaussianBasisFunction,1}
@@ -32,6 +23,8 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
 	for primitiveDefinition in contractedDefinition.primitives
 	  exponent=primitiveDefinition.exponent
 	  primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
+	  #norm = IntegralsModule.Overlap(primitiveBF,primitiveBF)
+	  #append!(contractedBF.coefficients,[primitiveDefinition.prefactor/sqrt(norm)])
 	  append!(contractedBF.coefficients,[primitiveDefinition.prefactor])
 	  append!(contractedBF.primitiveBFs,[primitiveBF])
 	end
@@ -42,5 +35,10 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
   return bas
 end
 
+function normalize!(basis::GaussianBasis)
+  for (cgb in basis.contractedBFs)
+    normalize!(cgb)
+  end
+end
 
 end # module
