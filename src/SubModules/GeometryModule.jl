@@ -1,5 +1,5 @@
 module GeometryModule
-export Geometry, readGeometryXYZ
+export Geometry, readGeometryXYZ, angstrom2bohr, angstrom2bohr!
 
 using ..BaseModule
 using ..AtomModule
@@ -14,7 +14,6 @@ function readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
 	for line in lines[3:end]	# line 1 is n. of atoms, line 2 is comment
 		columns = split(line)
 		elem = Element(columns[1])
-		#pos = Position(map(parse,tuple(columns[2:4]...))...)	# float is not recommended for use on tuples
 		pos = Position(map(parse,columns[2:4])...)	# float is not recommended for use on tuples
 		append!(geo.atoms,[Atom(elem,pos)])
 	end

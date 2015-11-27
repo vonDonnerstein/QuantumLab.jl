@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export Overlap, normalize!, doublefactorial, normalize!, computeElectronRepulsionIntegral
+export Overlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -127,10 +127,6 @@ function Overlap(
   return integral::Float64
 end
 
-function normalize!(cgb::ContractedGaussianBasisFunction)
-  N = Overlap(cgb,cgb)
-  scale!(cgb.coefficients,1/sqrt(N))
-end
 
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   mqn_t = [mqn.x,mqn.y,mqn.z]
@@ -307,7 +303,8 @@ function BFactors(
   K1,P,γ1 = IntegralsModule.GaussProductFundamental(μ,ν)
   K2,Q,γ2 = IntegralsModule.GaussProductFundamental(λ,σ)
   δ = 1/(4γ1) + 1/(4γ2)
-  p = (P-Q)
+  #p = (P-Q)	# this might be a typo in the book
+  p = (Q-P)
 
   factors = Bfactors([],[],[])
   for (xyz in (:x,:y,:z))
@@ -354,6 +351,7 @@ function computeElectronRepulsionIntegral(
       for ((Bz,n12,t12,k,n34,t34) in Bfactors.z)
 	V = (l12+l34+m12+m34+n12+n34) - 2*(r12+r34+s12+s34+t12+t34) - (i+j+k)
 	result += Ω * Bx * By * Bz * IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ))
+	#println("Bx*By*Bz*FIntegral[$V] = $Bx * $By * $Bz * $(IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ)))")
       end
     end
   end
