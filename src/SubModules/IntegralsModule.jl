@@ -364,7 +364,7 @@ function computeElectronRepulsionIntegral(
   λ::ContractedGaussianBasisFunction,
   σ::ContractedGaussianBasisFunction)
 
-  integral = 0.::Float64
+  integral::Real = 0.
   for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
     for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
       for (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs)

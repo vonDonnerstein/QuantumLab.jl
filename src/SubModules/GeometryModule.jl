@@ -21,7 +21,7 @@ function readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
 	return geo
 end
 
-angstrom2bohr(x::Float64) = (return x/0.529177210)
+angstrom2bohr(x::Real) = (return x/0.529177210)
 angstrom2bohr(pos::Position) = (return Position(angstrom2bohr(pos.x),angstrom2bohr(pos.y),angstrom2bohr(pos.z)))
 function angstrom2bohr!(geo::Geometry)
   for (atom in geo.atoms)

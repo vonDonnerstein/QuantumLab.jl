@@ -116,7 +116,7 @@ function evaluateSCF(
 
   N = electronNumber
   normalize!(basis)
-  S = computeMatrixOverlap(bas)
+  S = computeMatrixOverlap(basis)
   P = initialGuessDensity
 
   for (i in 1:30)
