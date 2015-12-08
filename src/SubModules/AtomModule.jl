@@ -4,7 +4,7 @@ import Base.==
 
 using ..BaseModule
 
-atomicNumbers = Dict(
+atomicNumbers = Dict{AbstractString,Integer}(
   "H" => 	1,
   "He" => 	2,
   "Li" => 	3,
