@@ -72,9 +72,9 @@ function GaussProductFundamental(
 end
 
 type PolynomialFactors
-  x::Array{Tuple{Real,Int},1} # Real*x^Int
-  y::Array{Tuple{Real,Int},1} # Real*y^Int
-  z::Array{Tuple{Real,Int},1} # Real*z^Int
+  x::Array{Tuple{Float64,Int},1} # Float64*x^Int
+  y::Array{Tuple{Float64,Int},1} # Float64*y^Int
+  z::Array{Tuple{Float64,Int},1} # Float64*z^Int
 end
 
 function GaussProductPolynomialFactor(
@@ -91,8 +91,14 @@ function GaussProductPolynomialFactor(
     l1 = pgb1.mqn.(xyz)
     l2 = pgb2.mqn.(xyz)
     for k in 0:l1+l2
-      ij = [((k+q) ÷ 2,(k-q) ÷ 2) for q in max(-k,k-2l2):2:min(k,2l1-k)]
-      f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j) for(i,j) in ij])
+      f = 0.::Float64
+      for q in max(-k,k-2l2):2:min(k,2l1-k)
+	i = (k+q) ÷ 2
+	j = (k-q) ÷ 2
+	f += binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j)
+      end
+      #ij = [((k+q) ÷ 2,(k-q) ÷ 2) for q in max(-k,k-2l2):2:min(k,2l1-k)]
+      #f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j) for(i,j) in ij])
       append!(factors.(xyz),[(f,k)])
     end
   end
@@ -225,16 +231,16 @@ function NuclearAttractionIntegral(
 
   result = 0
   for ((fx,l) in GaussProductPolynomialFactor(pgb1,pgb2).x)
-    for (r in 0:floor(Integer,(l/2)))
-      for (i in 0:floor(Integer,((l-2r)/2)))
+    for (r in 0:floor(Int,(l/2)))
+      for (i in 0:floor(Int,((l-2r)/2)))
 	Ax = ASummand(fx,pgb1.mqn.x,pgb2.mqn.x,pgb1.center.x,pgb2.center.x,(P-C).x,γ,l,r,i)
 	for ((fy,m) in GaussProductPolynomialFactor(pgb1,pgb2).y)
-	  for (s in 0:floor(Integer,(m/2)))
-	    for (j in 0:floor(Integer,((m-2s)/2)))
+	  for (s in 0:floor(Int,(m/2)))
+	    for (j in 0:floor(Int,((m-2s)/2)))
 	      Ay = ASummand(fy,pgb1.mqn.y,pgb2.mqn.y,pgb1.center.y,pgb2.center.y,(P-C).y,γ,m,s,j)
 	      for ((fz,n) in GaussProductPolynomialFactor(pgb1,pgb2).z)
-		for (t in 0:floor(Integer,(n/2)))
-		  for (k in 0:floor(Integer,((n-2t)/2)))
+		for (t in 0:floor(Int,(n/2)))
+		  for (k in 0:floor(Int,((n-2t)/2)))
 		    Az = ASummand(fz,pgb1.mqn.z,pgb2.mqn.z,pgb1.center.z,pgb2.center.z,(P-C).z,γ,n,t,k)
 		    result += 2π/γ * K * Ax * Ay * Az * FIntegral(l+m+n-2*(r+s+t)-(i+j+k),γ*distance(P,C)^2)
 		  end
@@ -265,9 +271,9 @@ end
 
 
 type θfactors
-  x::Array{Tuple{Real,Int,Int},1} # θ,l,r
-  y::Array{Tuple{Real,Int,Int},1} # θ,l,r
-  z::Array{Tuple{Real,Int,Int},1} # θ,l,r
+  x::Array{Tuple{Float64,Int,Int},1} # θ,l,r
+  y::Array{Tuple{Float64,Int,Int},1} # θ,l,r
+  z::Array{Tuple{Float64,Int,Int},1} # θ,l,r
 end
 
 function θFactors(
@@ -279,7 +285,7 @@ function θFactors(
   factors = θfactors([],[],[])
   for (xyz in [:x,:y,:z])
     for ((f,l) in IntegralsModule.GaussProductPolynomialFactor(μ,ν).(xyz))
-      for (r in 0:floor(Integer,(l/2)))
+      for (r in 0:floor(Int,(l/2)))
 	θ = f * (factorial(l)*γ^(r-l))/(factorial(r)*factorial(l-2r))
 	append!(factors.(xyz),[(θ,l,r)])
       end
@@ -289,9 +295,9 @@ function θFactors(
 end
 
 type Bfactors
-  x::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
-  y::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
-  z::Array{Tuple{Real,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  x::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  y::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  z::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
 end
 
 function BFactors(
@@ -311,7 +317,7 @@ function BFactors(
     for ((θ12,l12,r12) in θFactors(μ,ν).(xyz))
       for ((θ34,l34,r34) in θFactors(λ,σ).(xyz))
 	#for (i in 0:floor(Integer,((l12-2r12)/2)))    # this might be a typo in the book (otherwise e.g. ERI(s,s,px,px2) != ERI(px,px2,s,s) (where the 2 denotes a second center moved by 0.5 in x direction)
-	for (i in 0:floor(Integer,((l12+l34-2r12-2r34)/2)))
+	for (i in 0:floor(Int,((l12+l34-2r12-2r34)/2)))
 	  B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*p.(xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
 	  append!(factors.(xyz),[(B,l12,r12,i,l34,r34)])
 	end
@@ -364,7 +370,7 @@ function computeElectronRepulsionIntegral(
   λ::ContractedGaussianBasisFunction,
   σ::ContractedGaussianBasisFunction)
 
-  integral::Real = 0.
+  integral::Float64 = 0.
   for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
     for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
       for (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs)

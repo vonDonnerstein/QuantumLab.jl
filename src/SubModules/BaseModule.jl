@@ -3,9 +3,9 @@ export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance
 import Base.*, Base.+, Base./, Base.-
 
 immutable Position
-	x::Real
-	y::Real
-	z::Real
+	x::Float64
+	y::Float64
+	z::Float64
 end
 
 *(c::Real,p::Position) = Position(c*p.x,c*p.y,c*p.z)
@@ -25,7 +25,7 @@ immutable MQuantumNumber
   z::Int
 end
 
-lqnExponent = Dict(
+lqnExponent = Dict{ASCIIString,Int}(
   "S" => 	0,
   "P" => 	1,
   "D" => 	2,
@@ -34,7 +34,7 @@ lqnExponent = Dict(
   "H" =>	5,
 )
 immutable LQuantumNumber
-	symbol::AbstractString
+	symbol::ASCIIString
 	exponent::Int
 
 	LQuantumNumber(sym::AbstractString) = new(sym,lqnExponent[sym])

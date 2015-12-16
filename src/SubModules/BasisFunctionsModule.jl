@@ -5,12 +5,12 @@ using ..BaseModule
 
 type PrimitiveGaussianBasisFunction
   center::Position
-  exponent::Real
+  exponent::Float64
   mqn::MQuantumNumber
 end
 
 type ContractedGaussianBasisFunction
-  coefficients::Array{Real,1}
+  coefficients::Array{Float64,1}
   primitiveBFs::Array{PrimitiveGaussianBasisFunction,1}
 end
 

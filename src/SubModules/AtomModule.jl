@@ -4,7 +4,7 @@ import Base.==
 
 using ..BaseModule
 
-atomicNumbers = Dict{AbstractString,Integer}(
+atomicNumbers = Dict{ASCIIString,Int}(
   "H" => 	1,
   "He" => 	2,
   "Li" => 	3,
@@ -126,7 +126,7 @@ atomicNumbers = Dict{AbstractString,Integer}(
 )
 
 immutable Element
-	symbol::AbstractString
+	symbol::ASCIIString
 	atomicNumber::Int
 
 	Element(sym::AbstractString) = new(sym,atomicNumbers[sym])

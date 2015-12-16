@@ -4,8 +4,8 @@ using ..BaseModule
 using ..AtomModule
 
 immutable PrimitiveGaussianBasisFunctionDefinition
-	exponent::Real
-	prefactor::Real
+	exponent::Float64
+	prefactor::Float64
 end
 
 immutable ContractedGaussianBasisFunctionDefinition
