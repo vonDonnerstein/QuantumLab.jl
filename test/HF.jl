@@ -7,8 +7,13 @@ P = [ 0.5000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000 0.00
       0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000 0.5000000 ]
 
 basSet = readBasisSetTX93("STO-3G.tx93")
-geo = readGeometryXYZ("h2o.xyz")
+#geo = readGeometryXYZ("h2o.xyz")
+#tempat = geo.atoms[2]
+#geo.atoms[2] = geo.atoms[1]
+#geo.atoms[1] = tempat
+geo = readGeometryXYZ("h2o.pyquante.xyz")
 bas = computeBasis(basSet,geo)
+bas.contractedBFs[3],bas.contractedBFs[5] = bas.contractedBFs[5],bas.contractedBFs[3]
 
 
 function computeMatrixCoulomb(basis::GaussianBasis, density::Matrix)
@@ -38,6 +43,17 @@ function computeMatrixExchange(basis::GaussianBasis, density::Matrix)
     for (νIndex in 1:μIndex)
       ν = basis.contractedBFs[νIndex]
       ERImatrix = [computeElectronRepulsionIntegral(μ,λ,ν,σ) for λ in basis.contractedBFs, σ in basis.contractedBFs]
+#if (μIndex == 5 && νIndex == 1)
+#println("ERImatrix = \n$ERImatrix")
+#eri = computeElectronRepulsionIntegral(bas.contractedBFs[5],bas.contractedBFs[1],bas.contractedBFs[1],bas.contractedBFs[5])
+#println("ERI(5,1,1,5) = $eri")
+#println("K[5,1] = $(trace(ERImatrix*density))")
+#println("alt: $(dot(reshape(ERImatrix,7*7),reshape(density,7*7)))")
+#println("ERImatrixReshaped:")
+#for i in 1:7*7
+#println(reshape(ERImatrix,(1,7*7))[i])
+#end
+#end
       K[μIndex,νIndex] = trace(ERImatrix*density)
       K[νIndex,μIndex] = K[μIndex,νIndex]
     end
@@ -52,7 +68,7 @@ function computeEnergyInteratomicRepulsion(
   q2 = atom2.element.atomicNumber
   A = atom1.position
   B = atom2.position
-  return q1*q2/(distance(A,B)^2)
+  return q1*q2/(distance(A,B))
 end
 
 function computeEnergyInteratomicRepulsion(geo::Geometry)
@@ -75,7 +91,7 @@ function computeEnergyHartreeFock(
   J = computeMatrixCoulomb(basis,density)
   K = computeMatrixExchange(basis,density)
   G = 2J-K
-  return trace((T+V+1/2*G)*P)
+  return trace((T+V+1/2*G)*P*2)
 end
 
 function computeMatrixFock(
@@ -99,7 +115,7 @@ function evaluateSCFStep(
   N = electronNumber
   S = overlap
   F = computeMatrixFock(basis,geometry,initialGuessDensity)
-  eig = eigfact(F,S)
+  eig = eigfact(Symmetric(F),Symmetric(S)) # because Symmetric is faster and allows for sorted eigenvalues
   C = eig.vectors
   moEnergies = eig.values
   Cocc = eig.vectors[:,1:N]
@@ -121,7 +137,7 @@ function evaluateSCF(
 
   for (i in 1:30)
     energies,P = evaluateSCFStep(basis,geometry,P,S,N)
-    println("E[$i]: $(computeEnergyHartreeFock(basis,geometry,P))")
+    println("E[$i]: $(computeEnergyHartreeFock(basis,geometry,P)+computeEnergyInteratomicRepulsion(geo))")
   end
 end
 
