@@ -6,14 +6,6 @@ P = [ 0.5000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000 0.00
       0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.6666667 0.0000000; 
       0.0000000   0.0000000   0.0000000   0.0000000   0.0000000   0.0000000 0.5000000 ]
 
-basSet = readBasisSetTX93("STO-3G.tx93")
-#geo = readGeometryXYZ("h2o.xyz")
-#tempat = geo.atoms[2]
-#geo.atoms[2] = geo.atoms[1]
-#geo.atoms[1] = tempat
-geo = readGeometryXYZ("h2o.pyquante.xyz")
-bas = computeBasis(basSet,geo)
-bas.contractedBFs[3],bas.contractedBFs[5] = bas.contractedBFs[5],bas.contractedBFs[3]
 
 
 function computeMatrixCoulomb(basis::GaussianBasis, density::Matrix)
@@ -128,29 +120,68 @@ function evaluateSCF(
   basis::GaussianBasis,
   geometry::Geometry,
   initialGuessDensity::Matrix,
-  electronNumber::Integer)
+  electronNumber::Integer;
+  energyConvergenceCriterion::Float64 = 1e-8)
 
   N = electronNumber
   normalize!(basis)
   S = computeMatrixOverlap(basis)
   P = initialGuessDensity
 
-  for (i in 1:30)
+  energyConverged = false
+  local totalEnergy = computeEnergyHartreeFock(basis,geometry,P)+computeEnergyInteratomicRepulsion(geometry)
+  local energies::Array{Float64,1}
+  local P::Matrix
+  i = 0
+  while (!energyConverged)
+    i+=1
     energies,P = evaluateSCFStep(basis,geometry,P,S,N)
-    println("E[$i]: $(computeEnergyHartreeFock(basis,geometry,P)+computeEnergyInteratomicRepulsion(geo))")
+    oldEnergy = totalEnergy
+    totalEnergy = computeEnergyHartreeFock(basis,geometry,P)+computeEnergyInteratomicRepulsion(geometry)
+    println("E[$i]: $totalEnergy")
+    if (abs(totalEnergy-oldEnergy) < energyConvergenceCriterion)
+      println("Converged!")
+      energyConverged = true
+    end
   end
+  return energies, P
 end
 
       
-h2o = Geometry([Atom(Element("O"),Position(0.0, 0.0, 0.04851804)),
-		Atom(Element("H"),Position(0.75300223,0.00000000,-0.51923377)),
-		Atom(Element("H"),Position(-0.75300223,0.00000000,-0.51923377))])
+h2o = Geometry([Atom(Element("H"),Position( 0.751, 0.194, 0.000)),
+		Atom(Element("O"),Position( 0.000,-0.388, 0.000)),
+		Atom(Element("H"),Position(-0.751, 0.194, 0.000))])
+#h2o = Geometry([Atom(Element("O"),Position(0.0, 0.0, 0.04851804)),
+#		Atom(Element("H"),Position(0.75300223,0.00000000,-0.51923377)),
+#		Atom(Element("H"),Position(-0.75300223,0.00000000,-0.51923377))])
 angstrom2bohr!(h2o)
 
+basSet = readBasisSetTX93("STO-3G.tx93")
 bfs = computeBasis(basSet,h2o)
 normalize!(bfs)
-bfs.contractedBFs[3],bfs.contractedBFs[5] = bfs.contractedBFs[5],bfs.contractedBFs[3]
+#bfs.contractedBFs[3],bfs.contractedBFs[5] = bfs.contractedBFs[5],bfs.contractedBFs[3]
+bfs.contractedBFs[4],bfs.contractedBFs[6] = bfs.contractedBFs[6],bfs.contractedBFs[4]
 
+densityGuessSADα_sto3g_H = [ 1.000000 ]
+densityGuessSADα_sto3g_O = 
+  [ 1.065739   -0.264689    0.000000    0.000000    0.000000; 
+   -0.264689    1.065739    0.000000    0.000000    0.000000; 
+    0.000000    0.000000    1.000000    0.000000    0.000000; 
+    0.000000    0.000000    0.000000    1.000000    0.000000; 
+    0.000000    0.000000    0.000000    0.000000    0.000000 ]
+
+densityGuessSADβ_sto3g_H = [ 0.000000 ]
+densityGuessSADβ_sto3g_O = 
+  [ 1.065739   -0.264689    0.000000    0.000000    0.000000; 
+   -0.264689    1.065739    0.000000    0.000000    0.000000; 
+    0.000000    0.000000    0.000000    0.000000    0.000000; 
+    0.000000    0.000000    0.000000    0.000000    0.000000; 
+    0.000000    0.000000    0.000000    0.000000    0.000000 ]
+
+p0_H = (densityGuessSADα_sto3g_H + densityGuessSADβ_sto3g_H)/2
+p0_O = (densityGuessSADα_sto3g_O + densityGuessSADβ_sto3g_O)/2
+
+p0_H2O = cat([1,2], p0_H, p0_O, p0_H)
 
 function prettyprint(cgbf::ContractedGaussianBasisFunction,indent="")
   print(indent); dump(typeof(cgbf))
@@ -172,5 +203,8 @@ function prettyprint(basis::GaussianBasis)
   for cgbf in basis.contractedBFs
     prettyprint(cgbf,indent)
   end
-
 end
+
+using Base.Test
+@test_approx_eq_eps -74.96178985 computeEnergyHartreeFock(bfs,h2o,evaluateSCF(bfs,h2o,p0_H2O,5)[2])+computeEnergyInteratomicRepulsion(h2o) 1e-7
+
