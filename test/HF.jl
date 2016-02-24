@@ -79,9 +79,23 @@ function computeEnergyHartreeFock(
   density::Matrix)
   P = density
   T = computeMatrixKinetic(basis)
+  eT = 2*trace(T*P)
+  println("=================================")
+  println("Kinetic Energy: $eT")
   V = computeMatrixNuclearAttraction(basis,geometry)
+  eV = 2*trace(V*P)
+  println("Nuclear Attraction Energy: $eV")
+  println("Sum 1-Electron Energy: $(eT+eV)")
+  println("---------------------------------")
   J = computeMatrixCoulomb(basis,density)
+  eJ = 2*trace(J*P)
+  println("Coulomb Energy: $eJ")
   K = computeMatrixExchange(basis,density)
+  eK = -trace(K*P)
+  println("Exchange Energy: $eK")
+  println("Total Electronic Energy: $(eT+eV+eJ+eK)")
+  println("Total Energy: $(eT+eV+eJ+eK+computeEnergyInteratomicRepulsion(geometry))")
+  println("=================================")
   G = 2J-K
   return trace((T+V+1/2*G)*P*2)
 end
