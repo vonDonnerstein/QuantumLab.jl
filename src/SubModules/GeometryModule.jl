@@ -1,5 +1,5 @@
 module GeometryModule
-export Geometry, readGeometryXYZ, angstrom2bohr, angstrom2bohr!
+export Geometry, readGeometryXYZ, angstrom2bohr, angstrom2bohr!, computeEnergyInteratomicRepulsion
 
 using ..BaseModule
 using ..AtomModule
@@ -27,6 +27,26 @@ function angstrom2bohr!(geo::Geometry)
   for (atom in geo.atoms)
     atom.position = angstrom2bohr(atom.position)
   end
+end
+
+function computeEnergyInteratomicRepulsion(
+  atom1::Atom,
+  atom2::Atom)
+  q1 = atom1.element.atomicNumber
+  q2 = atom2.element.atomicNumber
+  A = atom1.position
+  B = atom2.position
+  return q1*q2/(distance(A,B))
+end
+
+function computeEnergyInteratomicRepulsion(geo::Geometry)
+  result = 0.::Float64
+  for (A in 1:length(geo.atoms))
+    for (B in 1:A-1)
+      result += computeEnergyInteratomicRepulsion(geo.atoms[A],geo.atoms[B])
+    end
+  end
+  return result
 end
 
 end #module

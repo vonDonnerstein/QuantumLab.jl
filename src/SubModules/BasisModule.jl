@@ -1,5 +1,6 @@
 module BasisModule
-export GaussianBasis, PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, computeBasis, normalize!
+export GaussianBasis, computeBasis, normalize!, prettyprint
+import ..BaseModule.prettyprint
 
 using ..BaseModule
 using ..BasisFunctionsModule
@@ -7,6 +8,7 @@ using ..BasisSetModule
 using ..GeometryModule
 using ..AtomModule
 using ..IntegralsModule
+
 
 abstract Basis
 
@@ -44,6 +46,18 @@ end
 function normalize!(cgb::ContractedGaussianBasisFunction)
   N = Overlap(cgb,cgb)
   scale!(cgb.coefficients,1/sqrt(N))
+end
+
+function prettyprint(basis::GaussianBasis)
+  dump(typeof(basis))
+  indent = "  "
+
+  println(indent * "contractedBFs: ")
+  indent = indent * "  "
+
+  for cgbf in basis.contractedBFs
+    prettyprint(cgbf,indent)
+  end
 end
 
 end # module

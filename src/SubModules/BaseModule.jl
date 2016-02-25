@@ -1,5 +1,5 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance
+export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, prettyprint
 import Base.*, Base.+, Base./, Base.-
 
 immutable Position
@@ -64,4 +64,5 @@ Base.done(mqns::MQuantumNumbers,state) = state > mqns.count
 Base.length(mqns::MQuantumNumbers) = MQuantumNumbers.count
 #Base.eltype(::Type{MQuantumNumbers}) = Int
 
+function prettyprint() end
 end # module
