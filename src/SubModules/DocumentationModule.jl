@@ -1,0 +1,118 @@
+module DocumentationModule
+export Citation, JournalCitation, BookCitation, GenericCitation, summarize
+import Base.display
+
+"""Abstract class supertyping all objects that are entries of a bibliography (for documenting functions). Each subtype has its corresponding fields and defines its own display function."""
+abstract Citation
+
+"""Citation class for articles in scientific jounals."""
+type JournalCitation <: Citation
+  authors::Array{AbstractString,1}
+  journalabbr::AbstractString
+  vol::UInt
+  page::UInt
+  year::UInt
+end
+
+function display(cite::JournalCitation)
+  display(Base.Markdown.parse(""" - $(join(cite.authors,", ")), $(cite.journalabbr) **$(cite.vol)**, *$(cite.page)* ($(cite.year))"""))
+end
+
+"""Citation class for complete Books. Refer to BookSectionCitation for more specific parts of a book."""
+type BookCitation <: Citation
+  authors::Array{AbstractString,1}
+  title::AbstractString
+  ISBN::AbstractString
+end
+
+"""Citation class for anything that can not be described by any of the other subclasses of Citation. Make sure none of the others fits the purpose before using this one."""
+type GenericCitation <: Citation
+  string::AbstractString
+end
+
+function display(cite::GenericCitation)
+  display(Base.Markdown.parse(""" - $(cite.string)"""))
+end
+
+"""display(Array{Any,1}) is used to pretty-print documentation containing normal (Markdown) documentation text and Citation objects"""
+function display(docuArray::Array{Any,1})
+  local cites = Array{Citation,1}()
+  display(Base.Markdown.parse("""
+  # Documentation
+  """))
+  for docu in docuArray
+    if typeof(docu)==Base.Markdown.MD
+      display(docu)
+    elseif isa(docu,Citation)
+      push!(cites,docu)
+    else
+      println("Unexpected type of documentation: $(typeof(docu))")
+    end
+  end
+
+  print('\n')
+
+  display(Base.Markdown.parse("""
+  # Citations:
+  """))
+  for citekey in cites
+    display(citekey)
+  end
+end
+
+function display(docuArray::Array{Citation,1})
+  display(Base.Markdown.parse("""
+  # Citations:
+  """))
+  for citekey in docuArray
+    display(citekey)
+  end
+end
+
+function display{T<:Citation}(docuArray::Array{T,1})
+  display(Base.Markdown.parse("""
+  # Citations:
+  """))
+  for citekey in docuArray
+    display(citekey)
+  end
+end
+
+"""
+Taken from base/docs/Docs.jl, this function shows a summary of the fields, type and supertypes of a DataType. 
+In Docs.jl the function `typesummary` is only meant to be called when no other documentation can be found for it.
+If `typesummary` doesn't print "No documentation found" anymore in the future, then this function becomes obsolete.
+"""
+function summarize(f::DataType)
+    parts = [
+    """
+    **Summary:**
+    ```julia
+    $(f.abstract ? "abstract" : f.mutable ? "type" : "immutable") $f <: $(super(f))
+    ```
+    """
+    ]
+    if !isempty(fieldnames(f))
+        pad    = maximum([length(string(f)) for f in fieldnames(f)])
+        fields = ["$(rpad(f, pad)) :: $(t)" for (f, t) in zip(fieldnames(f), f.types)]
+        push!(parts,
+        """
+        **Fields:**
+        ```julia
+        $(join(fields, "\n"))
+        ```
+        """)
+    end
+    if !isempty(subtypes(f))
+        push!(parts,
+        """
+        **Subtypes:**
+        ```julia
+        $(join(subtypes(f), "\n"))
+        ```
+        """)
+    end
+    Markdown.parse(join(parts, "\n"))
+end
+
+end # module

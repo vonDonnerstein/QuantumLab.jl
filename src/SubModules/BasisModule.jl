@@ -1,6 +1,6 @@
 module BasisModule
 export GaussianBasis, computeBasis, normalize!, prettyprint
-import ..BaseModule.prettyprint
+import Base.display
 
 using ..BaseModule
 using ..BasisFunctionsModule
@@ -12,7 +12,10 @@ using ..IntegralsModule
 
 abstract Basis
 
-
+"""
+A GaussianBasis is a Basis constructed purely from Gaussian type functions (see PrimitiveGaussianBasisFunction).
+The list of basis functions defines the basis. It is most easily constructed from a BasisSet and a Geometry by computeBasis().
+"""
 type GaussianBasis <: Basis
   contractedBFs::Array{ContractedGaussianBasisFunction,1}
 end
@@ -48,7 +51,7 @@ function normalize!(cgb::ContractedGaussianBasisFunction)
   scale!(cgb.coefficients,1/sqrt(N))
 end
 
-function prettyprint(basis::GaussianBasis)
+function display(basis::GaussianBasis)
   dump(typeof(basis))
   indent = "  "
 
@@ -56,7 +59,7 @@ function prettyprint(basis::GaussianBasis)
   indent = indent * "  "
 
   for cgbf in basis.contractedBFs
-    prettyprint(cgbf,indent)
+    display(cgbf,indent)
   end
 end
 

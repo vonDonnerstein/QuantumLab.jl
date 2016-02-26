@@ -6,6 +6,11 @@ ProgressMeter.printover(STDOUT," + (Reexport...................")
 using Reexport
 ProgressMeter.printover(STDOUT,"")
 
+print(" + DocumentationModule.........")
+include("SubModules/DocumentationModule.jl")
+@reexport using .DocumentationModule
+println("Done.")
+
 print(" + BaseModule..................")
 include("SubModules/BaseModule.jl")
 @reexport using .BaseModule

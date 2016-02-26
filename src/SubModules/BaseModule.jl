@@ -19,6 +19,10 @@ function distance(p::Position,q::Position)
   return sqrt((pq.x)^2+(pq.y)^2+(pq.z)^2)
 end
 
+"""
+MQuantumNumber describes a single orientation of an atomic orbital in cartesian space by denoting the exponent of x, y and z of the radial part
+E.g.:   a d_xy orbital can be described by MQuantumNumber(1,1,0)
+"""
 immutable MQuantumNumber
   x::Int
   y::Int
@@ -33,6 +37,12 @@ lqnExponent = Dict{ASCIIString,Int}(
   "G" =>	4,
   "H" =>	5,
 )
+
+"""
+The LQuantumNumber desribes whether a function is spherical (s, lqn=0), polarized (p, lqn=1), etc.
+As is generally known the total MQuantumNumber in pure coordinates lies between -lqn and +lqn.
+This means that the sum of the three cartesian components can at most b. LQuantumNumber.
+"""
 immutable LQuantumNumber
 	symbol::ASCIIString
 	exponent::Int
@@ -40,6 +50,9 @@ immutable LQuantumNumber
 	LQuantumNumber(sym::AbstractString) = new(sym,lqnExponent[sym])
 end
 
+"""
+MQuantumNumber**s** returns all MQuantumNumber objects corresponding to the LQuantumNumber object given to the constructor as an iterable collection.
+"""
 immutable MQuantumNumbers
   lqn::LQuantumNumber
   mqnarray::Array{MQuantumNumber,1}
@@ -64,5 +77,4 @@ Base.done(mqns::MQuantumNumbers,state) = state > mqns.count
 Base.length(mqns::MQuantumNumbers) = MQuantumNumbers.count
 #Base.eltype(::Type{MQuantumNumbers}) = Int
 
-function prettyprint() end
 end # module
