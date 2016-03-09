@@ -27,7 +27,7 @@ function GaussianIntegral1D(mqn::Int,exponent::Float64)
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
 end
-@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D
+#@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D
 
 
 function GaussianIntegral1D(mqn::Int,exponent::Float64)
@@ -90,20 +90,22 @@ function GaussProductPolynomialFactor(
   B  = pgb2.center
   (K,P,γ) = GaussProductFundamental(pgb1,pgb2)
 
-  factors = PolynomialFactors([],[],[])
-  for (xyz in [:x,:y,:z])
-    l1 = pgb1.mqn.(xyz)
-    l2 = pgb2.mqn.(xyz)
+  #factors = PolynomialFactors(Array(Tuple{Float64,Int},pgb1.mqn.x+pgb2.mqn.x),Array(Tuple{Float64,Int},pgb1.mqn.y+pgb2.mqn.y),Array(Tuple{Float64,Int},pgb1.mqn.z+pgb2.mqn.z))
+  factors = PolynomialFactors(Tuple{Float64,Int}[],Tuple{Float64,Int}[],Tuple{Float64,Int}[])
+  for (xyz in 1:3)
+    l1 = getfield(pgb1.mqn,xyz)
+    l2 = getfield(pgb2.mqn,xyz)
+    sizehint!(getfield(factors,xyz),1+l1+l2)
     for k in 0:l1+l2
       f = 0.::Float64
       for q in max(-k,k-2l2):2:min(k,2l1-k)
 	i = (k+q) ÷ 2
 	j = (k-q) ÷ 2
-	f += binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j)
+	f += binomial(l1,i) * binomial(l2,j) * getfield((P-A),xyz)^(l1-i) * getfield((P-B),xyz)^(l2-j)
       end
       #ij = [((k+q) ÷ 2,(k-q) ÷ 2) for q in max(-k,k-2l2):2:min(k,2l1-k)]
       #f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j) for(i,j) in ij])
-      append!(factors.(xyz),[(f,k)])
+      push!(getfield(factors,xyz),(f,k))
     end
   end
 
@@ -286,12 +288,13 @@ function θFactors(
 
   K,P,γ = IntegralsModule.GaussProductFundamental(μ,ν)
 
-  factors = θfactors([],[],[])
-  for (xyz in [:x,:y,:z])
-    for ((f,l) in IntegralsModule.GaussProductPolynomialFactor(μ,ν).(xyz))
+  factors = θfactors(Tuple{Float64,Int,Int}[],Tuple{Float64,Int,Int}[],Tuple{Float64,Int,Int}[])
+  for (xyz in 1:3)
+    sizehint!(getfield(factors,xyz),floor(Int,(length(getfield(GaussProductPolynomialFactor(μ,ν),xyz))+1)*5/8))
+    for ((f,l) in getfield(IntegralsModule.GaussProductPolynomialFactor(μ,ν),xyz))
       for (r in 0:floor(Int,(l/2)))
 	θ = f * (factorial(l)*γ^(r-l))/(factorial(r)*factorial(l-2r))
-	append!(factors.(xyz),[(θ,l,r)])
+	push!(getfield(factors,xyz),(θ,l,r))
       end
     end
   end
@@ -317,13 +320,13 @@ function BFactors(
   p = (Q-P)
 
   factors = Bfactors([],[],[])
-  for (xyz in (:x,:y,:z))
-    for ((θ12,l12,r12) in θFactors(μ,ν).(xyz))
-      for ((θ34,l34,r34) in θFactors(λ,σ).(xyz))
+  for (xyz in 1:3)
+    for ((θ12,l12,r12) in getfield(θFactors(μ,ν),xyz))
+      for ((θ34,l34,r34) in getfield(θFactors(λ,σ),xyz))
 	#for (i in 0:floor(Integer,((l12-2r12)/2)))    # this might be a typo in the book (otherwise e.g. ERI(s,s,px,px2) != ERI(px,px2,s,s) (where the 2 denotes a second center moved by 0.5 in x direction)
 	for (i in 0:floor(Int,((l12+l34-2r12-2r34)/2)))
 	  B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*p.(xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
-	  append!(factors.(xyz),[(B,l12,r12,i,l34,r34)])
+	  push!(getfield(factors,xyz),(B,l12,r12,i,l34,r34))
 	end
       end
     end

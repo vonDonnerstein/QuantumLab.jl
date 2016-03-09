@@ -3,6 +3,7 @@ export computeMatrixKinetic, computeMatrixNuclearAttraction, computeMatrixOverla
 using ..IntegralsModule
 using ..BasisModule
 using ..Geometry
+using TensorOperations
 
 function computeMatrixKinetic(basis::GaussianBasis)
   return [KineticIntegral(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
@@ -33,6 +34,10 @@ function computeMatrixCoulomb(basis::GaussianBasis, density::Matrix)
   return J
 end
 
+function computeMatrixCoulomb(electronRepulsionIntegrals::Array{Float64,4}, density::Matrix)
+  @tensor J[μIndex,νIndex] := electronRepulsionIntegrals[μIndex,νIndex,λIndex,σIndex] * density[λIndex,σIndex]
+end
+
 function computeMatrixExchange(basis::GaussianBasis, density::Matrix)
   N = length(basis.contractedBFs)
 
@@ -50,6 +55,11 @@ function computeMatrixExchange(basis::GaussianBasis, density::Matrix)
   return K
 end
 
+function computeMatrixExchange(electronRepulsionIntegrals::Array{Float64,4}, density::Matrix)
+  @tensor K[μIndex,νIndex] := electronRepulsionIntegrals[μIndex,λIndex,νIndex,σIndex] * density[λIndex,σIndex]
+end
+
+
 function computeMatrixFock(
   basis::GaussianBasis,
   geometry::Geometry,
@@ -58,6 +68,18 @@ function computeMatrixFock(
   V = computeMatrixNuclearAttraction(basis,geometry)
   J = computeMatrixCoulomb(basis,density)
   K = computeMatrixExchange(basis,density)
+  return T+V+2J-K
+end
+
+function computeMatrixFock(
+  density::Matrix,
+  matrixKinetic::Matrix,
+  matrixNuclearAttraction::Matrix,
+  electronRepulsionIntegrals::Array{Float64,4})
+  T = matrixKinetic
+  V = matrixNuclearAttraction
+  J = computeMatrixCoulomb(electronRepulsionIntegrals,density)
+  K = computeMatrixExchange(electronRepulsionIntegrals,density)
   return T+V+2J-K
 end
 
