@@ -61,5 +61,10 @@ include("SubModules/InitialGuessModule.jl")
 @reexport using .InitialGuessModule
 println("Done.")
 
+print(" + BasisSetExchangeModule......")
+include("SubModules/BasisSetExchangeModule.jl")
+@reexport using .BasisSetExchangeModule
+println("Done.")
+
 
 end # module
