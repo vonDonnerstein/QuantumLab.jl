@@ -18,10 +18,17 @@ for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
 @test mqn == MQuantumNumber(2,0,0)
 @test distance(Position(0,0,1),Position(1,0,0)) == sqrt(2)
 
+# test BasisSetExchange
+bseEntries = obtainBasisSetExchangeEntries()
+stoEntry   = computeBasisSetExchangeEntry("sto-3g",bseEntries)[3]
+downloadBasisSetBasisSetExchange(stoEntry,"STO-3G.tx93")
+
 # test readBasisSetTX93
 sto3g = readBasisSetTX93("STO-3G.tx93")
 @test sto3g.definitions[Element("C")][1].lQuantumNumber.symbol == "S"
 @test sto3g.definitions[Element("C")][1].primitives[1].exponent == 71.616837
+
+run(`rm STO-3G.tx93`)
 
 # test computeBasis
 bas = computeBasis(sto3g,h2o)
