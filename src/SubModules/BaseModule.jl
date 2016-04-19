@@ -38,6 +38,16 @@ lqnExponent = Dict{ASCIIString,Int}(
   "H" =>	5,
 )
 
+exponentLqn = Dict{Int,ASCIIString}(
+  0 => 	"S",
+  1 => 	"P",
+  2 => 	"D",
+  3 =>	"F",
+  4 =>	"G",
+  5 =>	"H",
+)
+
+
 """
 The LQuantumNumber desribes whether a function is spherical (s, lqn=0), polarized (p, lqn=1), etc.
 As is generally known the total MQuantumNumber in pure coordinates lies between -lqn and +lqn.
@@ -48,6 +58,7 @@ immutable LQuantumNumber
 	exponent::Int
 
 	LQuantumNumber(sym::AbstractString) = new(sym,lqnExponent[sym])
+	LQuantumNumber(exp::Int) = new(exponentLqn[exp],exp)
 end
 
 """

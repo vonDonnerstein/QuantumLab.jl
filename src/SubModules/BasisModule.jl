@@ -30,10 +30,10 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
 	  exponent=primitiveDefinition.exponent
 	  primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
 	  norm = IntegralsModule.Overlap(primitiveBF,primitiveBF)
-	  append!(contractedBF.coefficients,[primitiveDefinition.prefactor/sqrt(norm)])
-	  append!(contractedBF.primitiveBFs,[primitiveBF])
+	  push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
+	  push!(contractedBF.primitiveBFs,primitiveBF)
 	end
-	append!(bas.contractedBFs,[contractedBF])
+	push!(bas.contractedBFs,contractedBF)
       end
     end
   end
