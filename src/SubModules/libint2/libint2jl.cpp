@@ -1,24 +1,4 @@
 #include <libint2.hpp>
-//struct substruct{
-//  double subval;
-//};
-//struct teststruct{
-//  private:
-//  double sin(double);
-//  struct hiddentype {
-//    double unnecessary;
-//  };
-//  double privat;
-//  substruct sub2;
-//  public:
-//  substruct sub;
-//  double val;
-//};
-//
-//void printteststruct(teststruct stru){
-//  printf("%f\n",stru.val);
-//  printf("Sub: %f\n",stru.sub.subval);
-//}
 
 libint2::Shell* createShell(double* origin, int lqn, int nprim, double* exponents, double* coefficients){
   std::vector<double> alpha = std::vector<double>(exponents,exponents+nprim);
