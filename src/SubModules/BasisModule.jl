@@ -29,7 +29,7 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
 	for primitiveDefinition in contractedDefinition.primitives
 	  exponent=primitiveDefinition.exponent
 	  primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
-	  norm = IntegralsModule.Overlap(primitiveBF,primitiveBF)
+	  norm = IntegralsModule.computeValueOverlap(primitiveBF,primitiveBF)
 	  push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
 	  push!(contractedBF.primitiveBFs,primitiveBF)
 	end
@@ -47,7 +47,7 @@ function normalize!(basis::GaussianBasis)
 end
 
 function normalize!(cgb::ContractedGaussianBasisFunction)
-  N = Overlap(cgb,cgb)
+  N = computeValueOverlap(cgb,cgb)
   scale!(cgb.coefficients,1/sqrt(N))
 end
 

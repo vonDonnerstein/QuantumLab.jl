@@ -1,7 +1,7 @@
 module BasisFunctionsModule
 export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, prettyprint
 import Base.display
-
+import QuantumLab.BaseModule.evaluateFunction
 using ..BaseModule
 
 """
@@ -30,6 +30,21 @@ function display(cgbf::ContractedGaussianBasisFunction,indent="")
     print(indent * "    exponent: "); println(cgbf.primitiveBFs[idx].exponent)
     print(indent * "    mqn:      "); println(cgbf.primitiveBFs[idx].mqn)
   end
+end
+
+function evaluateFunction(x::Position,pgbf::PrimitiveGaussianBasisFunction)
+  α = pgbf.exponent
+  O = pgbf.center
+  r = distance(x,O)
+  return (x.x - O.x)^(pgbf.mqn.x) * (x.y - O.y)^(pgbf.mqn.y) * (x.z - O.z)^(pgbf.mqn.z) * exp(-α*r^2)
+end
+
+function evaluateFunction(x::Position,cgbf::ContractedGaussianBasisFunction)
+  result = 0.::Float64
+  for (coeff,pgbf) in zip(cgbf.coefficients,cgbf.primitiveBFs)
+    result += coeff * evaluateFunction(x,pgbf)
+  end
+  return result
 end
 
 end

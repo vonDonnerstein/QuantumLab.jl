@@ -1,6 +1,6 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, prettyprint
-import Base.*, Base.+, Base./, Base.-
+export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, prettyprint, origin
+import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
 immutable Position
 	x::Float64
@@ -8,11 +8,15 @@ immutable Position
 	z::Float64
 end
 
+const origin = Position(0.,0.,0.)
+
 *(c::Real,p::Position) = Position(c*p.x,c*p.y,c*p.z)
 *(p::Position,c::Real) = Position(c*p.x,c*p.y,c*p.z)
 /(p::Position,c::Real) = Position(p.x/c,p.y/c,p.z/c)
 +(p::Position,q::Position) = Position(p.x+q.x,p.y+q.y,p.z+q.z)
 -(p::Position,q::Position) = Position(p.x-q.x,p.y-q.y,p.z-q.z)
+
+convert(::Type{Vector{Float64}},p::Position) = [p.x,p.y,p.z]
 
 function distance(p::Position,q::Position) 
   pq = p - q
@@ -87,5 +91,11 @@ Base.next(mqns::MQuantumNumbers,state) = (mqns.mqnarray[state],state+1)
 Base.done(mqns::MQuantumNumbers,state) = state > mqns.count
 Base.length(mqns::MQuantumNumbers) = MQuantumNumbers.count
 #Base.eltype(::Type{MQuantumNumbers}) = Int
+
+isless(lqn1::LQuantumNumber, lqn2::LQuantumNumber) = lqn1.exponent<lqn2.exponent
+
+function evaluateFunction(x::Position, f::Function)
+  return f(x)
+end
 
 end # module

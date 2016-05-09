@@ -1,10 +1,11 @@
 ﻿module IntegralsModule
-export Overlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral
+export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
 using ..GeometryModule
 using ..DocumentationModule
+using ..ShellModule
 using ProgressMeter
 
 ProgressMeter.printover(STDOUT," + (GSL........................")
@@ -112,7 +113,7 @@ function GaussProductPolynomialFactor(
   return factors
 end
 
-function Overlap(
+function computeValueOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
   # S_ij = Integrate[phi_i(r) phi_j(r),{r el R}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
@@ -126,19 +127,22 @@ function Overlap(
   return K*Ix*Iy*Iz::Float64
 end
 
-function Overlap(
+function computeValueOverlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
   integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      integral += coeff1*coeff2*Overlap(pgb1,pgb2)
+      integral += coeff1*coeff2*computeValueOverlap(pgb1,pgb2)
     end
   end
   return integral::Float64
 end
 
+function computeMatrixOverlap(sh1::Shell,sh2::Shell)
+  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+end
 
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   mqn_t = [mqn.x,mqn.y,mqn.z]
@@ -173,10 +177,10 @@ function KineticIntegral(
     α1 = pgb1.exponent
     α2 = pgb2.exponent
 
-    if(l1*l2!=0) integral += (1/2*l1*l2) * Overlap(pgb1decr,pgb2decr) end
-                 integral += (2*α1*α2)   * Overlap(pgb1incr,pgb2incr)
-    if(l2   !=0) integral += (-α1*l2)    * Overlap(pgb1incr,pgb2decr) end
-    if(l1   !=0) integral += (-l1*α2)    * Overlap(pgb1decr,pgb2incr) end
+    if(l1*l2!=0) integral += (1/2*l1*l2) * computeValueOverlap(pgb1decr,pgb2decr) end
+                 integral += (2*α1*α2)   * computeValueOverlap(pgb1incr,pgb2incr)
+    if(l2   !=0) integral += (-α1*l2)    * computeValueOverlap(pgb1incr,pgb2decr) end
+    if(l1   !=0) integral += (-l1*α2)    * computeValueOverlap(pgb1decr,pgb2incr) end
   end
 
   return integral::Float64

@@ -46,3 +46,11 @@ normalize!(bas)
 
 # test HartreeFockModule
 @test_approx_eq_eps -74.96178985 computeEnergyHartreeFock(bas,h2o,evaluateSCF(bas,h2o,mean(computeDensityGuessSAD("HF","STO-3G",h2o)),5)[2])+computeEnergyInteratomicRepulsion(h2o) 1e-7 # checked against FermiONs++
+
+# test ShellModule
+shell = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
+
+# test LibInt2Module
+shells = computeBasisShellsLibInt2(basSet,h2o)
+computeMatrixCoulomb(shells)
+
