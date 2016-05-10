@@ -9,7 +9,7 @@ module LibInt2Module
 export LibInt2Shell, destroy!, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, libInt2Initialize, libInt2Finalize
 export computeMatrixOverlap, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
 import Base.convert
-import Base.display
+import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral
 using TensorOperations
 using ..BaseModule
 using ..GeometryModule
@@ -180,20 +180,20 @@ function libint2Finalize()
   ccall((:_ZN7libint28finalizeEv,"libint2/libint2jl.so"),Void,())
 end
 
-function computeMatrixOverlap(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
+function computeMatrixBlockOverlap(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
   buf = ccall((:_Z14computeOverlapPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2/libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
 end
 
-function computeMatrixOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
+function computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
   (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
   maxprims = max(length(μ.coefficients), length(ν.coefficients))
   maxlqn   = max(μ.lqn, ν.lqn)
   engine = LibInt2EngineOverlap(maxprims,maxlqn)
 
-  result = copy(computeMatrixOverlap(engine,μlib,νlib))
+  result = copy(computeMatrixBlockOverlap(engine,μlib,νlib))
   
   destroy!(engine)
   return result
