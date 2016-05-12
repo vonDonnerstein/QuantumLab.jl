@@ -1,5 +1,10 @@
 module QuantumLab
 
+
+push!(Libdl.DL_LOAD_PATH,"../deps/usr/lib/")
+Libdl.dlopen("libint2-alpha.so.2")
+
+
 print(" + (ProgressMeter................")
 using ProgressMeter
 ProgressMeter.printover(STDOUT," + (Reexport...................")
