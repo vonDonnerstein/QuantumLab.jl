@@ -1,5 +1,5 @@
 module ShellModule
-export Shell
+export Shell, expandShell
 using ..BaseModule
 import Base.display
 

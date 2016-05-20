@@ -1,5 +1,5 @@
 module SpecialMatricesModule
-export computeMatrixKinetic, computeMatrixNuclearAttraction, computeMatrixOverlap, computeMatrixCoulomb, computeMatrixExchange, computeMatrixFock
+export computeMatrixKinetic, computeMatrixElectronRepulsion, computeMatrixNuclearAttraction, computeMatrixOverlap, computeMatrixCoulomb, computeMatrixExchange, computeMatrixFock
 using ..IntegralsModule
 using ..BasisModule
 using ..Geometry
@@ -10,8 +10,12 @@ function computeMatrixKinetic(basis::GaussianBasis)
   return [KineticIntegral(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
+function computeMatrixElectronRepulsion(basis::GaussianBasis)
+	return ERIs = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in basis.contractedBFs, ν in basis.contractedBFs, λ in basis.contractedBFs, σ in basis.contractedBFs]
+end
+
 function computeMatrixOverlap(basis::GaussianBasis)
-  return [Overlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+  return [computeValueOverlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
 function computeMatrixNuclearAttraction(basis::GaussianBasis,geo::Geometry)
@@ -64,7 +68,9 @@ end
 function computeMatrixFock(
   basis::GaussianBasis,
   geometry::Geometry,
-  density::Matrix)
+  density::Matrix,
+	computeMatrixCoulomb=computeMatrixCoulomb,
+	computeMatrixExchange=computeMatrixExchange)
   T = computeMatrixKinetic(basis)
   V = computeMatrixNuclearAttraction(basis,geometry)
   J = computeMatrixCoulomb(basis,density)
@@ -76,11 +82,12 @@ function computeMatrixFock(
   density::Matrix,
   matrixKinetic::Matrix,
   matrixNuclearAttraction::Matrix,
-  electronRepulsionIntegrals::Array{Float64,4})
+  electronRepulsionIntegralsColoumb::Array{Float64,4},
+  electronRepulsionIntegralsExchange::Array{Float64,4})
   T = matrixKinetic
   V = matrixNuclearAttraction
-  J = computeMatrixCoulomb(electronRepulsionIntegrals,density)
-  K = computeMatrixExchange(electronRepulsionIntegrals,density)
+  J = computeMatrixCoulomb(electronRepulsionIntegralsColoumb,density)
+  K = computeMatrixExchange(electronRepulsionIntegralsExchange,density)
   return T+V+2J-K
 end
 
