@@ -15,7 +15,7 @@ h2o = readGeometryXYZ("h2o.xyz")
 # test BaseModule
 mqn = MQuantumNumber(0,0,0)
 for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
-@test mqn == MQuantumNumber(2,0,0)
+@test mqn == MQuantumNumber(0,0,2)
 @test distance(Position(0,0,1),Position(1,0,0)) == sqrt(2)
 
 # test BasisSetExchange
@@ -36,7 +36,7 @@ bas = computeBasis(sto3g,h2o)
 
 # test IntegralsModule
 normalize!(bas)
-@test_approx_eq 0.0 computeMatrixOverlap(bas)[4,1]
+@test_approx_eq_eps 0.3129324434238492 computeMatrixOverlap(bas)[4,1] 1e-8
 @test_approx_eq_eps 29.00 computeMatrixKinetic(bas)[2,2] 1e-2
 @test_approx_eq_eps 0.16175843 IntegralsModule.FIntegral(2,0.3) 1e-8
 @test_approx_eq -π IntegralsModule.NuclearAttractionIntegral(PrimitiveGaussianBasisFunction(Position(0,0,0),1.,MQuantumNumber(1,0,0)),PrimitiveGaussianBasisFunction(Position(0,0,0),1.,MQuantumNumber(1,0,0)),Atom(Element("C"),Position(0,0,0)))
@@ -45,12 +45,16 @@ normalize!(bas)
 @test_approx_eq -0.264689 mean(computeDensityGuessSAD("HF","STO-3G",h2o))[3,2]
 
 # test HartreeFockModule
-@test_approx_eq_eps -74.96178985 computeEnergyHartreeFock(bas,h2o,evaluateSCF(bas,h2o,computeDensityGuessSAD("HF","STO-3G",h2o),5)[2])+computeEnergyInteratomicRepulsion(h2o) 1e-7 # checked against FermiONs++
+@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,evaluateSCF(bas,h2o,computeDensityGuessSAD("HF","STO-3G",h2o)[1],5)[3]) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 
 # test ShellModule
 shell = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
 
 # test LibInt2Module
-shells = computeBasisShellsLibInt2(basSet,h2o)
-computeMatrixCoulomb(shells)
+shells = computeBasisShellsLibInt2(sto3g,h2o)
+density = computeDensityGuessSAD("HF","STO-3G",h2o)[1]
+@test_approx_eq mean(computeMatrixOverlap(shells)) mean(computeMatrixOverlap(bas))
+@test_approx_eq mean(computeMatrixOverlap(shells)[1,4]) mean(computeMatrixOverlap(bas)[1,4])
+#@test_approx_eq mean(computeMatrixCoulomb(shells,density)) mean(computeMatrixCoulomb(bas,density))
+
 
