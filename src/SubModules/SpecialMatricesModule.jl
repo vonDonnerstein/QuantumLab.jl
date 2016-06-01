@@ -2,6 +2,7 @@ module SpecialMatricesModule
 export computeMatrixKinetic, computeMatrixElectronRepulsion, computeMatrixNuclearAttraction, computeMatrixOverlap, computeMatrixCoulomb, computeMatrixExchange, computeMatrixFock
 using ..IntegralsModule
 using ..BasisModule
+using ..BaseModule
 using ..Geometry
 using TensorOperations
 using ..LibInt2Module
@@ -117,7 +118,7 @@ function computeMatrixOverlap(shells::Vector{LibInt2Shell})
       block_row_size = div((lqn(sh2)+1)^2+(lqn(sh2)+1),2)
       lastrow += block_row_size
 
-      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = computeMatrixOverlap(engine,sh1,sh2)
+      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = computeMatrixBlockOverlap(engine,sh1,sh2)
     end
     lastrow = 0
   end

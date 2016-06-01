@@ -67,6 +67,7 @@ end
 
 """
 MQuantumNumber**s** returns all MQuantumNumber objects corresponding to the LQuantumNumber object given to the constructor as an iterable collection.
+Order is for example xx,xy,xz,yy,yz,zz for LQuantumNumber = 2
 """
 immutable MQuantumNumbers
   lqn::LQuantumNumber
@@ -76,15 +77,15 @@ immutable MQuantumNumbers
   function MQuantumNumbers(lqn::LQuantumNumber)
     maxmqn = lqn.exponent
     mqnarray=MQuantumNumber[]
-    for z in maxmqn:-1:0
-      for y in (maxmqn-z):-1:0
-	x = maxmqn-z-y
-	append!(mqnarray,[MQuantumNumber(x,y,z)])
-      end
-    end
-    count = ((maxmqn+1)^2+(maxmqn+1))/2
-    new(lqn,mqnarray,count)
-  end
+		for x in maxmqn:-1:0
+			for y in (maxmqn-x):-1:0
+				z = maxmqn-x-y
+				append!(mqnarray,[MQuantumNumber(x,y,z)])
+			end
+		end
+		count = ((maxmqn+1)^2+(maxmqn+1))/2
+		new(lqn,mqnarray,count)
+	end
 end
 Base.start(mqns::MQuantumNumbers) = 1
 Base.next(mqns::MQuantumNumbers,state) = (mqns.mqnarray[state],state+1)

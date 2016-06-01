@@ -6,7 +6,7 @@
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
 
 module LibInt2Module
-export LibInt2Shell, destroy!, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, libInt2Initialize, libInt2Finalize
+export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, libInt2Initialize, libInt2Finalize
 export computeMatrixBlockOverlap, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
 import Base.convert
 import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral

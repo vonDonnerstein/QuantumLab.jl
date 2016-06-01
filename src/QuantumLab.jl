@@ -1,7 +1,7 @@
 module QuantumLab
 
-
-push!(Libdl.DL_LOAD_PATH,"../deps/usr/lib/")
+lib_path = joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib")
+push!(Libdl.DL_LOAD_PATH,lib_path)
 Libdl.dlopen("libint2-alpha.so.2")
 
 
