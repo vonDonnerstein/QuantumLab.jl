@@ -37,7 +37,7 @@ When converting a Shell into a LibInt2Shell (e.g. with convert()), this is taken
 """
 function LibInt2Shell(origin::Vector{Float64},lqn::Int,nprim::Int,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true)
   if renorm==true
-    return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2/libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
+    return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
   else
     return convert(LibInt2Shell,Shell(LQuantumNumber(lqn),Position(origin...),exponents,coefficients))
   end
@@ -61,12 +61,12 @@ end
 
 #  Destructor
 function destroy!(shell::LibInt2Shell)
-  ccall((:_Z12destroyShellPN7libint25ShellE,"libint2/libint2jl.so"),Void,(LibInt2Shell,),shell)
+  ccall((:_Z12destroyShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),shell)
 end
 
 #  Further Functions
 function display(sh::LibInt2Shell)
-  ccall((:_Z10printShellPN7libint25ShellE,"libint2/libint2jl.so"),Void,(LibInt2Shell,),sh)
+  ccall((:_Z10printShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),sh)
 end
 
 function lqn(l2sh::LibInt2Shell)
@@ -142,12 +142,12 @@ end
 
 #  Constructors
 function LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-  reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2/libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+  reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
 end
 
 #  Destructor
 function destroy!(engine::LibInt2Engine)
-  ccall((:_Z13destroyEnginePN7libint26EngineE,"libint2/libint2jl.so"),Void,(LibInt2Engine,),engine)
+  ccall((:_Z13destroyEnginePN7libint26EngineE,"libint2jl.so"),Void,(LibInt2Engine,),engine)
 end
 
 ## LibInt2OneBodyEngine
@@ -162,28 +162,28 @@ end
 
 #  Constructors
 function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-  reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineOverlapii,"libint2/libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+  reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
 end
 
 #  Destructor
 function destroy!(engine::LibInt2OneBodyEngine)
-  ccall((:_Z20destroyOneBodyEnginePN7libint213OneBodyEngineE,"libint2/libint2jl.so"),Void,(LibInt2OneBodyEngine,),engine)
+  ccall((:_Z20destroyOneBodyEnginePN7libint213OneBodyEngineE,"libint2jl.so"),Void,(LibInt2OneBodyEngine,),engine)
 end
 
 
 ## library functionality
 function libint2Initialize()
-  ccall((:_ZN7libint210initializeEv,"libint2/libint2jl.so"),Void,())
+  ccall((:_ZN7libint210initializeEv,"libint2jl.so"),Void,())
 end
 
 function libint2Finalize()
-  ccall((:_ZN7libint28finalizeEv,"libint2/libint2jl.so"),Void,())
+  ccall((:_ZN7libint28finalizeEv,"libint2jl.so"),Void,())
 end
 
 function computeMatrixBlockOverlap(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
-  buf = ccall((:_Z14computeOverlapPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2/libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+  buf = ccall((:_Z14computeOverlapPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
 end
 
@@ -204,7 +204,7 @@ function computeElectronRepulsionIntegral(engine::LibInt2Engine, μ::LibInt2Shel
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
   λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
   σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
-  buf = ccall((:_Z10computeERIPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2/libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, μ,ν,λ,σ)
+  buf = ccall((:_Z10computeERIPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, μ,ν,λ,σ)
   return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
 end
 

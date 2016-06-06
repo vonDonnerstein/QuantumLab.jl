@@ -69,9 +69,7 @@ end
 function computeMatrixFock(
   basis::GaussianBasis,
   geometry::Geometry,
-  density::Matrix,
-	computeMatrixCoulomb=computeMatrixCoulomb,
-	computeMatrixExchange=computeMatrixExchange)
+  density::Matrix)
   T = computeMatrixKinetic(basis)
   V = computeMatrixNuclearAttraction(basis,geometry)
   J = computeMatrixCoulomb(basis,density)
@@ -83,12 +81,11 @@ function computeMatrixFock(
   density::Matrix,
   matrixKinetic::Matrix,
   matrixNuclearAttraction::Matrix,
-  electronRepulsionIntegralsColoumb::Array{Float64,4},
-  electronRepulsionIntegralsExchange::Array{Float64,4})
+  electronRepulsionIntegrals::Array{Float64,4})
   T = matrixKinetic
   V = matrixNuclearAttraction
-  J = computeMatrixCoulomb(electronRepulsionIntegralsColoumb,density)
-  K = computeMatrixExchange(electronRepulsionIntegralsExchange,density)
+  J = computeMatrixCoulomb(electronRepulsionIntegrals,density)
+  K = computeMatrixExchange(electronRepulsionIntegrals,density)
   return T+V+2J-K
 end
 

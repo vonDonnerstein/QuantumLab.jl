@@ -137,7 +137,7 @@ function evaluateSCF(
       energyConverged = true
     end
   end
-  return energies, P
+  return energies, totalEnergy, P
 end
 
 end # module
