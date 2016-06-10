@@ -36,6 +36,7 @@ bas = computeBasis(sto3g,h2o)
 
 # test IntegralsModule
 normalize!(bas)
+@test_approx_eq 0.0 computeMatrixOverlap(bas)[6,1]
 @test_approx_eq_eps 0.3129324434238492 computeMatrixOverlap(bas)[4,1] 1e-8
 @test_approx_eq_eps 29.00 computeMatrixKinetic(bas)[2,2] 1e-2
 @test_approx_eq_eps 0.16175843 IntegralsModule.FIntegral(2,0.3) 1e-8
@@ -45,16 +46,19 @@ normalize!(bas)
 @test_approx_eq -0.264689 mean(computeDensityGuessSAD("HF","STO-3G",h2o))[3,2]
 
 # test HartreeFockModule
-@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,evaluateSCF(bas,h2o,computeDensityGuessSAD("HF","STO-3G",h2o)[1],5)[3]) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
+densityguess = mean(computeDensityGuessSAD("HF","STO-3G",h2o))
+density = evaluateSCF(bas,h2o,densityguess,5)[3]
+@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,density) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 
-# test ShellModule
-shell = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
+# test Shells: ShellModule and LibInt2Module
+shell_native  =        Shell(LQuantumNumber("S"),Position(0.,0.,0.),[1.,2.,3.],[.1,.2,.3])
+shell_libint2 = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
+shell_nativefromlibint2 = Shell(shell_libint2)
+@test_approx_eq shell_native.coefficients[2] .2
+@test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
+
 
 # test LibInt2Module
 shells = computeBasisShellsLibInt2(sto3g,h2o)
-density = computeDensityGuessSAD("HF","STO-3G",h2o)[1]
-@test_approx_eq mean(computeMatrixOverlap(shells)) mean(computeMatrixOverlap(bas))
-@test_approx_eq mean(computeMatrixOverlap(shells)[1,4]) mean(computeMatrixOverlap(bas)[1,4])
-#@test_approx_eq mean(computeMatrixCoulomb(shells,density)) mean(computeMatrixCoulomb(bas,density))
-
-
+@test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
+@test_approx_eq_eps computeMatrixCoulomb(shells,density) computeMatrixCoulomb(bas,density) 1e-8

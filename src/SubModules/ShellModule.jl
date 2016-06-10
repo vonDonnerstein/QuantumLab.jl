@@ -1,7 +1,8 @@
 module ShellModule
 export Shell, expandShell
 using ..BaseModule
-import Base.display
+using ..BasisFunctionsModule
+import Base.display 
 
 """
 A shell of basis functions is the collection of basis functions that share a center and radial definition (e.g. 

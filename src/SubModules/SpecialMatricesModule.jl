@@ -1,5 +1,5 @@
 module SpecialMatricesModule
-export computeMatrixKinetic, computeMatrixElectronRepulsion, computeMatrixNuclearAttraction, computeMatrixOverlap, computeMatrixCoulomb, computeMatrixExchange, computeMatrixFock
+export computeMatrixKinetic, computeTensorElectronRepulsionIntegrals, computeMatrixNuclearAttraction, computeMatrixOverlap, computeMatrixCoulomb, computeMatrixExchange, computeMatrixFock
 using ..IntegralsModule
 using ..BasisModule
 using ..BaseModule
@@ -11,7 +11,7 @@ function computeMatrixKinetic(basis::GaussianBasis)
   return [KineticIntegral(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
-function computeMatrixElectronRepulsion(basis::GaussianBasis)
+function computeTensorElectronRepulsionIntegrals(basis::GaussianBasis)
 	return ERIs = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in basis.contractedBFs, ν in basis.contractedBFs, λ in basis.contractedBFs, σ in basis.contractedBFs]
 end
 

@@ -204,7 +204,7 @@ function computeElectronRepulsionIntegral(engine::LibInt2Engine, μ::LibInt2Shel
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
   λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
   σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
-  buf = ccall((:_Z10computeERIPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, μ,ν,λ,σ)
+  buf = ccall((:_Z10computeERIPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
   return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
 end
 
