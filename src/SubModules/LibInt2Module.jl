@@ -6,8 +6,8 @@
 # export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
 
 module LibInt2Module
-export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, libInt2Initialize, libInt2Finalize
-export computeMatrixBlockOverlap, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
+export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, LibInt2EngineKinetic, libInt2Initialize, libInt2Finalize
+export computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
 import Base.convert
 import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral
 using TensorOperations
@@ -165,6 +165,10 @@ function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
   reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
 end
 
+function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
+  reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+end
+
 #  Destructor
 function destroy!(engine::LibInt2OneBodyEngine)
   ccall((:_Z20destroyOneBodyEnginePN7libint213OneBodyEngineE,"libint2jl.so"),Void,(LibInt2OneBodyEngine,),engine)
@@ -194,6 +198,25 @@ function computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
   engine = LibInt2EngineOverlap(maxprims,maxlqn)
 
   result = copy(computeMatrixBlockOverlap(engine,μlib,νlib))
+  
+  destroy!(engine)
+  return result
+end
+
+function computeMatrixBlockKinetic(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
+  μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
+  νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
+  buf = ccall((:_Z14computeKineticPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+  return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
+end
+
+function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell)
+  (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
+  maxprims = max(length(μ.coefficients), length(ν.coefficients))
+  maxlqn   = max(μ.lqn, ν.lqn)
+  engine = LibInt2EngineKinetic(maxprims,maxlqn)
+
+  result = copy(computeMatrixBlockKinetic(engine,μlib,νlib))
   
   destroy!(engine)
   return result

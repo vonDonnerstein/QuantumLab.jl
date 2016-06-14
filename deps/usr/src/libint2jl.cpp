@@ -59,6 +59,14 @@ libint2::OneBodyEngine* createEngineOverlap(int nprims, int maxlqn){
   return onebody_engine;
 }
 
+libint2::OneBodyEngine* createEngineKinetic(int nprims, int maxlqn){
+  libint2::OneBodyEngine* onebody_engine = new libint2::OneBodyEngine(libint2::OneBodyEngine::kinetic,	 // will compute overlap ints
+                                                                      nprims, 		 		 // max # of primitives in shells this engine will accept
+                                                                      maxlqn			         // max angular momentum of shells this engine will accept
+                                                                     );
+  return onebody_engine;
+}
+
 void destroyEngine(libint2::Engine* engine){
   delete engine;
 }
@@ -75,6 +83,11 @@ const double* computeERI(libint2::Engine* engine, libint2::Shell* mu, libint2::S
 }
 
 const double* computeOverlap(libint2::OneBodyEngine* engine, libint2::Shell* shell1, libint2::Shell* shell2){
+  const double* ints = engine->compute(*shell1,*shell2);
+  return ints;
+}
+
+const double* computeKinetic(libint2::OneBodyEngine* engine, libint2::Shell* shell1, libint2::Shell* shell2){
   const double* ints = engine->compute(*shell1,*shell2);
   return ints;
 }

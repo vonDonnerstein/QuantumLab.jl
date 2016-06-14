@@ -124,6 +124,29 @@ function computeMatrixOverlap(shells::Vector{LibInt2Shell})
   return result
 end
 
+function computeMatrixKinetic(shells::Vector{LibInt2Shell})
+  totaldim, maxprims, maxlqn = computeDimensions(shells)
+  result = zeros(Float64,totaldim,totaldim)
+  engine = LibInt2EngineKinetic(maxprims,LQuantumNumber(maxlqn))
+
+  # column-major order (sh1 counts top to bottom, sh2 counts left to right)
+  lastcol,lastrow = 0,0
+  for sh1 in shells
+    block_col_size = div((lqn(sh1)+1)^2+(lqn(sh1)+1),2)
+    lastcol += block_col_size
+    for sh2 in shells
+      block_row_size = div((lqn(sh2)+1)^2+(lqn(sh2)+1),2)
+      lastrow += block_row_size
+
+      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = computeMatrixBlockKinetic(engine,sh1,sh2)
+    end
+    lastrow = 0
+  end
+
+  destroy!(engine)
+  return result
+end
+
 function computeMatrixCoulomb(shells::Vector{LibInt2Shell}, density::Matrix)
   totaldim, maxprims, maxlqn = computeDimensions(shells)
   result = zeros(Float64,totaldim,totaldim)

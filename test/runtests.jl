@@ -61,4 +61,5 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 # test LibInt2Module
 shells = computeBasisShellsLibInt2(sto3g,h2o)
 @test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
+@test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)
 @test_approx_eq_eps computeMatrixCoulomb(shells,density) computeMatrixCoulomb(bas,density) 1e-8
