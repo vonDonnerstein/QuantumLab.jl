@@ -65,9 +65,7 @@ function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetE
       elseif isa(result,Array{BasisSetExchangeEntry})
         push!(result,entry)
       else
-        println("Unexpected result-type!")
-        println(result)
-        return
+        error("Unexpected result-type!")
       end
     end
   end

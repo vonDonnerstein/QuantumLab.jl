@@ -1,5 +1,5 @@
 module BasisModule
-export GaussianBasis, computeBasis, normalize!, prettyprint
+export GaussianBasis, computeBasis, normalize!
 import Base.display
 
 using ..BaseModule

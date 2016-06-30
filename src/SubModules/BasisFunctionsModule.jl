@@ -1,5 +1,5 @@
 module BasisFunctionsModule
-export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, prettyprint
+export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction
 import Base.display
 import QuantumLab.BaseModule.evaluateFunction
 using ..BaseModule
