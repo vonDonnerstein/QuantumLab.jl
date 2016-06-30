@@ -1,5 +1,5 @@
 module BasisFunctionsModule
-export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, prettyprint
+export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, identityPGF, identityCGF
 import Base.display
 import QuantumLab.BaseModule.evaluateFunction
 using ..BaseModule
@@ -46,5 +46,9 @@ function evaluateFunction(x::Position,cgbf::ContractedGaussianBasisFunction)
   end
   return result
 end
+
+const identityPGF = PrimitiveGaussianBasisFunction(origin, 0., MQuantumNumber(0,0,0))
+const identityCGF = ContractedGaussianBasisFunction([1.],[identityPGF])
+
 
 end

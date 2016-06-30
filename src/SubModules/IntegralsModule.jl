@@ -28,7 +28,7 @@ function GaussianIntegral1D(mqn::Int,exponent::Float64)
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
 end
-#@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D
+@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D
 
 
 function GaussianIntegral1D(mqn::Int,exponent::Float64)

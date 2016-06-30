@@ -41,8 +41,7 @@ function readBasisSetTX93(filename::AbstractString)
 
     # definition line
     else
-      # floatregex = r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
-      regmatch = match(r"(?P<lqn>\w*)?\s*(?P<exp>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<lin>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)",line)
+      regmatch = match(Regex(T"(?P<lqn>\w*)?\s*(?P<exp>"*floatregex*T")\s*(?P<lin>"*floatregex*T")"),line)
       # new contracted
       if regmatch[:lqn] != ""					# if new contracted
 	lqn = regmatch[:lqn]

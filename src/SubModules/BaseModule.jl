@@ -1,5 +1,5 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, prettyprint, origin
+export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str
 import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
 immutable Position
@@ -9,6 +9,15 @@ immutable Position
 end
 
 const origin = Position(0.,0.,0.)
+
+"""
+True String: Taking the string as is without interpolation or escape interpretation.
+Necessary for regex interpolation, e.g.: Regex(T"\wo"*"rd") == r"\word" != Regex("\wo"*"rd") == r"word"
+"""
+macro T_str(s)
+  s
+end
+const floatregex = T"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
 
 *(c::Real,p::Position) = Position(c*p.x,c*p.y,c*p.z)
 *(p::Position,c::Real) = Position(c*p.x,c*p.y,c*p.z)
@@ -40,6 +49,8 @@ lqnExponent = Dict{ASCIIString,Int}(
   "F" =>	3,
   "G" =>	4,
   "H" =>	5,
+  "I" =>	6,
+  "K" =>	7,
 )
 
 exponentLqn = Dict{Int,ASCIIString}(
@@ -49,6 +60,8 @@ exponentLqn = Dict{Int,ASCIIString}(
   3 =>	"F",
   4 =>	"G",
   5 =>	"H",
+  6 =>	"I",
+  7 =>	"K",
 )
 
 
