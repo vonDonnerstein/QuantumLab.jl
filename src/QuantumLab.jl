@@ -81,5 +81,10 @@ include("SubModules/BasisSetExchangeModule.jl")
 @reexport using .BasisSetExchangeModule
 println("Done.")
 
+print(" + RIMethods...................")
+include("SubModules/RIMethods.jl")
+@reexport using .RIMethods
+println("Done.")
+
 
 end # module

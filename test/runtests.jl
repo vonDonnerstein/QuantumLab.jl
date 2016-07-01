@@ -76,3 +76,12 @@ shells = computeBasisShellsLibInt2(sto3g,h2o)
 @test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
 @test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)
 @test_approx_eq_eps computeMatrixCoulomb(shells,density) computeMatrixCoulomb(bas,density) 1e-8
+
+#test RI-Module
+@test_approx_eq 0.3950752513027109 mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
+tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
+@test_approx_eq 0.0429373705056905 mean(tensorRICoulomb)
+@test_approx_eq 0.0012436634924295 tensorRICoulomb[1,3,4,5]
+tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
+@test_approx_eq 0.0144597945326691 tensorRIOverlap[1,3,4,5]
+@test_approx_eq 0.0537036598506078 mean(tensorRIOverlap)

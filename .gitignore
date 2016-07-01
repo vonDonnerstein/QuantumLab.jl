@@ -2,3 +2,9 @@
 *.jl.mem
 *.swo
 *.swp
+*~
+tags
+*.vim
+*.orig
+*.txt
+*.out

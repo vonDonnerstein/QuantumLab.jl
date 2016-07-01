@@ -40,6 +40,8 @@ lqnExponent = Dict{ASCIIString,Int}(
   "F" =>	3,
   "G" =>	4,
   "H" =>	5,
+	"I" =>  6,
+	"K" =>  7,
 )
 
 exponentLqn = Dict{Int,ASCIIString}(
@@ -49,6 +51,8 @@ exponentLqn = Dict{Int,ASCIIString}(
   3 =>	"F",
   4 =>	"G",
   5 =>	"H",
+  6 =>	"I",
+  7 =>	"K",
 )
 
 

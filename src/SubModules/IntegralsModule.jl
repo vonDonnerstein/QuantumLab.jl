@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral
+export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeIntegral2Center2Electron, computeIntegral3Center2Electron, computeValueThreeCenterOverlap
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -23,7 +23,7 @@ function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
   ζ = exponent
 
   if (mqn%2!=0) # integral over uneven function
-    return 0 
+    return 0
   else
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
@@ -38,7 +38,7 @@ function GaussianIntegral1D_Mathematica(mqn::Int,exponent::Float64)
   ζ = exponent
 
   if (mqn%2!=0) # integral over uneven function
-    return 0 
+    return 0
   else
     t=(m+1)/2
     return ζ^(-t) * gamma(t)
@@ -147,6 +147,63 @@ function computeMatrixOverlap(sh1::Shell,sh2::Shell)
   return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
+function computeValueThreeCenterOverlap(
+  pgb1::PrimitiveGaussianBasisFunction,
+  pgb2::PrimitiveGaussianBasisFunction,
+  pgb3::PrimitiveGaussianBasisFunction)
+  #
+  Ix = 0.::Float64
+  Iy = 0.::Float64
+  Iz = 0.::Float64
+  (K12,center,exponent) = IntegralsModule.GaussProductFundamental(pgb1,pgb2)
+  factors12 = IntegralsModule.GaussProductPolynomialFactor(pgb1,pgb2)
+  #
+  mqn = MQuantumNumber(0,0,0)
+  pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+  (K,P,γ) = IntegralsModule.GaussProductFundamental(pgb12,pgb3)
+  #
+  for (xyz in [:x,:y,:z])
+    for ((f,i) in factors12.(xyz))
+      if (xyz == :x)
+	mqn = MQuantumNumber(i,0,0)
+	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+      elseif (xyz == :y)
+	mqn = MQuantumNumber(0,i,0)
+	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+      elseif (xyz == :z)
+	mqn = MQuantumNumber(0,0,i)
+	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+      end
+      factors = IntegralsModule.GaussProductPolynomialFactor(pgb12,pgb3)
+			if (xyz == :x)
+				Ix += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.x])
+			elseif (xyz == :y)
+				Iy += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.y])
+			elseif (xyz == :z)
+				Iz += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.z])
+			end
+    end
+  end
+  #
+  return K12*K*Ix*Iy*Iz::Float64
+end
+
+function computeValueThreeCenterOverlap(
+  cgb1::ContractedGaussianBasisFunction,
+  cgb2::ContractedGaussianBasisFunction,
+  cgb3::ContractedGaussianBasisFunction)
+  #
+  integral = 0.::Float64
+  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
+    for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
+      for (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
+	integral += coeff1*coeff2*coeff3*computeValueThreeCenterOverlap(pgb1,pgb2,pgb3)
+      end
+    end
+  end
+  return integral::Float64
+end
+
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   mqn_t = [mqn.x,mqn.y,mqn.z]
   xyznum = Dict(:x => 1, :y => 2, :z => 3)
@@ -158,7 +215,7 @@ end
 function KineticIntegral(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
-  #Ix + Iy + Iz = (pgb1 | 1/2 ∇^2 | pgb2) 
+  #Ix + Iy + Iz = (pgb1 | 1/2 ∇^2 | pgb2)
   #Ix = 1/2 l1 l2 <-1|-1> + 2 α1 α2 <+1|+1> - α1 l2 <+1|-1> - α2 l1 <-1|+1>
   #(acc. to Fundamentals of Mol. Integr. Eval. by Fermann, Valeev (eq. 4.1 + 4.13))
 
@@ -265,7 +322,7 @@ function NuclearAttractionIntegral(
       end
     end
   end
-  
+
   return -atom.element.atomicNumber * result
 end
 
@@ -400,5 +457,50 @@ end
 function computeElectronRepulsionIntegral(μ::Shell,ν::Shell,λ::Shell,σ::Shell)
   [computeElectronRepulsionIntegral(μcgbf,νcgbf,λcgbf,σcgbf) for μcgbf in expandShell(μ), νcgbf in expandShell(ν), λcgbf in expandShell(λ), σcgbf in expandShell(σ)]
 end
+
+function computeIntegral3Center2Electron(
+  μ::PrimitiveGaussianBasisFunction,
+  ν::PrimitiveGaussianBasisFunction,
+  M::PrimitiveGaussianBasisFunction)
+  stub = PrimitiveGaussianBasisFunction(Position(0.,0.,0.),0.,MQuantumNumber(0,0,0))
+  return computeElectronRepulsionIntegral(μ,ν,M,stub)
+end
+
+function computeIntegral3Center2Electron(
+  μ::ContractedGaussianBasisFunction,
+  ν::ContractedGaussianBasisFunction,
+  M::ContractedGaussianBasisFunction)
+  # compute (μν|P) (Mulliken notation) = Integrate[μ(1) ν(1) 1/Abs(1-2) P(2), d1 d2]
+  integral::Float64 = 0.
+  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
+    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
+      for (coeff3,pgb3) in zip(M.coefficients,M.primitiveBFs)
+	integral += coeff1*coeff2*coeff3*computeIntegral3Center2Electron(pgb1,pgb2,pgb3)
+      end
+    end
+  end
+  return integral::Float64
+end
+
+function computeIntegral2Center2Electron(
+  μ::PrimitiveGaussianBasisFunction,
+  ν::PrimitiveGaussianBasisFunction)
+  stub = PrimitiveGaussianBasisFunction(Position(0.,0.,0.),0.,MQuantumNumber(0,0,0))
+  return computeElectronRepulsionIntegral(μ,stub,ν,stub)
+end
+
+function computeIntegral2Center2Electron(
+  μ::ContractedGaussianBasisFunction,
+  ν::ContractedGaussianBasisFunction)
+  # compute (μ|ν) (Mulliken notation) = Integrate[μ(1) 1/Abs(1-2) ν(2), d1 d2]
+  integral::Float64 = 0.
+  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
+    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
+      integral += coeff1*coeff2*computeIntegral2Center2Electron(pgb1,pgb2)
+    end
+  end
+  return integral::Float64
+end
+
 
 end # module

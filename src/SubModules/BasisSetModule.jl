@@ -41,16 +41,16 @@ function readBasisSetTX93(filename::AbstractString)
 
     # definition line
     else
-      # floatregex = r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
-      regmatch = match(r"(?P<lqn>\w*)?\s*(?P<exp>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<lin>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)",line)
-      # new contracted
-      if regmatch[:lqn] != ""					# if new contracted
-	lqn = regmatch[:lqn]
-	if(contractedDefinition.primitives != []) 				#    not a new element
-	  append!(basSet.definitions[elem],[contractedDefinition])					#   finish contractedDefinition
-	end
-	  contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])	#   start new contractedDefinition
-      end
+			# floatregex = r"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
+			regmatch = match(r"(?P<lqn>\w*)?\s*(?P<exp>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)\s*(?P<lin>[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?)",line)
+			# new contracted
+			if regmatch[:lqn] != ""					# if new contracted
+				lqn = regmatch[:lqn]
+				if(contractedDefinition.primitives != []) 				#    not a new element
+					append!(basSet.definitions[elem],[contractedDefinition])					#   finish contractedDefinition
+				end
+				contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])	#   start new contractedDefinition
+			end
       # always (add primitive to current contracted)
       exponent = float(regmatch[:exp])
       linfactor = float(regmatch[:lin])
