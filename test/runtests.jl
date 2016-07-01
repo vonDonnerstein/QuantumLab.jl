@@ -57,9 +57,17 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq shell_native.coefficients[2] .2
 @test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
 
-
 # test LibInt2Module
 shells = computeBasisShellsLibInt2(sto3g,h2o)
 @test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
 @test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)
 @test_approx_eq_eps computeMatrixCoulomb(shells,density) computeMatrixCoulomb(bas,density) 1e-8
+
+# test LaplaceModule
+if(!isdir("hackbusch_pretables"))
+  downloadLaplacePointsHackbusch("hackbusch_pretables")
+end
+R = transformRangeToIdealLaplace(0.5,3.)[2]
+lp = transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableLarger(7,R,"hackbusch_pretables")[1], 0.5)
+@test_approx_eq_eps LaplaceModule.computeInverseByLaplaceApproximation(2.3,lp) 1./2.3 1e-7
+

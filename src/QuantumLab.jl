@@ -81,5 +81,11 @@ include("SubModules/BasisSetExchangeModule.jl")
 @reexport using .BasisSetExchangeModule
 println("Done.")
 
+print(" + LaplaceModule...............")
+include("SubModules/LaplaceModule.jl")
+@reexport using .LaplaceModule
+println("Done.")
+
+
 
 end # module

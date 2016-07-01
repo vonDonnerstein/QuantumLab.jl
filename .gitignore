@@ -2,3 +2,4 @@
 *.jl.mem
 *.swo
 *.swp
+test/hackbusch_pretables
