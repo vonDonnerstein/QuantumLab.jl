@@ -18,7 +18,7 @@ doublefactorial(n::Int) = prod(n:-2:1)
 """
 I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
 """
-function GaussianIntegral1D(mqn::Int,exponent::Float64)
+function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
   m = mqn
   ζ = exponent
 
@@ -28,11 +28,12 @@ function GaussianIntegral1D(mqn::Int,exponent::Float64)
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
 end
-@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D
+@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D_Valeev
 
-
-function GaussianIntegral1D(mqn::Int,exponent::Float64)
-  # I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Mathematica 9)
+"""
+I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Mathematica 9)
+"""
+function GaussianIntegral1D_Mathematica(mqn::Int,exponent::Float64)
   m = mqn
   ζ = exponent
 
@@ -43,6 +44,8 @@ function GaussianIntegral1D(mqn::Int,exponent::Float64)
     return ζ^(-t) * gamma(t)
   end
 end
+
+GaussianIntegral1D = GaussianIntegral1D_Mathematica
 
 #function FundamentalIntegral(
 #  pgb1::PrimitiveGaussianBasisFunction,
