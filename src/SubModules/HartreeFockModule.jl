@@ -37,10 +37,12 @@ function computeEnergyHartreeFock(
   density::Matrix,
   matrixKinetic::Matrix,
   matrixNuclearAttraction::Matrix,
-  electronRepulsionIntegrals::Array{Float64,4},
-  energyInteratomicRepulsion::Float64)
+  electronRepulsionIntegralsColoumb::Array{Float64,4},
+  energyInteratomicRepulsion::Float64,
+	electronRepulsionIntegralsExchange::Array{Float64,4}=electronRepulsionIntegralsColoumb)
 
-  eris = electronRepulsionIntegrals
+  ERIsCoulomb = electronRepulsionIntegralsColoumb
+	ERIsExchange = electronRepulsionIntegralsExchange
 
   P = density
   T = matrixKinetic
@@ -52,10 +54,10 @@ function computeEnergyHartreeFock(
   println("Nuclear Attraction Energy: $eV")
   println("Sum 1-Electron Energy: $(eT+eV)")
   println("---------------------------------")
-  J = computeMatrixCoulomb(eris,density)
+  J = computeMatrixCoulomb(ERIsCoulomb,density)
   eJ = 2*trace(J*P)
   println("Coulomb Energy: $eJ")
-  K = computeMatrixExchange(eris,density)
+  K = computeMatrixExchange(ERIsExchange,density)
   eK = -trace(K*P)
   println("Exchange Energy: $eK")
   println("Total Electronic Energy: $(eT+eV+eJ+eK)")
@@ -70,7 +72,8 @@ function evaluateSCFStep(
   geometry::Geometry,
   initialGuessDensity::Matrix,
   overlap::Matrix,
-  electronNumber::Integer)
+  electronNumber::Integer,
+	computeMatrixFock=computeMatrixFock)
 
   N = electronNumber
   S = overlap
@@ -88,13 +91,15 @@ function evaluateSCFStep(
   initialGuessDensity::Matrix,
   matrixKinetic::Matrix,
   matrixNuclearAttraction::Matrix,
-  electronRepulsionIntegrals::Array{Float64,4},
+  electronRepulsionIntegralsColoumb::Array{Float64,4},
   overlap::Matrix,
-  electronNumber::Integer)
+  electronNumber::Integer,
+	electronRepulsionIntegralsExchange::Array{Float64,4}=electronRepulsionIntegralsColoumb,
+	computeMatrixFock=computeMatrixFock)
 
   N = electronNumber
   S = overlap
-  F = computeMatrixFock(initialGuessDensity,matrixKinetic,matrixNuclearAttraction,electronRepulsionIntegrals)
+  F = computeMatrixFock(initialGuessDensity,matrixKinetic,matrixNuclearAttraction,electronRepulsionIntegralsColoumb,electronRepulsionIntegralsExchange)
   eig = eigfact(Symmetric(F),Symmetric(S)) # because Symmetric is faster and allows for sorted eigenvalues
   C = eig.vectors
   moEnergies = eig.values
@@ -109,14 +114,18 @@ function evaluateSCF(
   geometry::Geometry,
   initialGuessDensity::Matrix,
   electronNumber::Integer;
-  energyConvergenceCriterion::Float64 = 1e-8)
+  energyConvergenceCriterion::Float64 = 1e-8,
+	computeTensorElectronRepulsionIntegralsCoulomb = computeTensorElectronRepulsionIntegrals,
+	computeTensorElectronRepulsionIntegralsExchange = computeTensorElectronRepulsionIntegrals)
+
 
   N = electronNumber
   normalize!(basis)
   S = computeMatrixOverlap(basis)
   T = computeMatrixKinetic(basis)
   V = computeMatrixNuclearAttraction(basis,geometry)
-  ERIs = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in basis.contractedBFs, ν in basis.contractedBFs, λ in basis.contractedBFs, σ in basis.contractedBFs]
+  ERIsCoulomb = computeTensorElectronRepulsionIntegralsCoulomb(basis)
+  ERIsExchange = computeTensorElectronRepulsionIntegralsCoulomb==computeTensorElectronRepulsionIntegralsExchange ? ERIsCoulomb : computeTensorElectronRepulsionIntegralsExchange(basis)
   P = initialGuessDensity
 
   eNN = computeEnergyInteratomicRepulsion(geometry)
@@ -128,9 +137,9 @@ function evaluateSCF(
   i = 0
   while (!energyConverged)
     i+=1
-    energies,P = evaluateSCFStep(P,T,V,ERIs,S,N)
+    energies,P = evaluateSCFStep(P,T,V,ERIsCoulomb,S,N,ERIsExchange)
     oldEnergy = totalEnergy
-    totalEnergy = computeEnergyHartreeFock(P,T,V,ERIs,eNN)+computeEnergyInteratomicRepulsion(geometry)
+    totalEnergy = computeEnergyHartreeFock(P,T,V,ERIsCoulomb,eNN,ERIsExchange)+computeEnergyInteratomicRepulsion(geometry)
     println("E[$i]: $totalEnergy")
     if (abs(totalEnergy-oldEnergy) < energyConvergenceCriterion)
       println("Converged!")

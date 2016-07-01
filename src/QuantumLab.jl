@@ -86,6 +86,11 @@ include("SubModules/LaplaceModule.jl")
 @reexport using .LaplaceModule
 println("Done.")
 
+print(" + ResolutionIdentityModule....")
+include("SubModules/ResolutionIdentityModule.jl")
+@reexport using .ResolutionIdentityModule
+println("Done.")
+
 
 
 end # module

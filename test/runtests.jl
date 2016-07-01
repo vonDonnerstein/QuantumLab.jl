@@ -84,3 +84,11 @@ R = transformRangeToIdealLaplace(0.5,3.)[2]
 lp = transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableLarger(7,R,"hackbusch_pretables")[1], 0.5)
 @test_approx_eq_eps LaplaceModule.computeInverseByLaplaceApproximation(2.3,lp) 1./2.3 1e-7
 
+#test RI-Module
+@test_approx_eq 0.3950752513027109 mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
+tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
+@test_approx_eq 0.0429373705056905 mean(tensorRICoulomb)
+@test_approx_eq 0.0012436634924295 tensorRICoulomb[1,3,4,5]
+tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
+@test_approx_eq 0.0144597945326691 tensorRIOverlap[1,3,4,5]
+@test_approx_eq 0.0537036598506078 mean(tensorRIOverlap)

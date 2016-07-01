@@ -3,3 +3,4 @@
 *.swo
 *.swp
 test/hackbusch_pretables
+*.orig
