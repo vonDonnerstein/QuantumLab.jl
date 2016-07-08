@@ -1,6 +1,27 @@
+# Code Coverage
 *.jl.cov
+*.jl.*.cov
+*.jl.*.html
 *.jl.mem
+amber.png
+emerald.png
+glass.png
+ruby.png
+snow.png
+updown.png
+gcov.css
+index-sort-f.html
+index-sort-l.html
+index.html
+lcov.info
+
+# VIM
 *.swo
 *.swp
+
+# Testing
 test/hackbusch_pretables
+test/STO-3G.tx93
+
+# Git
 *.orig
