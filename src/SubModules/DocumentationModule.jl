@@ -1,9 +1,19 @@
 module DocumentationModule
 export Citation, JournalCitation, BookCitation, GenericCitation, summarize
 import Base.display
+import Base.convert
+import Base.promote_rule
 
 """Abstract class supertyping all objects that are entries of a bibliography (for documenting functions). Each subtype has its corresponding fields and defines its own display function."""
 abstract Citation
+
+"""
+Documentation is a generic type to which all types which are to be used with `@doc` can be automatically converted.
+At the moment this means: Any type of Citation and Markdown
+"""
+type Documentation
+  doc::Union{Citation,Base.Markdown.MD}
+end
 
 """Citation class for articles in scientific jounals."""
 type JournalCitation <: Citation
@@ -35,18 +45,17 @@ function display(cite::GenericCitation)
 end
 
 """display(Array{Any,1}) is used to pretty-print documentation containing normal (Markdown) documentation text and Citation objects"""
-function display(docuArray::Array{Any,1})
+function display(docuArray::Array{Documentation,1})
   local cites = Array{Citation,1}()
   display(Base.Markdown.parse("""
   # Documentation
   """))
-  for docu in docuArray
+  for document in docuArray
+    docu = document.doc
     if typeof(docu)==Base.Markdown.MD
       display(docu)
     elseif isa(docu,Citation)
       push!(cites,docu)
-    else
-      println("Unexpected type of documentation: $(typeof(docu))")
     end
   end
 
@@ -114,5 +123,11 @@ function summarize(f::DataType)
     end
     Markdown.parse(join(parts, "\n"))
 end
+
+# promotion and conversion
+Base.promote_rule(::Type{Documentation},::Type{Base.Markdown.MD}) = Documentation
+Base.promote_rule(::Type{GenericCitation},::Type{Base.Markdown.MD}) = Documentation
+Base.convert(::Type{Documentation},md::Base.Markdown.MD) = Documentation(md)
+Base.convert(::Type{Documentation},cite::Citation) = Documentation(cite)
 
 end # module
