@@ -11,7 +11,10 @@ h2o = readGeometryXYZ("h2o.xyz")
 
 # test AtomModule
 @test Element("C") == Element("C")
-@test isequal(Element("Na"),Element("Na"))
+el1 = Element("C")
+el2 = Element("C")
+@test isequal(el1,el2)
+@test !isequal(el1,Element("Na"))
 
 # test BaseModule
 mqn = MQuantumNumber(0,0,0)
@@ -20,23 +23,27 @@ for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
 @test distance(Position(0,0,1),Position(1,0,0)) == sqrt(2)
 @test length(MQuantumNumbers(LQuantumNumber("P"))) == 3
 @test 2*Position(1,2,3) == Position(1,2,3)*2
+@test isless(LQuantumNumber("S"),LQuantumNumber("P"))
+@test_approx_eq 0. BaseModule.evaluateFunction(Position(1.,2.,3.), x->x.x+x.y-x.z)
 
 # test BasisSetExchange
-bseEntries = obtainBasisSetExchangeEntries()
-stoEntry   = computeBasisSetExchangeEntry("sto-3g",bseEntries)[3]
-downloadBasisSetBasisSetExchange(stoEntry,"STO-3G.tx93")
-@test_throws ErrorException computeBasisSetExchangeEntry("NotDefined",bseEntries)
+# as this takes quite some time we primarily only want to do this during continuous integration (travis-ci) and when we haven-t checked this before
+if (!isfile("STO-3G.tx93"))
+  bseEntries = obtainBasisSetExchangeEntries()
+  stoEntry   = computeBasisSetExchangeEntry("sto-3g",bseEntries)[3]
+  downloadBasisSetBasisSetExchange(stoEntry,"STO-3G.tx93")
+  @test_throws ErrorException computeBasisSetExchangeEntry("NotDefined",bseEntries)
+end
 
 # test readBasisSetTX93
 sto3g = readBasisSetTX93("STO-3G.tx93")
 @test sto3g.definitions[Element("C")][1].lQuantumNumber.symbol == "S"
 @test sto3g.definitions[Element("C")][1].primitives[1].exponent == 71.616837
 
-run(`rm STO-3G.tx93`)
-
-# test computeBasis
+# test BasisModule
 bas = computeBasis(sto3g,h2o)
 @test_approx_eq_eps -0.7332137 bas.contractedBFs[3].primitiveBFs[1].center.y 1e-7
+@test_approx_eq_eps 0.35175381 BasisFunctionsModule.evaluateFunction(origin, bas.contractedBFs[3]) 1e-8
 
 # test IntegralsModule
 normalize!(bas)
@@ -56,7 +63,7 @@ matrixSADguess = computeDensityGuessSAD("HF","STO-3G",h2o)
 @test_throws ErrorException computeDensityGuessSAD("NotImplemented","STO-3G",h2o)
 
 # test SpecialMatricesModule
-@test_approx_eq_eps -0.785008186026 mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) 1e-10
+@test_approx_eq_eps -0.785008186026 mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) 1e-10                  #### !!!! ####
 
 # test HartreeFockModule
 density = evaluateSCF(bas,h2o,mean(matrixSADguess),5)[3]
@@ -71,6 +78,8 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
 
 # test LibInt2Module
+tmp = Shell(LibInt2Shell([0.,1.,2.],1,2,[1.,2.],[0.5,0.5];renorm=false)).coefficients
+@test_eq tmp[1] tmp[2]
 shells = computeBasisShellsLibInt2(sto3g,h2o)
 @test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
 @test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)
@@ -83,8 +92,9 @@ end
 R = transformRangeToIdealLaplace(0.5,3.)[2]
 lp = transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableLarger(7,R,"hackbusch_pretables")[1], 0.5)
 @test_approx_eq_eps LaplaceModule.computeInverseByLaplaceApproximation(2.3,lp) 1./2.3 1e-7
+#@test findLaplacePointsHackbuschPretableLarger(2,100.,"hackbusch_pretables") == findLaplacePointsHackbuschPretableLarger(2,50.,"hackbusch_pretables")
 
-#test RI-Module
+# test RI-Module
 @test_approx_eq 0.3950752513027109 mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
 tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
 @test_approx_eq 0.0429373705056905 mean(tensorRICoulomb)
@@ -92,3 +102,23 @@ tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
 tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
 @test_approx_eq 0.0144597945326691 tensorRIOverlap[1,3,4,5]
 @test_approx_eq 0.0537036598506078 mean(tensorRIOverlap)
+
+
+
+
+
+
+### display functions ###
+# These are simply here, so that the test coverage isn't limited by the display functions.
+# They do not however test for anything really, so do not trust them. If you do add a *real* 
+# test for a display function, please add it to the corresponding module block above instead
+# of here.
+display(bas)
+display(bas.contractedBFs[3])
+display(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016))
+display(GenericCitation("M. Mustermann personal note"))
+display(@doc(IntegralsModule.GaussianIntegral1D_Valeev))
+display(shells[1])
+display(lp)
+summarize(BasisModule.Basis)
+summarize(GaussianBasis)

@@ -15,6 +15,8 @@ using ..BaseModule
 using ..GeometryModule
 using ..BasisSetModule
 using ..ShellModule
+using ..BasisFunctionsModule
+using ..IntegralsModule
 
 
 ## Bitstypes
@@ -34,6 +36,7 @@ end
 The libint2 library expects the coefficients to be input the same way as with basis set definition files. It then renormalizes the coefficients accordingly.
 This behavior is the default for efficiency reasons. To directly enter the coefficients set the renorm flag to false.
 When converting a Shell into a LibInt2Shell (e.g. with convert()), this is taken care of automatically.
+Note, that coefficients are generally only specified up to a global scaling factor - only relative factors are handled by renormalization.
 """
 function LibInt2Shell(origin::Vector{Float64},lqn::Int,nprim::Int,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true)
   if renorm==true
@@ -53,7 +56,7 @@ function convert(::Type{LibInt2Shell},sh::Shell)
   scaledcoefficients = Float64[]
   for (coeff,expon) in zip(sh.coefficients,sh.exponents)
     pgb = PrimitiveGaussianBasisFunction(origin,expon,MQuantumNumber(sh.lqn.exponent,0,0))
-    push!(scaledcoefficients,coeff * sqrt(IntegralsModule.Overlap(pgb,pgb)))
+    push!(scaledcoefficients,coeff * sqrt(computeValueOverlap(pgb,pgb)))
   end
 
   LibInt2Shell([sh.center.x,sh.center.y,sh.center.z],sh.lqn.exponent,length(sh.exponents),sh.exponents,scaledcoefficients)
