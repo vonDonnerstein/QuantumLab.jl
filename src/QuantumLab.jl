@@ -2,7 +2,7 @@ module QuantumLab
 
 lib_path = joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib")
 push!(Libdl.DL_LOAD_PATH,lib_path)
-Libdl.dlopen("libint2-alpha.so.2")
+Libdl.dlopen("libint2.so")
 
 
 print(" + (ProgressMeter................")
