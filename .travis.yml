@@ -3,6 +3,8 @@ os:
   - linux
   - osx
 sudo: required
+git:
+  depth: 3 
 julia:
   - release
     #  - nightly
@@ -11,6 +13,6 @@ notifications:
 after_success:
   - julia -e 'cd(Pkg.dir("QuantumLab")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
 # uncomment the following lines to override the default test script
-#script:
-#  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd()); Pkg.build("QuantumLab"); Pkg.test("QuantumLab"; coverage=true)'
+script:
+  - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
+  - julia --check-bounds=yes -e 'Pkg.clone(pwd(),"QuantumLab"); Pkg.build("QuantumLab"); Pkg.test("QuantumLab"; coverage=true)'

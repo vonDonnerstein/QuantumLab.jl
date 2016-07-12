@@ -1,7 +1,6 @@
 
 # <img src="http://schurkus.com/wp-content/uploads/2015/10/QuantumLab.png" alt=Q width="55">uantumLab
 
-`Linux/Mac`: [![Build Status](https://travis-ci.org/vonDonnerstein/QuantumLab.jl.svg)](https://travis-ci.org/vonDonnerstein/QuantumLab.jl) `Win`: [![Build Status](https://ci.appveyor.com/api/projects/status/github/vonDonnerstein/QuantumLab.jl?branch=master&svg=true)](https://ci.appveyor.com/project/vonDonnerstein/quantumlab) `Test Coverage`: [![Coverage Status](https://coveralls.io/repos/vonDonnerstein/QuantumLab.jl/badge.svg?branch=master&service=github)](https://coveralls.io/github/vonDonnerstein/QuantumLab.jl?branch=master)
 
 A Quantum Chemistry Package based on the Julia language.
 
