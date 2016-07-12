@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeIntegral2Center2Electron, computeIntegral3Center2Electron, computeValueThreeCenterOverlap
+export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -457,50 +457,5 @@ end
 function computeElectronRepulsionIntegral(μ::Shell,ν::Shell,λ::Shell,σ::Shell)
   [computeElectronRepulsionIntegral(μcgbf,νcgbf,λcgbf,σcgbf) for μcgbf in expandShell(μ), νcgbf in expandShell(ν), λcgbf in expandShell(λ), σcgbf in expandShell(σ)]
 end
-
-function computeIntegral3Center2Electron(
-  μ::PrimitiveGaussianBasisFunction,
-  ν::PrimitiveGaussianBasisFunction,
-  M::PrimitiveGaussianBasisFunction)
-  stub = PrimitiveGaussianBasisFunction(Position(0.,0.,0.),0.,MQuantumNumber(0,0,0))
-  return computeElectronRepulsionIntegral(μ,ν,M,stub)
-end
-
-function computeIntegral3Center2Electron(
-  μ::ContractedGaussianBasisFunction,
-  ν::ContractedGaussianBasisFunction,
-  M::ContractedGaussianBasisFunction)
-  # compute (μν|P) (Mulliken notation) = Integrate[μ(1) ν(1) 1/Abs(1-2) P(2), d1 d2]
-  integral::Float64 = 0.
-  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
-    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
-      for (coeff3,pgb3) in zip(M.coefficients,M.primitiveBFs)
-	integral += coeff1*coeff2*coeff3*computeIntegral3Center2Electron(pgb1,pgb2,pgb3)
-      end
-    end
-  end
-  return integral::Float64
-end
-
-function computeIntegral2Center2Electron(
-  μ::PrimitiveGaussianBasisFunction,
-  ν::PrimitiveGaussianBasisFunction)
-  stub = PrimitiveGaussianBasisFunction(Position(0.,0.,0.),0.,MQuantumNumber(0,0,0))
-  return computeElectronRepulsionIntegral(μ,stub,ν,stub)
-end
-
-function computeIntegral2Center2Electron(
-  μ::ContractedGaussianBasisFunction,
-  ν::ContractedGaussianBasisFunction)
-  # compute (μ|ν) (Mulliken notation) = Integrate[μ(1) 1/Abs(1-2) ν(2), d1 d2]
-  integral::Float64 = 0.
-  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
-    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
-      integral += coeff1*coeff2*computeIntegral2Center2Electron(pgb1,pgb2)
-    end
-  end
-  return integral::Float64
-end
-
 
 end # module

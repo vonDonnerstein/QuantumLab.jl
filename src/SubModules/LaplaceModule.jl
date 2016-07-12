@@ -13,6 +13,7 @@ export LaplacePoints, downloadLaplacePointsHackbusch, findLaplacePointsHackbusch
 using ..DocumentationModule
 using ..BaseModule
 import Base.display
+import Base.==
 
 """
 LaplacePoints contain the collection of weights and corresponding nodes for the quadrature
@@ -237,5 +238,7 @@ function computeRPADenominatorByDoubleLaplace(x::Float64,ω::Float64,lp::Laplace
   return sum
 end
 @doc JournalCitation(["H. F. Schurkus","C. Ochsenfeld"],"J. Chem. Phys.",144,031101,2016) computeRPADenominatorByDoubleLaplace
+
+==(x::LaplacePoints, y::LaplacePoints) = x.weights == y.weights && x.nodes == y.nodes
 
 end # LaplaceModule
