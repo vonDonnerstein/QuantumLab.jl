@@ -15,6 +15,9 @@ default:
 	@echo "There is no sensible default target (yet). Look into Makefile to see your options."
 
 # MAIN TARGETS
+libint2jl:
+	cd deps/usr/src && $(MAKE) 
+
 coverage: 
 	$(MAKE) clean
 	$(MAKE) index.html
