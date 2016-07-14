@@ -15,6 +15,11 @@ index-sort-l.html
 index.html
 lcov.info
 
+# Building libint
+deps/usr/src/libint2_source
+deps/usr/src/libint2_build
+deps/usr/src/libint2_binaries
+
 # VIM
 *.swo
 *.swp

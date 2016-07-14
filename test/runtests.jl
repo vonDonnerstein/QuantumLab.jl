@@ -79,7 +79,7 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 
 # test LibInt2Module
 tmp = Shell(LibInt2Shell([0.,1.,2.],1,2,[1.,2.],[0.5,0.5];renorm=false)).coefficients
-@test_eq tmp[1] tmp[2]
+@test_approx_eq tmp[1] tmp[2]
 shells = computeBasisShellsLibInt2(sto3g,h2o)
 @test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
 @test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)

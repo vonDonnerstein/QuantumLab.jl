@@ -147,34 +147,16 @@ end
 function LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
   reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
 end
+function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
+  reinterpret(LibInt2Engine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+end
+function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
+  reinterpret(LibInt2Engine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+end
 
 #  Destructor
 function destroy!(engine::LibInt2Engine)
   ccall((:_Z13destroyEnginePN7libint26EngineE,"libint2jl.so"),Void,(LibInt2Engine,),engine)
-end
-
-## LibInt2OneBodyEngine
-#  Type Declaration
-bitstype 64 LibInt2OneBodyEngine64
-bitstype 32 LibInt2OneBodyEngine32
-if is(Int,Int32)
-  typealias LibInt2OneBodyEngine LibInt2OneBodyEngine32
-else
-  typealias LibInt2OneBodyEngine LibInt2OneBodyEngine64
-end
-
-#  Constructors
-function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-  reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
-end
-
-function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-  reinterpret(LibInt2OneBodyEngine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
-end
-
-#  Destructor
-function destroy!(engine::LibInt2OneBodyEngine)
-  ccall((:_Z20destroyOneBodyEnginePN7libint213OneBodyEngineE,"libint2jl.so"),Void,(LibInt2OneBodyEngine,),engine)
 end
 
 
@@ -187,10 +169,13 @@ function libint2Finalize()
   ccall((:_ZN7libint28finalizeEv,"libint2jl.so"),Void,())
 end
 
-function computeMatrixBlockOverlap(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
+"""
+If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
+"""
+function computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
-  buf = ccall((:_Z14computeOverlapPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+  buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
 end
 
@@ -206,10 +191,13 @@ function computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
   return result
 end
 
-function computeMatrixBlockKinetic(engine::LibInt2OneBodyEngine, μ::LibInt2Shell, ν::LibInt2Shell)
+"""
+If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
+"""
+function computeMatrixBlockKinetic(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
-  buf = ccall((:_Z14computeKineticPN7libint213OneBodyEngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2OneBodyEngine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+  buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
 end
 
@@ -225,12 +213,15 @@ function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell)
   return result
 end
 
+"""
+If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
+"""
 function computeElectronRepulsionIntegral(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
   λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
   σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
-  buf = ccall((:_Z10computeERIPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
+  buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
   return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
 end
 
