@@ -18,6 +18,9 @@ default:
 libint2jl:
 	cd deps/usr/src && $(MAKE) 
 
+libint2jl-clean:
+	cd deps/usr/src && $(MAKE) clean
+
 coverage: 
 	$(MAKE) clean
 	$(MAKE) index.html
