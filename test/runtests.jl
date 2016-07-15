@@ -78,12 +78,22 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
 
 # test LibInt2Module
-tmp = Shell(LibInt2Shell([0.,1.,2.],1,2,[1.,2.],[0.5,0.5];renorm=false)).coefficients
+libInt2Finalize()
+libInt2Initialize()
+tmp_lib = LibInt2Shell([0.,1.,2.],1,2,[1.,2.],[0.5,0.5];renorm=false)
+tmp = Shell(tmp_lib).coefficients
 @test_approx_eq tmp[1] tmp[2]
+destroy!(tmp_lib)
 shells = computeBasisShellsLibInt2(sto3g,h2o)
-@test_approx_eq computeMatrixOverlap(shells) computeMatrixOverlap(bas)
-@test_approx_eq computeMatrixKinetic(shells) computeMatrixKinetic(bas)
-@test_approx_eq_eps computeMatrixCoulomb(shells,density) computeMatrixCoulomb(bas,density) 1e-8
+S = computeMatrixOverlap(shells)
+@test_approx_eq S computeMatrixOverlap(bas)
+T = computeMatrixKinetic(shells)
+@test_approx_eq T computeMatrixKinetic(bas)
+J = computeMatrixCoulomb(shells,density)
+@test_approx_eq_eps J computeMatrixCoulomb(bas,density) 1e-8
+@test_approx_eq computeMatrixBlockOverlap(shells[1],shells[1]) S[1,1]
+@test_approx_eq computeMatrixBlockKinetic(shells[1],shells[1]) T[1,1]
+@test_approx_eq computeElectronRepulsionIntegral(shells[1],shells[5],shells[4],shells[4])[1,1,2,2] computeElectronRepulsionIntegral(bas.contractedBFs[1],bas.contractedBFs[7],bas.contractedBFs[5],bas.contractedBFs[5])
 
 # test LaplaceModule
 if(!isdir("hackbusch_pretables"))
@@ -92,7 +102,8 @@ end
 R = transformRangeToIdealLaplace(0.5,3.)[2]
 lp = transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableLarger(7,R,"hackbusch_pretables")[1], 0.5)
 @test_approx_eq_eps LaplaceModule.computeInverseByLaplaceApproximation(2.3,lp) 1./2.3 1e-7
-#@test findLaplacePointsHackbuschPretableLarger(2,100.,"hackbusch_pretables") == findLaplacePointsHackbuschPretableLarger(2,50.,"hackbusch_pretables")
+#@test_approx_eq LaplaceModule.computeRPADenominatorByDoubleLaplace(1.2,2.3,lp) 1./(1.2^2 + 2.3^2)
+@test findLaplacePointsHackbuschPretableLarger(2,100.,"hackbusch_pretables") == findLaplacePointsHackbuschPretableLarger(2,50.,"hackbusch_pretables")
 
 # test RI-Module
 @test_approx_eq 0.3950752513027109 mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
