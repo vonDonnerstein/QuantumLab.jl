@@ -1,5 +1,13 @@
 #include <libint2.hpp>
 
+void libint2start() {
+  libint2::initialize();
+}
+
+void libint2stop() {
+  libint2::finalize();
+}
+
 libint2::Shell* createShell(double* origin, int lqn, int nprim, double* exponents, double* coefficients){
   std::vector<double> alpha = std::vector<double>(exponents,exponents+nprim);
   std::vector<double> coeff = std::vector<double>(coefficients,coefficients+nprim);
