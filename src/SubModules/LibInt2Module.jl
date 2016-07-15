@@ -1,10 +1,3 @@
-# LibInt2 installation:
-# sudo apt-get install libgmp3-dev libeigen3-dev
-# ../libint/configure CXX=g++ CXXFLAGS="-I/usr/include/eigen3 -std=c++11" --enable-shared
-# dos2unix -f libtool
-# make -j8
-# export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:.
-
 module LibInt2Module
 export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, LibInt2EngineKinetic, libInt2Initialize, libInt2Finalize
 export computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
@@ -161,12 +154,12 @@ end
 
 
 ## library functionality
-function libint2Initialize()
-  ccall((:_ZN7libint210initializeEv,"libint2jl.so"),Void,())
+function libInt2Initialize()
+  ccall((:_Z12libint2startv,"libint2jl.so"),Void,())
 end
 
-function libint2Finalize()
-  ccall((:_ZN7libint28finalizeEv,"libint2jl.so"),Void,())
+function libInt2Finalize()
+  ccall((:_Z11libint2stopv,"libint2jl.so"),Void,())
 end
 
 """
@@ -252,4 +245,4 @@ end
 
 end # Module
 
-LibInt2Module.libint2Initialize()
+LibInt2Module.libInt2Initialize()

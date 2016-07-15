@@ -212,7 +212,7 @@ end
 cmp. help(transformRangeToIdealLaplace)
 """
 function transformLaplacePointFromIdealLaplace(lp::LaplacePoints, A)
-  LaplacePoints(lp.weights/A, lp.nodes/A)
+  LaplacePoints(map(transformWeightFromIdealLaplace,lp.weights), map(transformNodeFromIdealLaplace,lp.nodes))
 end
 
 """
