@@ -7,7 +7,7 @@ libint2   = library_dependency("libint2.so")
 
 prefix = joinpath(BinDeps.depsdir(libint2jl))
 lib_dir = BinDeps.libdir(libint2jl)
-bin_dir = BinDeps.downloadsdir(libint2jl)
+VERSION = "2.2.0-beta1"
 #= download_dir = joinpath(prefix,"downloads") =#
 #= provides(SimpleBuild, =#
 #= 				(@build_steps begin =#
@@ -29,8 +29,7 @@ provides(SimpleBuild,
 					CreateDirectory(lib_dir)
 					FileRule(joinpath(prefix,"usr","bin","libint2jl.so"),
 					@build_steps begin
-						ChangeDirectory(bin_dir)
-						`ln -s libint2jl.so $bin_dir`
+						`ln -s libint2jl-$VERSION.so libint2jl.so`
 					end)
 				end), libint2jl, os = :Linux)
 provides(SimpleBuild,
@@ -38,8 +37,7 @@ provides(SimpleBuild,
 					CreateDirectory(lib_dir)
 					FileRule(joinpath(prefix,"usr","lib","libint2.so"),
 					@build_steps begin
-						ChangeDirectory(bin_dir)
-						`ln -s libint2-2.2.0-beta1.so $(joinpath(lib_dir,"libint2.so"))`
+						`ln -s libint2-$VERSION.so libint2.so`
 					end)
 				end), libint2, os = :Linux)
 
@@ -49,8 +47,7 @@ provides(SimpleBuild,
 					CreateDirectory(lib_dir)
 					FileRule(joinpath(prefix,"usr","lib","libint2jl.so"),
 					@build_steps begin
-						ChangeDirectory(bin_dir)
-						`ln -s libint2jl.dylib $(joinpath(lib_dir,"libint2jl.so"))`
+						`ln -s libint2jl-$VERSION.dylib libint2jl.so`
 					end)
 				end), libint2jl, os = :Darwin)
 provides(SimpleBuild,
@@ -58,8 +55,7 @@ provides(SimpleBuild,
 					CreateDirectory(lib_dir)
 					FileRule(joinpath(prefix,"usr","lib","libint2.so"),
 					@build_steps begin
-						ChangeDirectory(bin_dir)
-						`ln -s libint2-2.2.0-beta1.dylib $(joinpath(lib_dir,"libint2.so"))`
+						`ln -s libint2-$VERSION.dylib libint2.so`
 					end)
 				end), libint2, os = :Darwin)
 
