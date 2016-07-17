@@ -2,8 +2,8 @@ using BinDeps
 
 @BinDeps.setup
 
-libint2jl = library_dependency("libint2jl.so", validate=(name,handle)->true)
-libint2   = library_dependency("libint2.so")
+libint2jl = library_dependency("libint2jl-QuantumLab.so")
+libint2   = library_dependency("libint2-QuantumLab.so")
 
 prefix = joinpath(BinDeps.depsdir(libint2jl))
 lib_dir = BinDeps.libdir(libint2jl)
@@ -25,19 +25,23 @@ VERSION = "2.2.0-beta1"
 
 #Sets symbolic link for precompiled libint2.so and libint2jl.so in deps/bin directory for Linux
 provides(SimpleBuild,
-				(@build_steps begin
+				 (@build_steps begin
 					CreateDirectory(lib_dir)
-					FileRule(joinpath(prefix,"usr","bin","libint2jl.so"),
 					@build_steps begin
-						`ln -s libint2jl-$VERSION.so libint2jl.so`
-					end)
-				end), libint2jl, os = :Linux)
+						ChangeDirectory(lib_dir)
+						FileRule(joinpath(prefix,"usr","lib","libint2jl-QuantumLab.so"),
+								@build_steps begin
+									`ln -s libint2jl-$VERSION.so libint2jl-QuantumLab.so`
+								end)
+						end
+		 end), libint2jl, os = :Linux)
 provides(SimpleBuild,
 				(@build_steps begin
 					CreateDirectory(lib_dir)
-					FileRule(joinpath(prefix,"usr","lib","libint2.so"),
+					ChangeDirectory(lib_dir)
+					FileRule(joinpath(prefix,"usr","lib","libint2-QuantumLab.so"),
 					@build_steps begin
-						`ln -s libint2-$VERSION.so libint2.so`
+						`ln -s libint2-$VERSION.so libint2-QuantumLab.so`
 					end)
 				end), libint2, os = :Linux)
 
@@ -45,17 +49,19 @@ provides(SimpleBuild,
 provides(SimpleBuild,
 				(@build_steps begin
 					CreateDirectory(lib_dir)
-					FileRule(joinpath(prefix,"usr","lib","libint2jl.so"),
+					ChangeDirectory(lib_dir)
+					FileRule(joinpath(prefix,"usr","lib","libint2jl-QuantumLab.so"),
 					@build_steps begin
-						`ln -s libint2jl-$VERSION.dylib libint2jl.so`
+						`ln -s libint2jl-$VERSION.dylib libint2jl-QuantumLab.so`
 					end)
 				end), libint2jl, os = :Darwin)
 provides(SimpleBuild,
 				(@build_steps begin
 					CreateDirectory(lib_dir)
-					FileRule(joinpath(prefix,"usr","lib","libint2.so"),
+					ChangeDirectory(lib_dir)
+					FileRule(joinpath(prefix,"usr","lib","libint2-QuantumLab.so"),
 					@build_steps begin
-						`ln -s libint2-$VERSION.dylib libint2.so`
+						`ln -s libint2-$VERSION.dylib libint2-QuantumLab.so`
 					end)
 				end), libint2, os = :Darwin)
 

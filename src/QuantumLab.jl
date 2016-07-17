@@ -2,7 +2,7 @@ module QuantumLab
 
 lib_path = joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib")
 push!(Libdl.DL_LOAD_PATH,lib_path)
-Libdl.dlopen("libint2.so")
+Libdl.dlopen("libint2-QuantumLab.so")
 
 
 print(" + (ProgressMeter................")
@@ -51,10 +51,19 @@ include("SubModules/IntegralsModule.jl")
 @reexport using .IntegralsModule
 println("Done.")
 
-print(" + LibInt2Module...............")
-include("SubModules/LibInt2Module.jl")
-@reexport using .LibInt2Module
-println("Done.")
+#= try =#
+	print(" + LibInt2Module...............")
+	include("SubModules/LibInt2Module.jl")
+	@reexport using .LibInt2Module
+	println("Done.")
+#= catch =#
+#= 	println("Loading Error") =#
+#= 	println("Check your libint2jl and libint2 shared objects") =#
+#= 	print(" + LibInt2_Substitution_Module...") =#
+#= 	include("SubModules/LibInt2_Substitution_Module.jl") =#
+#= 	@reexport using .LibInt2_Substitution_Module =#
+#= 	println("Done.") =#
+#= end =#
 
 print(" + BasisModule.................")
 include("SubModules/BasisModule.jl")

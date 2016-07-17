@@ -16,3 +16,5 @@ after_success:
 script:
   - if [[ -a .git/shallow ]]; then git fetch --unshallow; fi
   - julia --check-bounds=yes -e 'Pkg.clone(pwd(),"QuantumLab"); Pkg.build("QuantumLab"); Pkg.test("QuantumLab"; coverage=true)'
+  - cd .julia/v0.4/QuantumLab/
+  - ls -l deps/usr/lib
