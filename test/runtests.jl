@@ -4,6 +4,25 @@ using Base.Test
 # write your own tests here
 @test 1 == 1
 
+# test DocumentationModule
+docModTester() = return 1
+@doc """
+some markdown documentation
+""" docModTester
+@test typeof(@doc(docModTester)) == Base.Markdown.MD
+@add_doc GenericCitation("generic citation") docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060") docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016) docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc Citation(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)) docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@test isa([Base.Markdown.parse("Hellau!"),BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060")],Vector{DocumentationModule.Documentation})
+@test isa([Base.Markdown.parse("Hellau!"),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)],Vector{DocumentationModule.Documentation})
+@test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+@test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+
 # test readGeometryXYZ
 h2o = readGeometryXYZ("h2o.xyz")
 @test h2o.atoms[2].element.symbol == "O"
@@ -50,6 +69,7 @@ bas = computeBasis(sto3g,h2o)
 normalize!(bas)
 matrixOverlap = computeMatrixOverlap(bas)
 matrixKinetic = computeMatrixKinetic(bas)
+@test_approx_eq IntegralsModule.GaussianIntegral1D_Valeev(1,.4) 0.
 @test_approx_eq 0.0 matrixOverlap[6,1]
 @test_approx_eq_eps 0.3129324434238492 matrixOverlap[4,1] 1e-8
 @test_approx_eq_eps 29.00 matrixKinetic[2,2] 1e-2
@@ -77,6 +97,8 @@ shell_libint2 = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
 shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq shell_native.coefficients[2] .2
 @test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
+@test_approx_eq computeMatrixBlockOverlap(shell_nativefromlibint2,shell_nativefromlibint2) computeMatrixBlockOverlap(shell_libint2,shell_libint2)
+@test_approx_eq computeElectronRepulsionIntegral(shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2) computeElectronRepulsionIntegral(shell_libint2,shell_libint2,shell_libint2,shell_libint2)
 
 # test LibInt2Module
 libInt2Finalize()
@@ -137,6 +159,7 @@ display([Base.Markdown.parse("**Why, god, why??**"),BookCitation(["C. Darwin"], 
 display([JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)])
 display(@doc(IntegralsModule.GaussianIntegral1D_Valeev))
 display(shells[1])
+display(shell_native)
 display(lp)
 summarize(BasisModule.Basis)
 summarize(GaussianBasis)

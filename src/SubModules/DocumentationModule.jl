@@ -133,7 +133,6 @@ Base.promote_rule(::Type{Base.Markdown.MD},::Type{Citation}) 		= Documentation
 Base.promote_rule(::Type{Base.Markdown.MD},::Type{GenericCitation}) 	= Documentation
 Base.promote_rule(::Type{Base.Markdown.MD},::Type{BookCitation}) 	= Documentation
 Base.promote_rule(::Type{Base.Markdown.MD},::Type{JournalCitation}) 	= Documentation
-Base.promote_rule(::Type{Documentation},::Type{Citation}) 		= Documentation
 Base.promote_rule(::Type{Documentation},::Type{GenericCitation}) 	= Documentation
 Base.promote_rule(::Type{Documentation},::Type{BookCitation}) 		= Documentation
 Base.promote_rule(::Type{Documentation},::Type{JournalCitation}) 	= Documentation

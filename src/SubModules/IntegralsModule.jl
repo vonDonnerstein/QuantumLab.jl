@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap
+export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap, computeMatrixBlockOverlap
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -116,6 +116,10 @@ function GaussProductPolynomialFactor(
   return factors
 end
 
+function computeMatrixBlockOverlap(sh1::Shell,sh2::Shell)
+  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+end
+
 function computeValueOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
@@ -141,10 +145,6 @@ function computeValueOverlap(
     end
   end
   return integral::Float64
-end
-
-function computeMatrixOverlap(sh1::Shell,sh2::Shell)
-  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
 function computeValueThreeCenterOverlap(

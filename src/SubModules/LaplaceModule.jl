@@ -141,14 +141,14 @@ function readLaplacePointsHackbusch(filename::AbstractString)
   return result
 end
 
-"""
-Alternative to specifying the file directly one can also specify the numberOfPoints, upper limit,
-and directory name (default:"hackbusch") to load the corresponding pretable file..
-"""
 function readLaplacePointsHackbusch(numberOfPoints::Integer,R::Real,dir::AbstractString="hackbusch")
   filename = computeFilenameHackbusch(numberOfPoints,R)
   readLaplacePointsHackbusch("$dir/$filename")
 end
+@doc """
+Alternative to specifying the file directly one can also specify the numberOfPoints, upper limit,
+and directory name (default:"hackbusch") to load the corresponding pretable file..
+""" readLaplacePointsHackbusch
 
 """
 Returns the LaplacePoints for the smallest range larger than the requested one for which 
