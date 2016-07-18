@@ -29,6 +29,11 @@ coverage:
 show_coverage: index.html
 	xdg-open index.html
 
+full_coverage:
+	rm -f test/STO-3G.tx93
+	rm -rf test/hackbusch_pretables/
+	$(MAKE) coverage
+
 clean: 
 	find . -name *.cov -exec rm {} \;
 	find . -name index.html -exec rm {} \;

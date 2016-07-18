@@ -1,5 +1,5 @@
 ﻿module IntegralsModule
-export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap
+export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap, computeMatrixBlockOverlap
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -15,9 +15,6 @@ ProgressMeter.printover(STDOUT," + IntegralsModule.............")
 
 doublefactorial(n::Int) = prod(n:-2:1)
 
-"""
-I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
-"""
 function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
   m = mqn
   ζ = exponent
@@ -28,7 +25,10 @@ function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
 end
-@doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D_Valeev
+@doc """
+I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
+""" GaussianIntegral1D_Valeev
+@add_doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D_Valeev
 
 """
 I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Mathematica 9)
@@ -116,6 +116,10 @@ function GaussProductPolynomialFactor(
   return factors
 end
 
+function computeMatrixBlockOverlap(sh1::Shell,sh2::Shell)
+  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+end
+
 function computeValueOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
@@ -141,10 +145,6 @@ function computeValueOverlap(
     end
   end
   return integral::Float64
-end
-
-function computeMatrixOverlap(sh1::Shell,sh2::Shell)
-  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
 function computeValueThreeCenterOverlap(

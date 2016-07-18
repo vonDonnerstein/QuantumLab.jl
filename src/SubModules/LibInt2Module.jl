@@ -1,8 +1,9 @@
 module LibInt2Module
 export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, LibInt2EngineKinetic, libInt2Initialize, libInt2Finalize
-export computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
+export computeMatrixBlockKinetic, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
 import Base.convert
 import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral
+import ..IntegralsModule.computeMatrixBlockOverlap
 using TensorOperations
 using ..BaseModule
 using ..GeometryModule
@@ -165,14 +166,14 @@ end
 """
 If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
 """
-function computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
+function IntegralsModule.computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
   buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
 end
 
-function computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
+function IntegralsModule.computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
   (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
   maxprims = max(length(μ.coefficients), length(ν.coefficients))
   maxlqn   = max(μ.lqn, ν.lqn)

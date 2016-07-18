@@ -133,7 +133,7 @@ immutable Element
 end
 
 ==(el1::Element,el2::Element) = el1.symbol==el2.symbol && el1.atomicNumber==el2.atomicNumber
-isequal(el1::Element,el2::Element) = isequal(el1.symbol,el2.symbol) && isequal(el1.atomicNumber,el2.atomicNumber)
+#isequal(el1::Element,el2::Element) = isequal(el1.symbol,el2.symbol) && isequal(el1.atomicNumber,el2.atomicNumber)
 
 import Base.hash
 hash(el::Element) = hash(el.symbol,hash(el.atomicNumber))
