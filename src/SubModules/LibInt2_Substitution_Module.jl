@@ -1,0 +1,260 @@
+module LibInt2_Substitution_Module
+export LibInt2Shell, destroy!, lqn, nprims, LibInt2Engine, LibInt2EngineCoulomb, LibInt2OneBodyEngine, LibInt2EngineOverlap, LibInt2EngineKinetic, libInt2Initialize, libInt2Finalize
+export computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeElectronRepulsionIntegral, computeBasisShellsLibInt2
+import Base.convert
+import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral
+using TensorOperations
+using ..BaseModule
+using ..GeometryModule
+using ..BasisSetModule
+using ..ShellModule
+using ..BasisFunctionsModule
+using ..IntegralsModule
+
+## Bitstypes
+
+## LibInt2Shell
+#  Type Declaration
+bitstype 64 LibInt2Shell64
+bitstype 32 LibInt2Shell32
+if is(Int,Int32)
+  typealias LibInt2Shell LibInt2Shell32
+else
+  typealias LibInt2Shell LibInt2Shell64
+end
+
+#= #  Constructors =#
+#= """ =#
+#= The libint2 library expects the coefficients to be input the same way as with basis set definition files. It then renormalizes the coefficients accordingly. =#
+#= This behavior is the default for efficiency reasons. To directly enter the coefficients set the renorm flag to false. =#
+#= When converting a Shell into a LibInt2Shell (e.g. with convert()), this is taken care of automatically. =#
+#= Note, that coefficients are generally only specified up to a global scaling factor - only relative factors are handled by renormalization. =#
+#= """ =#
+#= function LibInt2Shell(origin::Vector{Float64},lqn::Int,nprim::Int,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true) =#
+#=   if renorm==true =#
+#=     return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients)) =#
+#=   else =#
+#=     return convert(LibInt2Shell,Shell(LQuantumNumber(lqn),Position(origin...),exponents,coefficients)) =#
+#=   end =#
+#= end =#
+
+#= function LibInt2Shell(origin::Position,lqn::LQuantumNumber,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true) =#
+#=   orig = convert(Vector{Float64},origin) =#
+#=   nprim = length(coefficients) =#
+#=   LibInt2Shell(orig,lqn.exponent,nprim,exponents,coefficients;renorm=renorm) =#
+#= end =#
+
+#= function convert(::Type{LibInt2Shell},sh::Shell) =#
+#=   scaledcoefficients = Float64[] =#
+#=   for (coeff,expon) in zip(sh.coefficients,sh.exponents) =#
+#=     pgb = PrimitiveGaussianBasisFunction(origin,expon,MQuantumNumber(sh.lqn.exponent,0,0)) =#
+#=     push!(scaledcoefficients,coeff * sqrt(computeValueOverlap(pgb,pgb))) =#
+#=   end =#
+
+#=   LibInt2Shell([sh.center.x,sh.center.y,sh.center.z],sh.lqn.exponent,length(sh.exponents),sh.exponents,scaledcoefficients) =#
+#= end =#
+
+#= #  Destructor =#
+#= function destroy!(shell::LibInt2Shell) =#
+#= end =#
+
+#= #  Further Functions =#
+#= function display(sh::LibInt2Shell) =#
+#=   ccall((:_Z10printShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),sh) =#
+#= end =#
+
+#= function lqn(l2sh::LibInt2Shell) =#
+#=   # cmp. convert(::Type{Shell},::LibInt2Shell) =#
+#=   sh_ptrptrptr = reinterpret(Ptr{Ptr{Ptr{Cdouble}}},l2sh) =#
+#=   contract_ptrptr = unsafe_load(sh_ptrptrptr,4) =#
+#=   contract_ptr = reinterpret(Ptr{Cint},contract_ptrptr) =#
+#=   return Int(unsafe_load(contract_ptr,1)) =#
+#= end =#
+
+#= function nprims(l2sh::LibInt2Shell) =#
+#=   # cmp. convert(::Type{Shell},::LibInt2Shell) =#
+#=   sh_ptrptr    = reinterpret(Ptr{Ptr{Cdouble}},l2sh) =#
+#=   alpha_ptr = unsafe_load(sh_ptrptr,1) =#
+#=   alphaEnd_ptr = unsafe_load(sh_ptrptr,2) =#
+#=   return Int(div(alphaEnd_ptr-alpha_ptr,8)) =#
+#= end =#
+
+
+#= function convert(::Type{Shell},l2sh::LibInt2Shell) =#
+#=   # LibInt2Shell objects reside in memory as =#
+#=   # class Shell { =#
+#=   #   std::vector<real_t> alpha; =#
+#=   #   std::vector<Contraction> contr; =#
+#=   #   std::array<real_t, 3> O;   		//!< this is inlined in memory =#
+#=   #   std::vector<real_t> max_ln_coeff; =#
+#=   # } =#
+#=   # where =#
+#=   # struct Contraction { =#
+#=   #   int l; =#
+#=   #   bool pure; =#
+#=   #   std::vector<real_t> coeff; =#
+#=   # } =#
+#=   # A std::vector is of the same size as 3 ptrs = 24 bytes on 64bit with gnu compiler. =#
+#=   # The first pointer gives the start of the allocated space, the second pointer gives the pointer =#
+#=   # beyond the last vector element and the third pointer beyond the allocated space of the vector =# 
+#=   # (cmp. std::vector.reserve()). =#
+
+#=   # I assume one contraction per shell -> no shared-sp =#
+
+#=   sh_ptrptrptr = reinterpret(Ptr{Ptr{Ptr{Cdouble}}},l2sh) =#
+#=   sh_ptrptr    = reinterpret(Ptr{Ptr{Cdouble}},l2sh) =#
+#=   sh_ptr       = reinterpret(Ptr{Cdouble},l2sh) =#
+
+#=   alpha_ptr = unsafe_load(sh_ptrptr,1) =#
+#=   alphaEnd_ptr = unsafe_load(sh_ptrptr,2) =#
+#=   primitivecount = div(alphaEnd_ptr-alpha_ptr,8) =#
+#=   expons = pointer_to_array(alpha_ptr,primitivecount) =#
+  
+#=   center_ptr = sh_ptr + 24*2 =#
+#=   center = Position(pointer_to_array(center_ptr,3)...) =#
+
+#=   contract_ptrptr = unsafe_load(sh_ptrptrptr,4) =#
+#=   coeff_ptr = unsafe_load(contract_ptrptr,2) # the int and bool together take the space of one pointer =#
+#=   coeffs = pointer_to_array(coeff_ptr,primitivecount) =#
+
+#=   contract_ptr = reinterpret(Ptr{Cint},contract_ptrptr) =#
+#=   lqn = LQuantumNumber(Int(unsafe_load(contract_ptr,1))) =#
+
+#=   return Shell(lqn,center,expons,coeffs) =#
+#= end =#
+
+
+#= ## LibInt2Engine =#
+#= #  Type Declaration =#
+#= bitstype 64 LibInt2Engine64 =#
+#= bitstype 32 LibInt2Engine32 =#
+#= if is(Int,Int32) =#
+#=   typealias LibInt2Engine LibInt2Engine32 =#
+#= else =#
+#=   typealias LibInt2Engine LibInt2Engine64 =#
+#= end =#
+
+#= #  Constructors =#
+#= function LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) =#
+#=   reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent)) =#
+#= end =#
+#= function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) =#
+#=   reinterpret(LibInt2Engine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent)) =#
+#= end =#
+#= function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) =#
+#=   reinterpret(LibInt2Engine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent)) =#
+#= end =#
+
+#  Destructor
+function destroy!(engine::LibInt2Engine)
+	println("\nWARNING")
+	println("LibInt2Module is not truely loaded just emulated via LibInt2_Substitution_Module\n")
+end
+
+## library functionality
+function libInt2Finalize()
+	println("\nWARNING")
+	println("LibInt2Module is not truely loaded just emulated via LibInt2_Substitution_Module\n")
+end
+
+function libInt2Initialize()
+	println("\nWARNING")
+	println("LibInt2Module is not truely loaded just emulated via LibInt2_Substitution_Module\n")
+end
+
+#= """ =#
+#= If a LibInt2Engine is specified, it is used without assertion if it is of the correct type. =#
+#= """ =#
+#= function computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell) =#
+#=   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2) =#
+#=   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2) =#
+#=   buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν) =#
+#=   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns)) =#
+#= end =#
+
+#= function computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell) =#
+#=   (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib)) =#
+#=   maxprims = max(length(μ.coefficients), length(ν.coefficients)) =#
+#=   maxlqn   = max(μ.lqn, ν.lqn) =#
+#=   engine = LibInt2EngineOverlap(maxprims,maxlqn) =#
+
+#=   result = copy(computeMatrixBlockOverlap(engine,μlib,νlib)) =#
+  
+#=   destroy!(engine) =#
+#=   return result =#
+#= end =#
+
+#= """ =#
+#= If a LibInt2Engine is specified, it is used without assertion if it is of the correct type. =#
+#= """ =#
+#= function computeMatrixBlockKinetic(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell) =#
+#=   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2) =#
+#=   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2) =#
+#=   buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν) =#
+#=   return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns)) =#
+#= end =#
+
+#= function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell) =#
+#=   (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib)) =#
+#=   maxprims = max(length(μ.coefficients), length(ν.coefficients)) =#
+#=   maxlqn   = max(μ.lqn, ν.lqn) =#
+#=   engine = LibInt2EngineKinetic(maxprims,maxlqn) =#
+
+#=   result = copy(computeMatrixBlockKinetic(engine,μlib,νlib)) =#
+  
+#=   destroy!(engine) =#
+#=   return result =#
+#= end =#
+
+#= """ =#
+#= If a LibInt2Engine is specified, it is used without assertion if it is of the correct type. =#
+#= """ =#
+#= function computeElectronRepulsionIntegral(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell) =#
+#=   μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2) =#
+#=   νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2) =#
+#=   λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2) =#
+#=   σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2) =#
+#=   buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ) =#
+#=   return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns)) =#
+#= end =#
+
+#= function computeElectronRepulsionIntegral(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell) =#
+#=   (μ, ν, λ, σ) = map(sh->convert(Shell,sh), (μlib, νlib, λlib, σlib)) =#
+#=   maxprims = max(length(μ.coefficients), length(ν.coefficients), length(λ.coefficients), length(σ.coefficients)) =#
+#=   maxlqn   = max(μ.lqn, ν.lqn, λ.lqn, σ.lqn) =#
+#=   engine = LibInt2EngineCoulomb(maxprims,maxlqn) =#
+
+#=   result = copy(computeElectronRepulsionIntegral(engine, μlib,νlib,λlib,σlib)) =#
+
+#=   destroy!(engine) =#
+#=   return result =#
+#= end =#
+
+#= function computeBasisShellsLibInt2(basSet::BasisSet,geo::Geometry) =#
+#=   shells = Vector{LibInt2Shell}() =#
+#=   for atom in geo.atoms =#
+#=     for contractedDefinition in basSet.definitions[atom.element] =#
+#=       exponents = [prim.exponent for prim in contractedDefinition.primitives] =#
+#=       coefficients = [prim.prefactor for prim in contractedDefinition.primitives] =#
+#=       sh = LibInt2Shell(atom.position,contractedDefinition.lQuantumNumber,exponents,coefficients) =#
+#=       push!(shells,sh) =#
+#=     end =#
+#=   end =#
+#=   return shells =#
+#= end =#
+
+#= function computeBasisShellsLibInt2(basSet::BasisSet,geo::Geometry) =#
+#=   shells = Vector{LibInt2Shell}() =#
+#=   for atom in geo.atoms =#
+#=     for contractedDefinition in basSet.definitions[atom.element] =#
+#=       exponents = [prim.exponent for prim in contractedDefinition.primitives] =#
+#=       coefficients = [prim.prefactor for prim in contractedDefinition.primitives] =#
+#=       sh = LibInt2Shell(atom.position,contractedDefinition.lQuantumNumber,exponents,coefficients) =#
+#=       push!(shells,sh) =#
+#=     end =#
+#=   end =#
+#=   return shells =#
+#= end =#
+
+
+end
