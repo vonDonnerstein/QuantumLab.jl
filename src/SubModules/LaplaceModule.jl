@@ -212,7 +212,7 @@ end
 cmp. help(transformRangeToIdealLaplace)
 """
 function transformLaplacePointFromIdealLaplace(lp::LaplacePoints, A)
-  LaplacePoints(map(transformWeightFromIdealLaplace,lp.weights), map(transformNodeFromIdealLaplace,lp.nodes))
+  LaplacePoints(map(x->transformWeightFromIdealLaplace(x,A),lp.weights), map(x->transformNodeFromIdealLaplace(x,A),lp.nodes))
 end
 
 """
@@ -233,7 +233,7 @@ end
 function computeRPADenominatorByDoubleLaplace(x::Float64,ω::Float64,lp::LaplacePoints)
   sum = 0.
   for (node,weight) in zip(lp.nodes,lp.weights)
-    sum += weight * sin(ω*node) * exp(-node*x)
+    sum += weight * sin(ω*node)/ω * exp(-node*x)
   end
   return sum
 end

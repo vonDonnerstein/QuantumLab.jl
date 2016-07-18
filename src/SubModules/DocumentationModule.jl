@@ -1,5 +1,5 @@
 module DocumentationModule
-export Citation, JournalCitation, BookCitation, GenericCitation, summarize
+export Citation, JournalCitation, BookCitation, GenericCitation, summarize, @add_doc
 import Base.display
 import Base.convert
 import Base.promote_rule
@@ -35,6 +35,10 @@ type BookCitation <: Citation
   ISBN::AbstractString
 end
 
+function display(cite::BookCitation)
+  display(Base.Markdown.parse(""" - $(join(cite.authors,", ")): *$(cite.title)* (ISBN $(cite.ISBN))"""))
+end
+
 """Citation class for anything that can not be described by any of the other subclasses of Citation. Make sure none of the others fits the purpose before using this one."""
 type GenericCitation <: Citation
   string::AbstractString
@@ -44,7 +48,6 @@ function display(cite::GenericCitation)
   display(Base.Markdown.parse(""" - $(cite.string)"""))
 end
 
-"""display(Array{Any,1}) is used to pretty-print documentation containing normal (Markdown) documentation text and Citation objects"""
 function display(docuArray::Array{Documentation,1})
   local cites = Array{Citation,1}()
   display(Base.Markdown.parse("""
@@ -125,9 +128,29 @@ function summarize(f::DataType)
 end
 
 # promotion and conversion
-Base.promote_rule(::Type{Documentation},::Type{Base.Markdown.MD}) = Documentation
-Base.promote_rule(::Type{GenericCitation},::Type{Base.Markdown.MD}) = Documentation
+Base.promote_rule(::Type{Base.Markdown.MD},::Type{Documentation}) 	= Documentation
+Base.promote_rule(::Type{Base.Markdown.MD},::Type{Citation}) 		= Documentation
+Base.promote_rule(::Type{Base.Markdown.MD},::Type{GenericCitation}) 	= Documentation
+Base.promote_rule(::Type{Base.Markdown.MD},::Type{BookCitation}) 	= Documentation
+Base.promote_rule(::Type{Base.Markdown.MD},::Type{JournalCitation}) 	= Documentation
+Base.promote_rule(::Type{Documentation},::Type{Citation}) 		= Documentation
+Base.promote_rule(::Type{Documentation},::Type{GenericCitation}) 	= Documentation
+Base.promote_rule(::Type{Documentation},::Type{BookCitation}) 		= Documentation
+Base.promote_rule(::Type{Documentation},::Type{JournalCitation}) 	= Documentation
 Base.convert(::Type{Documentation},md::Base.Markdown.MD) = Documentation(md)
 Base.convert(::Type{Documentation},cite::Citation) = Documentation(cite)
+
+macro add_doc(newentry,obj)
+  _curmod = current_module()
+  _obj = :($_curmod.$obj)
+  _olddoc = Base.doc(eval(_obj))
+  return quote
+    if isa($_olddoc, Vector)
+      Base.doc!($_obj,[$newentry,$_olddoc...])  # making sure we promote to the correct type
+    else
+      Base.doc!($_obj,[$newentry,$_olddoc])     # making sure we promote to the correct type
+    end
+  end
+end
 
 end # module
