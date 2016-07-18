@@ -30,7 +30,11 @@ deps/usr/lib/libint2jl-QuantumLab.so
 
 # Testing
 test/hackbusch_pretables
-test/STO-3G.tx93
+test/*.tx93
+test/*.xyz
+
+# ctags
+tags
 
 # Git
 *.orig
