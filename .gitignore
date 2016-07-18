@@ -22,7 +22,7 @@ deps/usr/src/libint2_binaries
 
 # LibInt2 Links
 deps/usr/lib/libint2-QuantumLab.so
-deps/usr/lib/libint2jl-QuantumLab.so
+deps/usr/lib/libint2jl.so
 
 # VIM
 *.swo
