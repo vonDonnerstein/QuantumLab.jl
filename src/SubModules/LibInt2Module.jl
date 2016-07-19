@@ -13,6 +13,13 @@ using ..BasisFunctionsModule
 using ..IntegralsModule
 
 
+"""
+The maximal LQuantumNumber to which libint2 has been compiled. Compare :/deps/usr/src/Makefile: MAX_AM.
+Creating shells with higher LQuantumNumber causes segfaults within the libint2.
+"""
+const MAX_AM = 7
+
+
 ## Bitstypes
 
 ## LibInt2Shell
@@ -27,12 +34,18 @@ end
 
 #  Constructors
 """
+    LibInt2Shell(origin::Vector{Float64}, lqn::Int, nprim::Int, exponents::Vector{Float64}, coefficients::Vector{Float64}; renorm::Bool=false)
 The libint2 library expects the coefficients to be input the same way as with basis set definition files. It then renormalizes the coefficients accordingly.
 This behavior is the default for efficiency reasons. To directly enter the coefficients set the renorm flag to false.
 When converting a Shell into a LibInt2Shell (e.g. with convert()), this is taken care of automatically.
 Note, that coefficients are generally only specified up to a global scaling factor - only relative factors are handled by renormalization.
 """
 function LibInt2Shell(origin::Vector{Float64},lqn::Int,nprim::Int,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true)
+  if lqn > MAX_AM
+    error("libint2 has only been compiled to MAX_AM $MAX_AM.
+	  Can't create LibInt2Shell with lqn larger than that ($lqn).
+	  Consider recompiling to higher MAX_AM, or use `Shell`s instead of `LibInt2Shell`s.")
+  end
   if renorm==true
     return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
   else

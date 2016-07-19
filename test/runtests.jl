@@ -92,6 +92,7 @@ density = evaluateSCF(bas,h2o,mean(matrixSADguess),5)[3]
 @test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,density) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 
 # test Shells: ShellModule and LibInt2Module
+@test_throws ErrorException LibInt2Shell([0.,0.,0.],100,1,[.1],[.5])
 shell_native  = Shell(LQuantumNumber("S"),Position(0.,0.,0.),[1.,2.,3.],[.1,.2,.3])
 shell_libint2 = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
 shell_nativefromlibint2 = Shell(shell_libint2)

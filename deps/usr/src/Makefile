@@ -79,6 +79,12 @@ $(libint2_compile): $(libint2_extract_and_configure_the_compiler)
 	cd libint2_build/libint-$(VERSION) && $(MAKE)
 	cd libint2_build/libint-$(VERSION) && $(MAKE) install
 	cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.so ../lib/libint2-$(VERSION).so
+	@tput setaf 1
+	@tput bold
+	@echo -e "WARNING: libint2-$(VERSION).so has been (re-)compiled. \n" \
+	                "Please make sure the 'const MAX_AM' in src/SubModules/LibInt2Module.jl \n" \
+			"is in line with your actual compile options."
+	@tput sgr0
 .PHONY: libint2_compile
 libint2_compile: $(libint2_compile)
 
