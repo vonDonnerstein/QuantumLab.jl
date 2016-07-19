@@ -19,6 +19,8 @@ lcov.info
 deps/usr/src/libint2_source
 deps/usr/src/libint2_build
 deps/usr/src/libint2_binaries
+deps/usr/lib/libint2-QuantumLab.so
+deps/usr/lib/libint2jl.so
 
 # VIM
 *.swo
@@ -26,7 +28,11 @@ deps/usr/src/libint2_binaries
 
 # Testing
 test/hackbusch_pretables
-test/STO-3G.tx93
+test/*.tx93
+test/*.xyz
+
+# ctags
+tags
 
 # Git
 *.orig
