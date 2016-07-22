@@ -8,14 +8,14 @@ MAX_AM=7 # Support Gaussians of angular momentum up to N. Can specify values for
 OPT_LEVEL=3
 
 OPT_AM=1
-MAX_AM=2
 OPT_LEVEL=0
 
-CXX=clang++
-SIMD=AVX
+CXX=c++
+SIMD=
 
 
 # DERIVATIVE VARIABLES (do not modify directly)
+PLATFORM = $(shell uname)
 CXXFLAGS        = -std=c++11 -O$(OPT_LEVEL) 	
 ifeq ($(SIMD),AVX)
   CXXFLAGS     += -mavx
@@ -77,12 +77,22 @@ $(libint2_extract_and_configure_the_compiler): $(libint2_compile_the_compiler)
 .PHONY: libint2_extract_and_configure_the_compiler
 libint2_extract_and_configure_the_compiler: $(libint2_extract_and_configure_the_compiler)
 
-libint2_compile=../lib/libint2-$(VERSION).so
-$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
-	@echo COMPILE_LIBINT2
-	cd libint2_build/libint-$(VERSION) && $(MAKE)
-	cd libint2_build/libint-$(VERSION) && $(MAKE) install
-	cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.so ../lib/libint2-$(VERSION).so
+ifeq ($(PLATFORM),Linux)
+	libint2_compile=../lib/libint2-$(VERSION).so
+	$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
+		@echo COMPILE_LIBINT2
+		cd libint2_build/libint-$(VERSION) && $(MAKE)
+		cd libint2_build/libint-$(VERSION) && $(MAKE) install
+		cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.so ../lib/libint2-$(VERSION).so
+else ifeq ($(PLATFORM),Darwin)
+	libint2_compile=../lib/libint2-$(VERSION).dylib
+	$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
+		@echo COMPILE_LIBINT2
+		cd libint2_build/libint-$(VERSION) && $(MAKE)
+		cd libint2_build/libint-$(VERSION) && $(MAKE) install
+		cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.dylib ../lib/libint2-$(VERSION).dylib
+		install_name_tool -id @rpath/libint2-$(VERSION).dylib ../lib/libint2-$(VERSION).dylib
+endif
 .PHONY: libint2_compile
 libint2_compile: $(libint2_compile)
 
@@ -93,11 +103,20 @@ libint2_compile: $(libint2_compile)
 
 
 ### LIBINT2JL ###
-INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/include/eigen3
+ifeq ($(PLATFORM),Linux)
+INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/inlude/eigen3
 
-libint2jl: ../lib/libint2-$(VERSION).so
-	@echo COMPILE_LIBINT2JL
-	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).so -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).so 
+	libint2jl: ../lib/libint2-$(VERSION).so
+		@echo COMPILE_LIBINT2JL
+		$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).so -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).so 
+else ifeq ($(PLATFORM),Darwin)
+	INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/local/opt/eigen/include/eigen3
+
+	libint2jl: ../lib/libint2-$(VERSION).dylib
+		@echo COMPILE_LIBINT2JL
+		$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION).dylib libint2jl.cpp ../lib/libint2-$(VERSION).dylib 
+
+endif
 
 
 
