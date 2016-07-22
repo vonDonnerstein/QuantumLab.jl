@@ -21,7 +21,7 @@ PLATFORM = $(shell uname)
 SO_EXTENSION=so
 ifeq ($(PLATFORM),Darwin)
   SO_EXTENSION=dylib
-else 
+endif 
 CXXFLAGS        = -std=c++11 -O$(OPT_LEVEL) 	
 ifeq ($(SIMD),AVX)
   CXXFLAGS     += -mavx
