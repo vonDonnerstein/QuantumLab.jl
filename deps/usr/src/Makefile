@@ -2,20 +2,26 @@
 # only tested with g++, version as follows though current prerelease tag is 2.1.0-beta2
 VERSION=2.2.0-beta1
 
+# for OSX (after a fresh install): (PlATFORM == Darwin)
+# 1) install homebrew by following the instructions on brew.sh
+# 2) brew install autoconf automake gmp eigen boost
+# 3) make
+
 # LIBINT2 BUILD CONFIGURATION
 OPT_AM=4 # Optimize maximally for up to angular momentum N (N <= max-am)
 MAX_AM=7 # Support Gaussians of angular momentum up to N. Can specify values for each derivative levels as a list N0,N1,N2... 
 OPT_LEVEL=3
 
-OPT_AM=1
-OPT_LEVEL=0
-
-CXX=c++
-SIMD=
+CXX=clang++
+SIMD=AVX
 
 
 # DERIVATIVE VARIABLES (do not modify directly)
 PLATFORM = $(shell uname)
+SO_EXTENSION=so
+ifeq ($(PLATFORM),Darwin)
+  SO_EXTENSION=dylib
+else 
 CXXFLAGS        = -std=c++11 -O$(OPT_LEVEL) 	
 ifeq ($(SIMD),AVX)
   CXXFLAGS     += -mavx
@@ -77,21 +83,14 @@ $(libint2_extract_and_configure_the_compiler): $(libint2_compile_the_compiler)
 .PHONY: libint2_extract_and_configure_the_compiler
 libint2_extract_and_configure_the_compiler: $(libint2_extract_and_configure_the_compiler)
 
-ifeq ($(PLATFORM),Linux)
-	libint2_compile=../lib/libint2-$(VERSION).so
-	$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
-		@echo COMPILE_LIBINT2
-		cd libint2_build/libint-$(VERSION) && $(MAKE)
-		cd libint2_build/libint-$(VERSION) && $(MAKE) install
-		cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.so ../lib/libint2-$(VERSION).so
-else ifeq ($(PLATFORM),Darwin)
-	libint2_compile=../lib/libint2-$(VERSION).dylib
-	$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
-		@echo COMPILE_LIBINT2
-		cd libint2_build/libint-$(VERSION) && $(MAKE)
-		cd libint2_build/libint-$(VERSION) && $(MAKE) install
-		cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.dylib ../lib/libint2-$(VERSION).dylib
-		install_name_tool -id @rpath/libint2-$(VERSION).dylib ../lib/libint2-$(VERSION).dylib
+libint2_compile=../lib/libint2-$(VERSION).$(SO_EXTENSION)
+$(libint2_compile): $(libint2_extract_and_configure_the_compiler)
+	@echo COMPILE_LIBINT2
+	cd libint2_build/libint-$(VERSION) && $(MAKE)
+	cd libint2_build/libint-$(VERSION) && $(MAKE) install
+	cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.$(SO_EXTENSION) ../lib/libint2-$(VERSION).$(SO_EXTENSION)
+ifeq ($(PLATFORM),Darwin)
+	install_name_tool -id @rpath/libint2-$(VERSION).dylib ../lib/libint2-$(VERSION).dylib
 endif
 .PHONY: libint2_compile
 libint2_compile: $(libint2_compile)
@@ -103,19 +102,18 @@ libint2_compile: $(libint2_compile)
 
 
 ### LIBINT2JL ###
-ifeq ($(PLATFORM),Linux)
-INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/inlude/eigen3
+INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/include/eigen3
+ifeq ($(PLATFORM),Darwin)
+  INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/local/opt/eigen/include/eigen3
+endif
 
-	libint2jl: ../lib/libint2-$(VERSION).so
-		@echo COMPILE_LIBINT2JL
-		$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).so -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).so 
-else ifeq ($(PLATFORM),Darwin)
-	INCLUDE = -Ilibint2_binaries/include/ -Ilibint2_binaries/include/libint2 -I/usr/local/opt/eigen/include/eigen3
-
-	libint2jl: ../lib/libint2-$(VERSION).dylib
-		@echo COMPILE_LIBINT2JL
-		$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION).dylib libint2jl.cpp ../lib/libint2-$(VERSION).dylib 
-
+libint2jl: ../lib/libint2-$(VERSION).$(SO_EXTENSION)
+	@echo COMPILE_LIBINT2JL
+ifneq ($(PLATFORM),Darwin)
+	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).$(SO_EXTENSION) -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).$(SO_EXTENSION)
+else
+	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION).dylib libint2jl.cpp ../lib/libint2-$(VERSION).dylib 
+	install_name_tool -add_rpath @loader_path/. ../lib/libint2-$(VERSION).dylib
 endif
 
 
