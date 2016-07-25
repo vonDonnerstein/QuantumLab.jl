@@ -21,6 +21,9 @@ libint2jl:
 libint2jl-clean:
 	cd deps/usr/src && $(MAKE) clean
 
+tags:
+	ctags -R
+
 coverage: 
 	$(MAKE) clean
 	$(MAKE) index.html
