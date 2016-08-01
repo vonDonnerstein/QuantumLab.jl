@@ -1,5 +1,5 @@
-﻿module IntegralsModule
-export computeValueOverlap, doublefactorial, computeElectronRepulsionIntegral, KineticIntegral, NuclearAttractionIntegral, computeValueThreeCenterOverlap, computeMatrixBlockOverlap
+module IntegralsModule
+export computeIntegralOverlap, computeElectronRepulsionIntegral, computeIntegralKinetic, NuclearAttractionIntegral, computeIntegralThreeCenterOverlap, computeMatrixBlockOverlap, computeMatrixBlockKinetic, normalize!
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -13,7 +13,6 @@ using GSL
 ProgressMeter.printover(STDOUT," + IntegralsModule.............")
 
 
-doublefactorial(n::Int) = prod(n:-2:1)
 
 function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
   m = mqn
@@ -117,10 +116,14 @@ function GaussProductPolynomialFactor(
 end
 
 function computeMatrixBlockOverlap(sh1::Shell,sh2::Shell)
-  return [computeValueOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+  return [computeIntegralOverlap(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
-function computeValueOverlap(
+function computeMatrixBlockKinetic(sh1::Shell,sh2::Shell)
+  return [computeIntegralKinetic(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+end
+
+function computeIntegralOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
   # S_ij = Integrate[phi_i(r) phi_j(r),{r el R}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
@@ -134,20 +137,20 @@ function computeValueOverlap(
   return K*Ix*Iy*Iz::Float64
 end
 
-function computeValueOverlap(
+function computeIntegralOverlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
   integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      integral += coeff1*coeff2*computeValueOverlap(pgb1,pgb2)
+      integral += coeff1*coeff2*computeIntegralOverlap(pgb1,pgb2)
     end
   end
   return integral::Float64
 end
 
-function computeValueThreeCenterOverlap(
+function computeIntegralThreeCenterOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction,
   pgb3::PrimitiveGaussianBasisFunction)
@@ -188,7 +191,7 @@ function computeValueThreeCenterOverlap(
   return K12*K*Ix*Iy*Iz::Float64
 end
 
-function computeValueThreeCenterOverlap(
+function computeIntegralThreeCenterOverlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction,
   cgb3::ContractedGaussianBasisFunction)
@@ -197,7 +200,7 @@ function computeValueThreeCenterOverlap(
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
       for (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
-	integral += coeff1*coeff2*coeff3*computeValueThreeCenterOverlap(pgb1,pgb2,pgb3)
+	integral += coeff1*coeff2*coeff3*computeIntegralThreeCenterOverlap(pgb1,pgb2,pgb3)
       end
     end
   end
@@ -212,7 +215,7 @@ function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
   return MQuantumNumber(mqn_t[1],mqn_t[2],mqn_t[3])
 end
 
-function KineticIntegral(
+function computeIntegralKinetic(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)
   #Ix + Iy + Iz = (pgb1 | 1/2 ∇^2 | pgb2)
@@ -237,23 +240,23 @@ function KineticIntegral(
     α1 = pgb1.exponent
     α2 = pgb2.exponent
 
-    if(l1*l2!=0) integral += (1/2*l1*l2) * computeValueOverlap(pgb1decr,pgb2decr) end
-                 integral += (2*α1*α2)   * computeValueOverlap(pgb1incr,pgb2incr)
-    if(l2   !=0) integral += (-α1*l2)    * computeValueOverlap(pgb1incr,pgb2decr) end
-    if(l1   !=0) integral += (-l1*α2)    * computeValueOverlap(pgb1decr,pgb2incr) end
+    if(l1*l2!=0) integral += (1/2*l1*l2) * computeIntegralOverlap(pgb1decr,pgb2decr) end
+                 integral += (2*α1*α2)   * computeIntegralOverlap(pgb1incr,pgb2incr)
+    if(l2   !=0) integral += (-α1*l2)    * computeIntegralOverlap(pgb1incr,pgb2decr) end
+    if(l1   !=0) integral += (-l1*α2)    * computeIntegralOverlap(pgb1decr,pgb2incr) end
   end
 
   return integral::Float64
 end
 
-function KineticIntegral(
+function computeIntegralKinetic(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
   integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      integral += coeff1*coeff2*KineticIntegral(pgb1,pgb2)
+      integral += coeff1*coeff2*computeIntegralKinetic(pgb1,pgb2)
     end
   end
   return integral::Float64
@@ -456,6 +459,17 @@ end
 
 function computeElectronRepulsionIntegral(μ::Shell,ν::Shell,λ::Shell,σ::Shell)
   [computeElectronRepulsionIntegral(μcgbf,νcgbf,λcgbf,σcgbf) for μcgbf in expandShell(μ), νcgbf in expandShell(ν), λcgbf in expandShell(λ), σcgbf in expandShell(σ)]
+end
+
+function normalize!(cgb::ContractedGaussianBasisFunction)
+  N = computeIntegralOverlap(cgb,cgb)
+  scale!(cgb.coefficients,1/sqrt(N))
+end
+
+function normalize!(cgbs::Vector{ContractedGaussianBasisFunction})
+  for cgb in cgbs
+    normalize!(cgb)
+  end
 end
 
 end # module

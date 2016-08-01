@@ -1,5 +1,5 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str
+export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial
 import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
 immutable Position
@@ -111,5 +111,7 @@ isless(lqn1::LQuantumNumber, lqn2::LQuantumNumber) = lqn1.exponent<lqn2.exponent
 function evaluateFunction(x::Position, f::Function)
   return f(x)
 end
+
+doublefactorial(n::Int) = prod(n:-2:1)
 
 end # module

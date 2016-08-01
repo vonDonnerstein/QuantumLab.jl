@@ -1,4 +1,4 @@
-﻿module HartreeFockModule
+module HartreeFockModule
 export computeEnergyHartreeFock, evaluateSCF
 using ..BaseModule
 using ..BasisModule

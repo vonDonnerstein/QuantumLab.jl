@@ -12,7 +12,10 @@ export libInt2Initialize, libInt2Finalize
 export LibInt2Shell
 export LibInt2Engine, LibInt2EngineCoulomb, LibInt2EngineOverlap, LibInt2EngineKinetic
 export destroy!, lqn, nprims
-export computeMatrixBlockKinetic, computeBasisShellsLibInt2
+export computeBasisShellsLibInt2
+import ..IntegralsModule.computeMatrixBlockOverlap
+import ..IntegralsModule.computeMatrixBlockKinetic
+import ..IntegralsModule.computeElectronRepulsionIntegral
 
 
 
@@ -20,8 +23,7 @@ import ...QuantumLab.libint2_available
 
 if (libint2_available) # the normal case
   import Base.convert
-  import Base.display, ..IntegralsModule.computeElectronRepulsionIntegral
-  import ..IntegralsModule.computeMatrixBlockOverlap
+  import Base.display
   using TensorOperations
   using ..BaseModule
   using ..GeometryModule
@@ -60,7 +62,7 @@ if (libint2_available) # the normal case
     if renorm==true
       return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
     else
-      return convert(LibInt2Shell,Shell(Position(origin...),LQuantumNumber(lqn),exponents,coefficients))
+      return convert(LibInt2Shell,Shell(Position(origin...),LQuantumNumber(lqn),exponents,coefficients;renorm=false))
     end
   end
   
@@ -74,7 +76,7 @@ if (libint2_available) # the normal case
     scaledcoefficients = Float64[]
     for (coeff,expon) in zip(sh.coefficients,sh.exponents)
       pgb = PrimitiveGaussianBasisFunction(origin,expon,MQuantumNumber(sh.lqn.exponent,0,0))
-      push!(scaledcoefficients,coeff * sqrt(computeValueOverlap(pgb,pgb)))
+      push!(scaledcoefficients,coeff * sqrt(computeIntegralOverlap(pgb,pgb)))
     end
   
     LibInt2Shell([sh.center.x,sh.center.y,sh.center.z],sh.lqn.exponent,length(sh.exponents),sh.exponents,scaledcoefficients)
@@ -147,7 +149,7 @@ if (libint2_available) # the normal case
     contract_ptr = reinterpret(Ptr{Cint},contract_ptrptr)
     lqn = LQuantumNumber(Int(unsafe_load(contract_ptr,1)))
   
-    return Shell(center,lqn,expons,coeffs)
+    return Shell(center,lqn,expons,coeffs;renorm=false)
   end
   
   
@@ -281,22 +283,14 @@ else # if the libint2 is not available we have to stub the relevant functions
   using ..ShellModule
   using ..BasisFunctionsModule
   using ..IntegralsModule
+  using ..BasisModule
   #
   libInt2Initialize() = return
   libInt2Finalize() = return
   #
   typealias LibInt2Shell Shell
   function Shell(center::Vector{Float64},lqn::Int, nprim::Int, exponents::Vector{Float64},coefficients::Vector{Float64};renorm::Bool=true)
-    if renorm
-      scaledcoeffs = Float64[]
-      for (expon,coeff) in zip(exponents, coefficients)
-	pgb = PrimitiveGaussianBasisFunction(Position(center...),expon,MQuantumNumber(lqn,0,0))
-	push!(scaledcoeffs, coeff/sqrt(computeValueOverlap(pgb,pgb)))
-      end
-      Shell(Position(center...),LQuantumNumber(lqn),exponents,scaledcoeffs)
-    else
-      Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients)
-    end
+    Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients;renorm=renorm)
   end
   #
   bitstype 64 LibInt2Engine64
@@ -316,6 +310,10 @@ else # if the libint2 is not available we have to stub the relevant functions
   nprims(sh::Shell) = return length(sh.coefficients)
   #
   computeBasisShellsLibInt2 = computeBasisShells
+  #
+  computeMatrixBlockOverlap(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockOverlap(sh1,sh2)
+  computeMatrixBlockKinetic(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockKinetic(sh1,sh2)
+  computeElectronRepulsionIntegral(eng::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell,sh3::LibInt2Shell,sh4::LibInt2Shell) = computeElectronRepulsionIntegral(sh1,sh2,sh3,sh4)
 end
 
 end # Module

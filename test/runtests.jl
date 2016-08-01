@@ -76,7 +76,7 @@ matrixKinetic = computeMatrixKinetic(bas)
 @test_approx_eq_eps 0.16175843 IntegralsModule.FIntegral(2,0.3) 1e-8
 @test_approx_eq -π IntegralsModule.NuclearAttractionIntegral(PrimitiveGaussianBasisFunction(Position(0,0,0),1.,MQuantumNumber(1,0,0)),PrimitiveGaussianBasisFunction(Position(0,0,0),1.,MQuantumNumber(1,0,0)),Atom(Element("C"),Position(0,0,0)))
 @test_approx_eq IntegralsModule.GaussianIntegral1D_Mathematica(6,1.2)  IntegralsModule.GaussianIntegral1D_Valeev(6,1.2)
-@test_approx_eq IntegralsModule.OverlapFundamental(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2]) computeValueOverlap(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2])
+@test_approx_eq IntegralsModule.OverlapFundamental(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2]) computeIntegralOverlap(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2])
 
 # test InitialGuessModule
 matrixSADguess = computeDensityGuessSAD("HF","STO-3G",h2o)
@@ -93,15 +93,15 @@ density = evaluateSCF(bas,h2o,mean(matrixSADguess),5)[3]
 
 # test Shells: ShellModule and LibInt2Module
 import QuantumLab.libint2_available
-shell_native  = Shell(Position(0.,0.,0.),LQuantumNumber("S"),[1.,2.,3.],[.1,.2,.3])
+shell_native  = Shell(Position(0.,0.,0.),LQuantumNumber("S"),[1.,2.,3.],[.1,.2,.3],renorm=false)
 shell_libint2 = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
 shell_nativefromlibint2 = Shell(shell_libint2)
+@test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
 @test_approx_eq shell_native.coefficients[2] .2
 @test_approx_eq computeMatrixBlockOverlap(shell_nativefromlibint2,shell_nativefromlibint2) computeMatrixBlockOverlap(shell_libint2,shell_libint2)
 @test_approx_eq computeElectronRepulsionIntegral(shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2) computeElectronRepulsionIntegral(shell_libint2,shell_libint2,shell_libint2,shell_libint2)
 if (libint2_available)
   @test_throws ErrorException LibInt2Shell([0.,0.,0.],100,1,[.1],[.5])
-  @test_approx_eq_eps shell_nativefromlibint2.coefficients[2] 0.41030724 1e-8
 end
 
 # test LibInt2Module
@@ -112,7 +112,9 @@ tmp = Shell(tmp_lib).coefficients
 @test_approx_eq tmp[1] tmp[2]
 destroy!(tmp_lib)
 shells = computeBasisShellsLibInt2(sto3g,h2o)
+shells_native = computeBasisShells(sto3g,h2o)
 S = computeMatrixOverlap(shells)
+@test_approx_eq S computeMatrixOverlap(shells_native)
 @test_approx_eq S computeMatrixOverlap(bas)
 T = computeMatrixKinetic(shells)
 @test_approx_eq T computeMatrixKinetic(bas)

@@ -21,8 +21,8 @@ such that
 function computeMatricesResolutionOfTheIdentityOverlapMetric(
   basis::GaussianBasis,
   basis_aux::GaussianBasis)
-  B = [computeValueThreeCenterOverlap(μ,ν,P) for μ in basis.contractedBFs, ν in basis.contractedBFs, P in basis_aux.contractedBFs] #B=(μν|P)
-  C = Symmetric([computeValueOverlap(cgb1,cgb2) for cgb1 in basis_aux.contractedBFs, cgb2 in basis_aux.contractedBFs]) #Ci=(PQ)^-1
+  B = [computeIntegralThreeCenterOverlap(μ,ν,P) for μ in basis.contractedBFs, ν in basis.contractedBFs, P in basis_aux.contractedBFs] #B=(μν|P)
+  C = Symmetric([computeIntegralOverlap(cgb1,cgb2) for cgb1 in basis_aux.contractedBFs, cgb2 in basis_aux.contractedBFs]) #Ci=(PQ)^-1
   D = [computeElectronRepulsionIntegral(P,identityCGF,Q,identityCGF)   for P in basis_aux.contractedBFs, Q in basis_aux.contractedBFs] #D=(P|Q)
   return B, inv(C), D
 end

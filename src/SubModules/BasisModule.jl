@@ -1,6 +1,7 @@
 module BasisModule
-export GaussianBasis, computeBasis, normalize!
+export GaussianBasis, computeBasis, computeBasisShells
 import Base.display
+import ..IntegralsModule.normalize!
 
 using ..BaseModule
 using ..BasisFunctionsModule
@@ -8,6 +9,7 @@ using ..BasisSetModule
 using ..GeometryModule
 using ..AtomModule
 using ..IntegralsModule
+using ..ShellModule
 
 
 abstract Basis
@@ -29,7 +31,7 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
 				for primitiveDefinition in contractedDefinition.primitives
 					exponent=primitiveDefinition.exponent
 					primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
-					norm = IntegralsModule.computeValueOverlap(primitiveBF,primitiveBF)
+					norm = IntegralsModule.computeIntegralOverlap(primitiveBF,primitiveBF)
 					push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
 					push!(contractedBF.primitiveBFs,primitiveBF)
 				end
@@ -46,11 +48,6 @@ function normalize!(basis::GaussianBasis)
   end
 end
 
-function normalize!(cgb::ContractedGaussianBasisFunction)
-  N = computeValueOverlap(cgb,cgb)
-  scale!(cgb.coefficients,1/sqrt(N))
-end
-
 function display(basis::GaussianBasis)
   dump(typeof(basis))
   indent = "  "
@@ -61,6 +58,19 @@ function display(basis::GaussianBasis)
   for cgbf in basis.contractedBFs
     display(cgbf,indent)
   end
+end
+
+function computeBasisShells(basSet::BasisSet,geo::Geometry)
+  shells = Shell[]
+  for atom in geo.atoms
+    for contractedDefinition in basSet.definitions[atom.element]
+      exponents = [prim.exponent for prim in contractedDefinition.primitives]
+      coefficients = [prim.prefactor for prim in contractedDefinition.primitives]
+      sh = Shell(atom.position,contractedDefinition.lQuantumNumber,exponents,coefficients)
+      push!(shells,sh)
+    end
+  end
+  return shells
 end
 
 end # module

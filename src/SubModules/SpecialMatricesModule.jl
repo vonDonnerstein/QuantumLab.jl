@@ -8,7 +8,7 @@ using TensorOperations
 using ..LibInt2Module
 
 function computeMatrixKinetic(basis::GaussianBasis)
-  return [KineticIntegral(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+  return [computeIntegralKinetic(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
 function computeTensorElectronRepulsionIntegrals(basis::GaussianBasis)
@@ -16,7 +16,7 @@ function computeTensorElectronRepulsionIntegrals(basis::GaussianBasis)
 end
 
 function computeMatrixOverlap(basis::GaussianBasis)
-  return [computeValueOverlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+  return [computeIntegralOverlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
 function computeMatrixNuclearAttraction(basis::GaussianBasis,geo::Geometry)

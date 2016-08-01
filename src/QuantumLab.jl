@@ -63,14 +63,14 @@ include("SubModules/IntegralsModule.jl")
 @reexport using .IntegralsModule
 println("Done.")
 
-print(" + LibInt2Module...............")
-include("SubModules/LibInt2Module.jl")
-@reexport using .LibInt2Module
-println("Done.")
-
 print(" + BasisModule.................")
 include("SubModules/BasisModule.jl")
 @reexport using .BasisModule
+println("Done.")
+
+print(" + LibInt2Module...............")
+include("SubModules/LibInt2Module.jl")
+@reexport using .LibInt2Module
 println("Done.")
 
 print(" + SpecialMatricesModule.......")
