@@ -108,6 +108,9 @@ if (libint2_available) # the normal case
     return Int(div(alphaEnd_ptr-alpha_ptr,8))
   end
   
+  function nbf(l2sh::LibInt2Shell)
+    div((lqn(l2sh)+1)^2+(lqn(l2sh)+1),2)
+  end
   
   function convert(::Type{Shell},l2sh::LibInt2Shell)
     # LibInt2Shell objects reside in memory as

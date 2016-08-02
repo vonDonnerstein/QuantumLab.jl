@@ -6,6 +6,24 @@ using ..BasisModule
 using ..Geometry
 using TensorOperations
 using ..LibInt2Module
+using ..ShellModule
+
+function scatterMatrixBlocks2D(shells,totaldim::Integer,blockevaluator::Function,blocklength::Function)
+  result = zeros(Float64,totaldim,totaldim)
+  # column-major order (sh1 counts top to bottom, sh2 counts left to right)
+  lastcol,lastrow = 0,0
+  for sh1 in shells
+    block_col_size = blocklength(sh1)
+    lastcol += block_col_size
+    for sh2 in shells
+      block_row_size = blocklength(sh2)
+      lastrow += block_row_size
+      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = blockevaluator(sh1,sh2)
+    end
+    lastrow = 0
+  end
+  return result
+end
 
 function computeMatrixKinetic(basis::GaussianBasis)
   return [computeIntegralKinetic(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
@@ -17,6 +35,11 @@ end
 
 function computeMatrixOverlap(basis::GaussianBasis)
   return [computeIntegralOverlap(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
+end
+
+function computeMatrixOverlap(shells::Vector{Shell})
+  totaldim = mapreduce(ShellModule.nbf,+,0,shells)
+  return scatterMatrixBlocks2D(shells,totaldim,computeMatrixBlockOverlap,ShellModule.nbf)
 end
 
 function computeMatrixNuclearAttraction(basis::GaussianBasis,geo::Geometry)
@@ -65,7 +88,6 @@ function computeMatrixExchange(electronRepulsionIntegrals::Array{Float64,4}, den
   @tensor K[μIndex,νIndex] := electronRepulsionIntegrals[μIndex,λIndex,νIndex,σIndex] * density[λIndex,σIndex]
 end
 
-
 function computeMatrixFock(
   basis::GaussianBasis,
   geometry::Geometry,
@@ -106,46 +128,16 @@ end
 
 function computeMatrixOverlap(shells::Vector{LibInt2Shell})
   totaldim, maxprims, maxlqn = computeDimensions(shells)
-  result = zeros(Float64,totaldim,totaldim)
   engine = LibInt2EngineOverlap(maxprims,LQuantumNumber(maxlqn))
-
-  # column-major order (sh1 counts top to bottom, sh2 counts left to right)
-  lastcol,lastrow = 0,0
-  for sh1 in shells
-    block_col_size = div((lqn(sh1)+1)^2+(lqn(sh1)+1),2)
-    lastcol += block_col_size
-    for sh2 in shells
-      block_row_size = div((lqn(sh2)+1)^2+(lqn(sh2)+1),2)
-      lastrow += block_row_size
-
-      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = computeMatrixBlockOverlap(engine,sh1,sh2)
-    end
-    lastrow = 0
-  end
-
+  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockOverlap(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
   destroy!(engine)
   return result
 end
 
 function computeMatrixKinetic(shells::Vector{LibInt2Shell})
   totaldim, maxprims, maxlqn = computeDimensions(shells)
-  result = zeros(Float64,totaldim,totaldim)
   engine = LibInt2EngineKinetic(maxprims,LQuantumNumber(maxlqn))
-
-  # column-major order (sh1 counts top to bottom, sh2 counts left to right)
-  lastcol,lastrow = 0,0
-  for sh1 in shells
-    block_col_size = div((lqn(sh1)+1)^2+(lqn(sh1)+1),2)
-    lastcol += block_col_size
-    for sh2 in shells
-      block_row_size = div((lqn(sh2)+1)^2+(lqn(sh2)+1),2)
-      lastrow += block_row_size
-
-      result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] = computeMatrixBlockKinetic(engine,sh1,sh2)
-    end
-    lastrow = 0
-  end
-
+  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockKinetic(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
   destroy!(engine)
   return result
 end

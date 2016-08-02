@@ -69,4 +69,10 @@ function expandShell(sh::Shell)
   return result
 end
 
+"""
+compute the number of basisfunctions (cartesian) described by the shell
+"""
+function nbf(shell::Shell)
+  div((shell.lqn.exponent+1)^2+(shell.lqn.exponent+1),2)
+end
 end # module
