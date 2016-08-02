@@ -281,42 +281,7 @@ if (libint2_available) # the normal case
 
 
 else # if the libint2 is not available we have to stub the relevant functions
-  print("\b\b\b\b\b\b\b\b\b\b(stub)....")
-  using ..BaseModule
-  using ..ShellModule
-  using ..BasisFunctionsModule
-  using ..IntegralsModule
-  using ..BasisModule
-  #
-  libInt2Initialize() = return
-  libInt2Finalize() = return
-  #
-  typealias LibInt2Shell Shell
-  function Shell(center::Vector{Float64},lqn::Int, nprim::Int, exponents::Vector{Float64},coefficients::Vector{Float64};renorm::Bool=true)
-    Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients;renorm=renorm)
-  end
-  #
-  bitstype 64 LibInt2Engine64
-  bitstype 32 LibInt2Engine32
-  if is(Int,Int32)
-    typealias LibInt2Engine LibInt2Engine32
-  else
-    typealias LibInt2Engine LibInt2Engine64
-  end
-  LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
-  LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
-  LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
-  #
-  destroy!(shell::LibInt2Shell) = return
-  destroy!(engine::LibInt2Engine) = return
-  lqn(sh::Shell) = return sh.lqn.exponent
-  nprims(sh::Shell) = return length(sh.coefficients)
-  #
-  computeBasisShellsLibInt2 = computeBasisShells
-  #
-  computeMatrixBlockOverlap(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockOverlap(sh1,sh2)
-  computeMatrixBlockKinetic(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockKinetic(sh1,sh2)
-  computeElectronRepulsionIntegral(eng::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell,sh3::LibInt2Shell,sh4::LibInt2Shell) = computeElectronRepulsionIntegral(sh1,sh2,sh3,sh4)
+  include("LibInt2Module.stubs")
 end
 
 end # Module

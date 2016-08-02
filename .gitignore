@@ -14,6 +14,7 @@ index-sort-f.html
 index-sort-l.html
 index.html
 lcov.info
+test/coverage_run.out
 
 # Building libint
 deps/usr/src/libint2_source

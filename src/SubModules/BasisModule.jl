@@ -43,9 +43,7 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
 end
 
 function normalize!(basis::GaussianBasis)
-  for (cgb in basis.contractedBFs)
-    normalize!(cgb)
-  end
+  normalize!(basis.contractedBFs)
 end
 
 function display(basis::GaussianBasis)

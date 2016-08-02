@@ -29,6 +29,11 @@ function computeMatrixKinetic(basis::GaussianBasis)
   return [computeIntegralKinetic(cgb1,cgb2) for cgb1 in basis.contractedBFs, cgb2 in basis.contractedBFs]
 end
 
+function computeMatrixKinetic(shells::Vector{Shell})
+  totaldim = mapreduce(ShellModule.nbf,+,0,shells)
+  return scatterMatrixBlocks2D(shells,totaldim,computeMatrixBlockKinetic,ShellModule.nbf)
+end
+
 function computeTensorElectronRepulsionIntegrals(basis::GaussianBasis)
 	return ERIs = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in basis.contractedBFs, ν in basis.contractedBFs, λ in basis.contractedBFs, σ in basis.contractedBFs]
 end

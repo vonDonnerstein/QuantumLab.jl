@@ -100,6 +100,7 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq shell_native.coefficients[2] .2
 @test_approx_eq computeMatrixBlockOverlap(shell_nativefromlibint2,shell_nativefromlibint2) computeMatrixBlockOverlap(shell_libint2,shell_libint2)
 @test_approx_eq computeElectronRepulsionIntegral(shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2) computeElectronRepulsionIntegral(shell_libint2,shell_libint2,shell_libint2,shell_libint2)
+@test_approx_eq LibInt2Module.nbf(shell_libint2) 1
 if (libint2_available)
   @test_throws ErrorException LibInt2Shell([0.,0.,0.],100,1,[.1],[.5])
 end
@@ -117,6 +118,7 @@ S = computeMatrixOverlap(shells)
 @test_approx_eq S computeMatrixOverlap(shells_native)
 @test_approx_eq S computeMatrixOverlap(bas)
 T = computeMatrixKinetic(shells)
+@test_approx_eq T computeMatrixKinetic(shells_native)
 @test_approx_eq T computeMatrixKinetic(bas)
 J = computeMatrixCoulomb(shells,density)
 @test_approx_eq_eps J computeMatrixCoulomb(bas,density) 1e-8

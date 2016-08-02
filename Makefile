@@ -50,7 +50,7 @@ clean:
 $(cov_files): 
 	find . -name *.cov -exec rm {} \;
 	@echo "INFO: The next step may take a while:"
-	cd test; julia --code-coverage=user --inline=no runtests.jl &>/dev/null
+	cd test; julia --code-coverage=user --inline=no runtests.jl &>coverage_run.out
 
 lcov.info: $(cov_files)
 	julia -e 'using Coverage; LCOV.writefile("lcov.info",process_folder())'
