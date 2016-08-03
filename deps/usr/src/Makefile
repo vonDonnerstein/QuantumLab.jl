@@ -16,6 +16,9 @@ CXXFLAGS        = -std=c++11 -O$(OPT_LEVEL)
 ifeq ($(SIMD),AVX)
   CXXFLAGS     += -mavx
 endif
+ifeq ($(SIMD),SSE)
+  CXXFLAGS     += -msse -msse2 -msse3 -msse4
+endif
 
 # CONFIGURE FLAGS FOR THE COMPILATION OF THE COMPILER
 CONFIGURE_GEN_FLAGS =  --with-opt-am=$(OPT_AM) 
@@ -24,6 +27,9 @@ CONFIGURE_GEN_FLAGS += --enable-shared 			# build shared libraries
 CONFIGURE_GEN_FLAGS += --disable-unrolling  		# Do not unroll shell sets into integrals
 ifeq ($(SIMD),AVX)
   CONFIGURE_GEN_FLAGS += --with-real-type=libint2::simd::VectorAVXDouble
+endif
+ifeq ($(SIMD),SSE)
+  CONFIGURE_GEN_FLAGS += --with-real-type=libint2::simd::VectorSSEDouble
 endif
 CONFIGURE_GEN_FLAGS += --prefix=$(CURDIR)
 CONFIGURE_GEN_FLAGS += --with-incdirs="-I$(CURDIR)/libint2_source/include"
