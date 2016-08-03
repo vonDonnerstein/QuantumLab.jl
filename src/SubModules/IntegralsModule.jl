@@ -1,5 +1,5 @@
 module IntegralsModule
-export computeIntegralOverlap, computeElectronRepulsionIntegral, computeIntegralKinetic, NuclearAttractionIntegral, computeIntegralThreeCenterOverlap, computeMatrixBlockOverlap, computeMatrixBlockKinetic, normalize!
+export computeIntegralOverlap, computeElectronRepulsionIntegral, computeTensorBlockElectronRepulsionIntegrals, computeIntegralKinetic, computeIntegralNuclearAttraction, computeIntegralThreeCenterOverlap, computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeMatrixBlockNuclearAttraction, normalize!
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -121,6 +121,10 @@ end
 
 function computeMatrixBlockKinetic(sh1::Shell,sh2::Shell)
   return [computeIntegralKinetic(cgb1,cgb2) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
+end
+
+function computeMatrixBlockNuclearAttraction(sh1::Shell,sh2::Shell,atom::Atom)
+  return [computeIntegralNuclearAttraction(cgb1,cgb2,atom) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
 function computeIntegralOverlap(
@@ -293,7 +297,7 @@ function ASummand(
   return (-1)^l * f * (-1)^i * factorial(l) * PCx^(l-2r-2i) * (1/(4γ))^(r+i) / (factorial(r) * factorial(i) * factorial(l - 2r - 2i))
 end
 
-function NuclearAttractionIntegral(
+function computeIntegralNuclearAttraction(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction,
   atom::Atom)
@@ -329,14 +333,14 @@ function NuclearAttractionIntegral(
   return -atom.element.atomicNumber * result
 end
 
-function NuclearAttractionIntegral(
+function computeIntegralNuclearAttraction(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction,
   atom::Atom)
   integral = 0.::Float64
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      integral += coeff1*coeff2*NuclearAttractionIntegral(pgb1,pgb2,atom)
+      integral += coeff1*coeff2*computeIntegralNuclearAttraction(pgb1,pgb2,atom)
     end
   end
   return integral::Float64
@@ -457,8 +461,12 @@ function computeElectronRepulsionIntegral(
   return integral::Float64
 end
 
-function computeElectronRepulsionIntegral(μ::Shell,ν::Shell,λ::Shell,σ::Shell)
-  [computeElectronRepulsionIntegral(μcgbf,νcgbf,λcgbf,σcgbf) for μcgbf in expandShell(μ), νcgbf in expandShell(ν), λcgbf in expandShell(λ), σcgbf in expandShell(σ)]
+function computeTensorBlockElectronRepulsionIntegrals(
+  μs::Vector{ContractedGaussianBasisFunction},
+  νs::Vector{ContractedGaussianBasisFunction},
+  λs::Vector{ContractedGaussianBasisFunction},
+  σs::Vector{ContractedGaussianBasisFunction})
+  [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in μs, ν in νs, λ in λs, σ in σs]
 end
 
 function normalize!(cgb::ContractedGaussianBasisFunction)

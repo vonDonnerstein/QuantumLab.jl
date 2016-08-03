@@ -15,7 +15,7 @@ export destroy!, lqn, nprims
 export computeBasisShellsLibInt2
 import ..IntegralsModule.computeMatrixBlockOverlap
 import ..IntegralsModule.computeMatrixBlockKinetic
-import ..IntegralsModule.computeElectronRepulsionIntegral
+import ..IntegralsModule.computeTensorBlockElectronRepulsionIntegrals
 
 
 
@@ -239,7 +239,7 @@ if (libint2_available) # the normal case
   """
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
-  function computeElectronRepulsionIntegral(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell)
+  function computeTensorBlockElectronRepulsionIntegrals(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell)
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
@@ -248,13 +248,13 @@ if (libint2_available) # the normal case
     return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
   end
   
-  function computeElectronRepulsionIntegral(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell)
+  function computeTensorBlockElectronRepulsionIntegrals(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell)
     (μ, ν, λ, σ) = map(sh->convert(Shell,sh), (μlib, νlib, λlib, σlib))
     maxprims = max(length(μ.coefficients), length(ν.coefficients), length(λ.coefficients), length(σ.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn, λ.lqn, σ.lqn)
     engine = LibInt2EngineCoulomb(maxprims,maxlqn)
   
-    result = copy(computeElectronRepulsionIntegral(engine, μlib,νlib,λlib,σlib))
+    result = copy(computeTensorBlockElectronRepulsionIntegrals(engine, μlib,νlib,λlib,σlib))
   
     destroy!(engine)
     return result
