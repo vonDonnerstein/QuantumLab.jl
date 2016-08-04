@@ -75,6 +75,16 @@ libint2::Engine* createEngineKinetic(int nprims, int maxlqn){
   return engine;
 }
 
+libint2::Engine* createEngineNuclearAttraction(int nprims, int maxlqn, libint2::Atom* atoms, int natoms){
+  std::vector<libint2::Atom> atoms_vec(atoms,atoms+natoms);
+  libint2::Engine* engine = new libint2::Engine(libint2::Operator::nuclear,
+      						nprims,
+						maxlqn
+					       );
+  engine->set_params(libint2::make_point_charges(atoms_vec));
+  return engine;
+}
+
 void destroyEngine(libint2::Engine* engine){
   delete engine;
 }

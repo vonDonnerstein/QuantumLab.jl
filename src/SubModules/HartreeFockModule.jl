@@ -143,7 +143,15 @@ function evaluateSCF(
   V = computeMatrixNuclearAttraction(shells,geometry)
   Vnn = computeEnergyInteratomicRepulsion(geometry)
 
-  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixOverlap(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
+  #too slow because trivial ERI recomputation in every step:
+  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
+  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity): 
+  #bas = Basis([])
+  #for sh in shells
+  #  append!(bas,expandShell(sh))
+  #end
+  #ERIs = computeTensorElectronRepulsionIntegrals(bas)
+  #evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
 end
 
 end # module

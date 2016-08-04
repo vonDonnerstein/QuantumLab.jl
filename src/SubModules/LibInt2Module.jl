@@ -10,11 +10,12 @@ module LibInt2Module
   
 export libInt2Initialize, libInt2Finalize
 export LibInt2Shell
-export LibInt2Engine, LibInt2EngineCoulomb, LibInt2EngineOverlap, LibInt2EngineKinetic
+export LibInt2Engine, LibInt2EngineCoulomb, LibInt2EngineOverlap, LibInt2EngineKinetic, LibInt2EngineNuclearAttraction
 export destroy!, lqn, nprims
 export computeBasisShellsLibInt2
 import ..IntegralsModule.computeMatrixBlockOverlap
 import ..IntegralsModule.computeMatrixBlockKinetic
+import ..IntegralsModule.computeMatrixBlockNuclearAttraction
 import ..IntegralsModule.computeTensorBlockElectronRepulsionIntegrals
 
 
@@ -31,6 +32,7 @@ if (libint2_available) # the normal case
   using ..ShellModule
   using ..BasisFunctionsModule
   using ..IntegralsModule
+  using ..AtomModule
   
   
   ## Bitstypes
@@ -173,6 +175,17 @@ if (libint2_available) # the normal case
   function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
     reinterpret(LibInt2Engine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
+  function LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,atom::Atom)
+    l2atoms = [(atom.element.atomicNumber,atom.position.x,atom.position.y,atom.position.z)]
+    reinterpret(LibInt2Engine,ccall((:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi,"libint2jl.so"),Ptr{Void},(Cint,Cint,Ptr{Void},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
+  end
+  function LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,geo::Geometry)
+    l2atoms = Vector{Tuple{Int,Float64,Float64,Float64}}()
+    for atom in geo.atoms
+      push!(l2atoms,Tuple{Int,Float64,Float64,Float64}((atom.element.atomicNumber,atom.position.x,atom.position.y,atom.position.z)))
+    end
+    reinterpret(LibInt2Engine,ccall((:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi,"libint2jl.so"),Ptr{Void},(Cint,Cint,Ptr{Void},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
+  end
   function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
     reinterpret(LibInt2Engine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
@@ -231,6 +244,40 @@ if (libint2_available) # the normal case
     engine = LibInt2EngineKinetic(maxprims,maxlqn)
   
     result = copy(computeMatrixBlockKinetic(engine,μlib,νlib))
+    
+    destroy!(engine)
+    return result
+  end
+
+  """
+  If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
+  """
+  function computeMatrixBlockNuclearAttraction(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
+    μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
+    νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
+    buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+    return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
+  end
+  
+  function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, atom::Atom)
+    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
+    maxprims = max(length(μ.coefficients), length(ν.coefficients))
+    maxlqn   = max(μ.lqn, ν.lqn)
+    engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,atom)
+  
+    result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
+    
+    destroy!(engine)
+    return result
+  end
+
+  function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, geo::Geometry)
+    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
+    maxprims = max(length(μ.coefficients), length(ν.coefficients))
+    maxlqn   = max(μ.lqn, ν.lqn)
+    engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,geo)
+  
+    result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
     
     destroy!(engine)
     return result

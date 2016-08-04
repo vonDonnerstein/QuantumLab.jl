@@ -157,6 +157,22 @@ function computeMatrixNuclearAttraction(shells::Vector{Shell},geo::Geometry)
   return result
 end
 
+function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},atom::Atom)
+  totaldim, maxprims, maxlqn = computeDimensions(shells)
+  engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),atom)
+  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+  destroy!(engine)
+  return result
+end
+
+function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},geo::Geometry)
+  totaldim, maxprims, maxlqn = computeDimensions(shells)
+  engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),geo)
+  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+  destroy!(engine)
+  return result
+end
+
 #ERIS
 function computeTensorElectronRepulsionIntegrals(basis::GaussianBasis)
 	return ERIs = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for μ in basis.contractedBFs, ν in basis.contractedBFs, λ in basis.contractedBFs, σ in basis.contractedBFs]
@@ -188,6 +204,11 @@ function computeMatrixCoulomb(electronRepulsionIntegrals::Array{Float64,4}, dens
   @tensor J[μIndex,νIndex] := electronRepulsionIntegrals[μIndex,νIndex,λIndex,σIndex] * density[λIndex,σIndex]
 end
 
+function computeMatrixCoulomb(shells::Vector{Shell}, density)
+  totaldim = mapreduce(ShellModule.nbf,+,0,shells)
+  contractTensorBlocksWithMatrix_CoulombLike(shells,density,totaldim,computeTensorBlockElectronRepulsionIntegrals,ShellModule.nbf)
+end
+
 function computeMatrixCoulomb(shells::Vector{LibInt2Shell}, density::Matrix)
   totaldim, maxprims, maxlqn = computeDimensions(shells)
   engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
@@ -216,6 +237,11 @@ end
 
 function computeMatrixExchange(electronRepulsionIntegrals::Array{Float64,4}, density::Matrix)
   @tensor K[μIndex,νIndex] := electronRepulsionIntegrals[μIndex,λIndex,νIndex,σIndex] * density[λIndex,σIndex]
+end
+
+function computeMatrixExchange(shells::Vector{Shell}, density)
+  totaldim = mapreduce(ShellModule.nbf,+,0,shells)
+  contractTensorBlocksWithMatrix_ExchangeLike(shells,density,totaldim,computeTensorBlockElectronRepulsionIntegrals,ShellModule.nbf)
 end
 
 function computeMatrixExchange(shells::Vector{LibInt2Shell}, density::Matrix)
