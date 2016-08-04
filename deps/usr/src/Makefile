@@ -125,7 +125,7 @@ ifneq ($(PLATFORM),Darwin)
 	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).$(SO_EXTENSION) -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).$(SO_EXTENSION)
 else
 	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION).dylib libint2jl.cpp ../lib/libint2-$(VERSION).dylib 
-	install_name_tool -add_rpath @loader_path/. ../lib/libint2-$(VERSION).dylib
+	install_name_tool -add_rpath @loader_path/. ../lib/libint2jl-$(VERSION).dylib
 endif
 
 
