@@ -1,11 +1,16 @@
 using QuantumLab
 using Base.Test
 
-# write your own tests here
-@test 1 == 1
+info("$(now())  SETTING UP VARIABLES FOR FURTHER TESTING")
+indent="=> "
+include("setup.jl")
+
+
+
+
 
 # test DocumentationModule
-info("DocumentationModule")
+info("$(now())  TESTING:   DocumentationModule")
 docModTester() = return 1
 @doc """
 some markdown documentation
@@ -24,22 +29,14 @@ some markdown documentation
 @test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
 @test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
 
-# test readGeometryXYZ
-info("READING h2o.xyz")
-h2o = readGeometryXYZ("h2o.xyz")
-@test h2o.atoms[2].element.symbol == "O"
-@test_approx_eq_eps -1.4191843 readGeometryXYZ("h2o.xyz").atoms[3].position.x 1e-7
-
+info("$(now())  TESTING:   Basic Functionality")
 # test AtomModule
-info("AtomModule")
 @test Element("C") == Element("C")
 el1 = Element("C")
 el2 = Element("C")
 @test isequal(el1,el2)
 @test !isequal(el1,Element("Na"))
-
 # test BaseModule
-info("BaseModule")
 mqn = MQuantumNumber(0,0,0)
 for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
 @test mqn == MQuantumNumber(0,0,2)
@@ -48,35 +45,17 @@ for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
 @test 2*Position(1,2,3) == Position(1,2,3)*2
 @test isless(LQuantumNumber("S"),LQuantumNumber("P"))
 @test_approx_eq 0. BaseModule.evaluateFunction(Position(1.,2.,3.), x->x.x+x.y-x.z)
-
-# test BasisSetExchange
-# as this takes quite some time we primarily only want to do this during continuous integration (travis-ci) and when we haven-t checked this before
-if (!isfile("STO-3G.tx93"))
-  info("BasisSetExchangeModule")
-  bseEntries = obtainBasisSetExchangeEntries()
-  display(bseEntries)
-  stoEntry   = computeBasisSetExchangeEntry("sto-3g",bseEntries)[3]
-  downloadBasisSetBasisSetExchange(stoEntry,"STO-3G.tx93")
-  @test_throws ErrorException computeBasisSetExchangeEntry("NotDefined",bseEntries)
-end
-
+@test h2o.atoms[2].element.symbol == "O"
+@test_approx_eq_eps -1.4191843 readGeometryXYZ("h2o.xyz").atoms[3].position.x 1e-7
 # test readBasisSetTX93
-info("READING STO-3G.tx93")
-sto3g = readBasisSetTX93("STO-3G.tx93")
 @test sto3g.definitions[Element("C")][1].lQuantumNumber.symbol == "S"
 @test sto3g.definitions[Element("C")][1].primitives[1].exponent == 71.616837
-
 # test BasisModule
-info("BasisModule")
-bas = computeBasis(sto3g,h2o)
 @test_approx_eq_eps -0.7332137 bas.contractedBFs[3].primitiveBFs[1].center.y 1e-7
 @test_approx_eq_eps 0.35175381 BasisFunctionsModule.evaluateFunction(origin, bas.contractedBFs[3]) 1e-8
 
 # test IntegralsModule
-info("IntegralsModule")
-normalize!(bas)
-matrixOverlap = computeMatrixOverlap(bas)
-matrixKinetic = computeMatrixKinetic(bas)
+info("$(now())  TESTING:   IntegralsModule")
 @test_approx_eq IntegralsModule.GaussianIntegral1D_Valeev(1,.4) 0.
 @test_approx_eq 0.0 matrixOverlap[6,1]
 @test_approx_eq_eps 0.3129324434238492 matrixOverlap[4,1] 1e-8
@@ -87,24 +66,20 @@ matrixKinetic = computeMatrixKinetic(bas)
 @test_approx_eq IntegralsModule.OverlapFundamental(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2]) computeIntegralOverlap(bas.contractedBFs[1].primitiveBFs[1],bas.contractedBFs[1].primitiveBFs[2])
 
 # test InitialGuessModule
-info("InitialGuessModule")
-matrixSADguess = computeDensityGuessSAD("HF","STO-3G",h2o)
+info("$(now())  TESTING:   InitialGuessModule")
 @test_approx_eq_eps -0.264689 mean(matrixSADguess)[3,2] 1e-6
 @test_throws ErrorException computeDensityGuessSAD("NotImplemented","STO-3G",h2o)
 
-# test SpecialMatricesModule
-info("SpecialMatricesModule")
-@test_approx_eq_eps -0.785008186026 mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) 1e-10                  #### !!!! ####
+
 
 # test HartreeFockModule
-info("HartreeFockModule")
-density = evaluateSCF(bas,h2o,mean(matrixSADguess),5)[3]
+info("$(now())  TESTING:   HartreeFock (bas, h2o, density)")
+@test_approx_eq_eps -74.96178985 (evaluateSCF(bas,h2o,density,5,info=false,detailedinfo=false)[2] + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 #@test_approx_eq -4.473355520007 mean(HartreeFockModule.evaluateSCFStep(bas,h2o,mean(matrixSADguess),matrixOverlap,5)[1])
-@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,density) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
+#@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,density) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 
 # test Shells: ShellModule and LibInt2Module
-info("Shells")
-import QuantumLab.libint2_available
+info("$(now())  TESTING:   Shells/LibInt2Shells/Basis equivalence")
 shell_native  = Shell(Position(0.,0.,0.),LQuantumNumber("S"),[1.,2.,3.],[.1,.2,.3],renorm=false)
 shell_libint2 = LibInt2Shell([0.,0.,0.],0,3,[1.,2.,3.],[.1,.2,.3])
 shell_nativefromlibint2 = Shell(shell_libint2)
@@ -113,26 +88,25 @@ shell_nativefromlibint2 = Shell(shell_libint2)
 @test_approx_eq computeMatrixBlockOverlap(shell_nativefromlibint2,shell_nativefromlibint2) computeMatrixBlockOverlap(shell_libint2,shell_libint2)
 @test_approx_eq computeTensorBlockElectronRepulsionIntegrals(shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2,shell_nativefromlibint2) computeTensorBlockElectronRepulsionIntegrals(shell_libint2,shell_libint2,shell_libint2,shell_libint2)
 @test_approx_eq LibInt2Module.nbf(shell_libint2) 1
+import QuantumLab.libint2_available
 if (libint2_available)
   @test_throws ErrorException LibInt2Shell([0.,0.,0.],100,1,[.1],[.5])
 end
 
 # test LibInt2Module
-info("LibInt2Module")
+info("$(now())  TESTING:   LibInt2Module")
 libInt2Finalize()
 libInt2Initialize()
 tmp_lib = LibInt2Shell([0.,1.,2.],1,2,[1.,2.],[0.5,0.5];renorm=false)
 tmp = Shell(tmp_lib).coefficients
 @test_approx_eq tmp[1] tmp[2]
 destroy!(tmp_lib)
-shells = computeBasisShellsLibInt2(sto3g,h2o)
-shells_native = computeBasisShells(sto3g,h2o)
 S = computeMatrixOverlap(shells)
 @test_approx_eq S computeMatrixOverlap(shells_native)
-@test_approx_eq S computeMatrixOverlap(bas)
+@test_approx_eq S matrixOverlap
 T = computeMatrixKinetic(shells)
 @test_approx_eq T computeMatrixKinetic(shells_native)
-@test_approx_eq T computeMatrixKinetic(bas)
+@test_approx_eq T matrixKinetic
 J = computeMatrixCoulomb(shells,density)
 @test_approx_eq_eps J computeMatrixCoulomb(bas,density) 1e-8
 @test_approx_eq computeMatrixBlockOverlap(shells[1],shells[1]) S[1,1]
@@ -140,7 +114,7 @@ J = computeMatrixCoulomb(shells,density)
 @test_approx_eq computeTensorBlockElectronRepulsionIntegrals(shells[1],shells[5],shells[4],shells[4])[1,1,2,2] computeElectronRepulsionIntegral(bas.contractedBFs[1],bas.contractedBFs[7],bas.contractedBFs[5],bas.contractedBFs[5])
 
 # test LaplaceModule
-info("LaplaceModule")
+info("$(now())  TESTING:   LaplaceModule")
 if(!isdir("hackbusch_pretables"))
   downloadLaplacePointsHackbusch("hackbusch_pretables")
 end
@@ -149,11 +123,12 @@ lp = transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableLa
 @test_throws ErrorException findLaplacePointsHackbuschPretableSmaller(15,R,"hackbusch_pretables")
 @test_approx_eq_eps LaplaceModule.computeInverseByLaplaceApproximation(2.3,lp) 1./2.3 1e-7
 @test_approx_eq_eps LaplaceModule.computeRPADenominatorByDoubleLaplace(1.2,2.3,lp) 1./(1.2^2 + 2.3^2) 1e-3
+println("Expecting warning below:")
 @test findLaplacePointsHackbuschPretableLarger(2,100.,"hackbusch_pretables") == findLaplacePointsHackbuschPretableLarger(2,50.,"hackbusch_pretables")
 @test transformLaplacePointFromIdealLaplace( findLaplacePointsHackbuschPretableSmaller(15,transformRangeToIdealLaplace(0.5,6.)[2],"hackbusch_pretables")[1], 0.5) == lp
 
 # test RI-Module
-info("RIModule")
+info("$(now())  TESTING:   RIModule")
 @test_approx_eq 0.3950752513027109 mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
 tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
 @test_approx_eq 0.0429373705056905 mean(tensorRICoulomb)
@@ -161,6 +136,10 @@ tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
 tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
 @test_approx_eq 0.0144597945326691 tensorRIOverlap[1,3,4,5]
 @test_approx_eq 0.0537036598506078 mean(tensorRIOverlap)
+
+# test SpecialMatricesModule
+info("$(now())  SpecialMatricesModule")
+@test_approx_eq_eps -0.785008186026 mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) 1e-10                  #### !!!! ####
 
 
 
@@ -172,7 +151,7 @@ tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
 # They do not however test for anything really, so do not trust them. If you do add a *real* 
 # test for a display function, please add it to the corresponding module block above instead
 # of here.
-info("DISPLAY FUNCTIONS")
+info("$(now())  DISPLAY FUNCTIONS")
 display(bas)
 display(bas.contractedBFs[3])
 display(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016))
@@ -187,3 +166,7 @@ display(shell_native)
 display(lp)
 summarize(BasisModule.Basis)
 summarize(GaussianBasis)
+
+
+
+info("\n\n     CONGRATULATIONS!! ALL TESTS COMPLETED!")
