@@ -6,6 +6,7 @@ using ..GeometryModule
 using ..SpecialMatricesModule
 using ..IntegralsModule
 using ..ShellModule
+using ..LibInt2Module
 
 function computeEnergyHartreeFock(
   density::Matrix,
@@ -152,6 +153,21 @@ function evaluateSCF(
   #end
   #ERIs = computeTensorElectronRepulsionIntegrals(bas)
   #evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
+end
+
+function evaluateSCF(
+  shells::Vector{LibInt2Shell},
+  geometry::Geometry,
+  initialGuessDensity::Matrix,
+  electronNumber::Integer;
+  energyConvergenceCriterion::Float64 = 1e-8)
+
+  S = computeMatrixOverlap(shells)
+  T = computeMatrixKinetic(shells)
+  V = computeMatrixNuclearAttraction(shells,geometry)
+  Vnn = computeEnergyInteratomicRepulsion(geometry)
+
+  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
 end
 
 end # module
