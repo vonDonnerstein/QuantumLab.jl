@@ -20,6 +20,8 @@ test/coverage_run.out
 deps/usr/src/libint2_source
 deps/usr/src/libint2_build
 deps/usr/src/libint2_binaries
+
+# LibInt2 Links
 deps/usr/lib/libint2-QuantumLab.so
 deps/usr/lib/libint2jl.so
 
