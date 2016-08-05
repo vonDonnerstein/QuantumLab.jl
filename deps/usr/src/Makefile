@@ -13,7 +13,7 @@ MAX_AM=7 # Support Gaussians of angular momentum up to N. Can specify values for
 OPT_LEVEL=3
 
 CXX=clang++
-SIMD=AVX
+SIMD=avx
 
 
 # DERIVATIVE VARIABLES (do not modify directly)
@@ -23,10 +23,10 @@ ifeq ($(PLATFORM),Darwin)
   SO_EXTENSION=dylib
 endif 
 CXXFLAGS        = -std=c++11 -O$(OPT_LEVEL) 	
-ifeq ($(SIMD),AVX)
+ifeq ($(SIMD),avx)
   CXXFLAGS     += -mavx
 endif
-ifeq ($(SIMD),SSE)
+ifeq ($(SIMD),sse)
   CXXFLAGS     += -msse -msse2 -msse3 -msse4
 endif
 
@@ -35,10 +35,10 @@ CONFIGURE_GEN_FLAGS =  --with-opt-am=$(OPT_AM)
 CONFIGURE_GEN_FLAGS += --with-max-am=$(MAX_AM) 
 CONFIGURE_GEN_FLAGS += --enable-shared 			# build shared libraries
 CONFIGURE_GEN_FLAGS += --disable-unrolling  		# Do not unroll shell sets into integrals
-ifeq ($(SIMD),AVX)
+ifeq ($(SIMD),avx)
   CONFIGURE_GEN_FLAGS += --with-real-type=libint2::simd::VectorAVXDouble
 endif
-ifeq ($(SIMD),SSE)
+ifeq ($(SIMD),sse)
   CONFIGURE_GEN_FLAGS += --with-real-type=libint2::simd::VectorSSEDouble
 endif
 CONFIGURE_GEN_FLAGS += --prefix=$(CURDIR)
@@ -49,7 +49,7 @@ CONFIGURE_GEN_FLAGS += CXXFLAGS="$(CXXFLAGS)"
 # CONFIGURE FLAGS FOR THE ACTUAL COMPILATION
 CONFIGURE_FLAGS =  --enable-shared 			# build shared libraries
 # v--- This is not yet supported by libint (as of 2.2.0-beta1) ---v
-#ifeq ($(SIMD),AVX)
+#ifeq ($(SIMD),avx)
 #  CONFIGURE_FLAGS += --with-real-type=libint2::simd::VectorAVXDouble
 #endif
 # ^--- This is not yet supported by libint (as of 2.2.0-beta1) ---^
@@ -94,7 +94,7 @@ $(libint2_compile): $(libint2_extract_and_configure_the_compiler)
 	@echo COMPILE_LIBINT2
 	cd libint2_build/libint-$(VERSION) && $(MAKE)
 	cd libint2_build/libint-$(VERSION) && $(MAKE) install
-	cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.$(SO_EXTENSION) ../lib/libint2-$(VERSION).$(SO_EXTENSION)
+	cp libint2_build/libint-$(VERSION)/lib/.libs/libint2.$(SO_EXTENSION) ../lib/libint2-$(VERSION)-$(SIMD).$(SO_EXTENSION)
 	@tput setaf 1
 	@tput bold
 	@echo -e "WARNING: libint2-$(VERSION).so has been (re-)compiled. \n" \
@@ -102,7 +102,7 @@ $(libint2_compile): $(libint2_extract_and_configure_the_compiler)
 			"is in line with your actual compile options."
 	@tput sgr0
 ifeq ($(PLATFORM),Darwin)
-	install_name_tool -id @rpath/libint2-$(VERSION).dylib ../lib/libint2-$(VERSION).dylib
+	install_name_tool -id @rpath/libint2-$(VERSION)-$(SIMD).dylib ../lib/libint2-$(VERSION)-$(SIMD).dylib
 endif
 .PHONY: libint2_compile
 libint2_compile: $(libint2_compile)
@@ -122,10 +122,10 @@ endif
 libint2jl: ../lib/libint2-$(VERSION).$(SO_EXTENSION)
 	@echo COMPILE_LIBINT2JL
 ifneq ($(PLATFORM),Darwin)
-	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).$(SO_EXTENSION) -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION).$(SO_EXTENSION)
+	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION)-$(SIMD).$(SO_EXTENSION) -shared -fPIC -g -std=c++11 $(INCLUDE) libint2jl.cpp ../lib/libint2-$(VERSION)-$(SIMD).$(SO_EXTENSION)
 else
-	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION).dylib libint2jl.cpp ../lib/libint2-$(VERSION).dylib 
-	install_name_tool -add_rpath @loader_path/. ../lib/libint2jl-$(VERSION).dylib
+	$(CXX) $(CXXFLAGS) -Wno-deprecated -o ../lib/libint2jl-$(VERSION)-$(SIMD).dylib -dynamiclib -fPIC -g -std=c++11 $(INCLUDE) -install_name libint2jl-$(VERSION)-$(SIMD).dylib libint2jl.cpp ../lib/libint2-$(VERSION)-$(SIMD).dylib 
+	install_name_tool -add_rpath @loader_path/. ../lib/libint2jl-$(VERSION)-$(SIMD).dylib
 endif
 
 
@@ -137,5 +137,5 @@ test.exe:
 .PHONY: clean
 clean:
 	rm -rf libint2_build/ libint2_source/ libint2_binaries
-	rm ../lib/libint2-$(VERSION).so
-	rm ../lib/libint2jl.so
+	rm ../lib/libint2-$(VERSION)-$(SIMD).so
+	rm ../lib/libint2jl-$(VERSION)-$(SIMD).so

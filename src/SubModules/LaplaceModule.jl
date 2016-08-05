@@ -163,7 +163,7 @@ function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Flo
     end
   end
   # Expect R > Rₖ, so just return largest available table for the given number of points
-  println("Warning: numberOfPoints not sufficiently large ?!")
+  warn("numberOfPoints not sufficiently large ?!")
   r = hackbuschpretables[numberOfPoints][end]
   return (readLaplacePointsHackbusch(numberOfPoints,r,dir),r)
 end
