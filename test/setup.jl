@@ -1,3 +1,10 @@
+using QuantumLab
+using Base.Test
+
+if (!isdefined(:indent))
+  indent = ""
+end
+
 info("$(now())  $(indent)READING:   h2o.xyz -> h2o::Geometry ")
 h2o = readGeometryXYZ("h2o.xyz")
 
