@@ -127,6 +127,10 @@ function computeMatrixBlockNuclearAttraction(sh1::Shell,sh2::Shell,atom::Atom)
   return [computeIntegralNuclearAttraction(cgb1,cgb2,atom) for cgb1 in expandShell(sh1), cgb2 in expandShell(sh2)]
 end
 
+function computeMatrixBlockNuclearAttraction(sh1::Shell,sh2::Shell,geo::Geometry)
+  return mapreduce(atom->computeMatrixBlockNuclearAttraction(sh1,sh2,atom),+,0,geo.atoms)
+end
+
 function computeIntegralOverlap(
   pgb1::PrimitiveGaussianBasisFunction,
   pgb2::PrimitiveGaussianBasisFunction)

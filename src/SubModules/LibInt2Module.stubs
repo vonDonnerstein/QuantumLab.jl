@@ -6,6 +6,8 @@
   using ..BasisFunctionsModule
   using ..IntegralsModule
   using ..BasisModule
+  using ..AtomModule
+  using ..GeometryModule
   # Init/Final
   libInt2Initialize() = return
   libInt2Finalize() = return
@@ -15,16 +17,17 @@
     Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients;renorm=renorm)
   end
   # Engine
-  bitstype 64 LibInt2Engine64
-  bitstype 32 LibInt2Engine32
-  if is(Int,Int32)
-    typealias LibInt2Engine LibInt2Engine32
-  else
-    typealias LibInt2Engine LibInt2Engine64
+  type LibInt2Engine
+    geo::Geometry
+    LibInt2Engine() = new()
+    LibInt2Engine(geo::Geometry) = new(geo)
+    LibInt2Engine(atom::Atom) = new(Geometry([atom]))
   end
-  LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
-  LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
-  LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return reinterpret(LibInt2Engine,0)
+  LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return LibInt2Engine()
+  LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return LibInt2Engine()
+  LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber) = return LibInt2Engine()
+  LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,geo::Geometry) = return LibInt2Engine(geo)
+  LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,atom::Atom) = return LibInt2Engine(atom)
   #
   destroy!(shell::LibInt2Shell) = return
   destroy!(engine::LibInt2Engine) = return
@@ -36,4 +39,5 @@
   #
   computeMatrixBlockOverlap(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockOverlap(sh1,sh2)
   computeMatrixBlockKinetic(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockKinetic(sh1,sh2)
-  computeElectronRepulsionIntegral(eng::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell,sh3::LibInt2Shell,sh4::LibInt2Shell) = computeElectronRepulsionIntegral(sh1,sh2,sh3,sh4)
+  computeMatrixBlockNuclearAttraction(engine::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell) = computeMatrixBlockNuclearAttraction(sh1,sh2,engine.geo)
+  computeTensorBlockElectronRepulsionIntegrals(eng::LibInt2Engine,sh1::LibInt2Shell,sh2::LibInt2Shell,sh3::LibInt2Shell,sh4::LibInt2Shell) = computeTensorBlockElectronRepulsionIntegrals(sh1,sh2,sh3,sh4)
