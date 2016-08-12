@@ -1,12 +1,12 @@
 LIBINT_VERSION = "2.2.0-beta1"
-lib_path = joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib")
+lib_path = joinpath(dirname(@__FILE__),"usr","lib")
 
 
 @linux_only begin
 	try begin 
 			run(`grep --ignore-case --silent 'avx' /proc/cpuinfo`)
 			SIMD = "avx"
-			cd(joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib"))
+			cd(joinpath(dirname(@__FILE__),"usr","lib"))
 			run(`ln -s libint2jl-$LIBINT_VERSION-$SIMD.so libint2jl.so`)
 			run(`ln -s libint2-$LIBINT_VERSION-$SIMD.so libint2-QuantumLab.so`)
 		end
@@ -29,7 +29,7 @@ end
 			catch 
 				SIMD = "sse"
 			end
-			cd(joinpath(Pkg.dir("QuantumLab"),"deps","usr","lib"))
+			cd(joinpath(dirname(@__FILE__),"usr","lib"))
 			run(`ln -s libint2jl-$LIBINT_VERSION-$SIMD.dylib libint2jl.so`)
 			run(`ln -s libint2-$LIBINT_VERSION-$SIMD.dylib libint2-QuantumLab.so`)
 		end
