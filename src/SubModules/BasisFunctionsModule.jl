@@ -18,8 +18,8 @@ A ContractedGaussianBasisFunction is defined as a sum of PrimitiveGaussianBasisF
 an additional scaling for the total ContractedGaussianBasisFunction - scaling the whole ContractedGaussianBasisFunction happens by modifying the contraction coefficients accordingly.
 """
 type ContractedGaussianBasisFunction
-  coefficients::Array{Float64,1}
-  primitiveBFs::Array{PrimitiveGaussianBasisFunction,1}
+  coefficients::Vector{Float64}
+  primitiveBFs::Vector{PrimitiveGaussianBasisFunction}
 end
 
 function display(cgbf::ContractedGaussianBasisFunction,indent="")
@@ -40,7 +40,7 @@ function evaluateFunction(x::Position,pgbf::PrimitiveGaussianBasisFunction)
 end
 
 function evaluateFunction(x::Position,cgbf::ContractedGaussianBasisFunction)
-  result = 0.::Float64
+  result = 0.0
   for (coeff,pgbf) in zip(cgbf.coefficients,cgbf.primitiveBFs)
     result += coeff * evaluateFunction(x,pgbf)
   end

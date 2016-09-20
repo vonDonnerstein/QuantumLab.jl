@@ -10,24 +10,24 @@ include("setup.jl")
 
 
 # test DocumentationModule
-info("$(now())  TESTING:   DocumentationModule")
-docModTester() = return 1
-@doc """
-some markdown documentation
-""" docModTester
-@test typeof(@doc(docModTester)) == Base.Markdown.MD
-@add_doc GenericCitation("generic citation") docModTester
-@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-@add_doc BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060") docModTester
-@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-@add_doc JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016) docModTester
-@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-@add_doc Citation(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)) docModTester
-@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-@test isa([Base.Markdown.parse("Hellau!"),BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060")],Vector{DocumentationModule.Documentation})
-@test isa([Base.Markdown.parse("Hellau!"),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)],Vector{DocumentationModule.Documentation})
-@test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
-@test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+#info("$(now())  TESTING:   DocumentationModule")
+#docModTester() = 1
+#@doc """
+#some markdown documentation
+#""" docModTester
+#@test typeof(@doc(docModTester)) == Base.Markdown.MD
+#@add_doc GenericCitation("generic citation") docModTester
+#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+#@add_doc BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060") docModTester
+#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+#@add_doc JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016) docModTester
+#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+#@add_doc Citation(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)) docModTester
+#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+#@test isa([Base.Markdown.parse("Hellau!"),BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060")],Vector{DocumentationModule.Documentation})
+#@test isa([Base.Markdown.parse("Hellau!"),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)],Vector{DocumentationModule.Documentation})
+#@test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+#@test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
 
 info("$(now())  TESTING:   Basic Functionality")
 # test AtomModule
@@ -38,7 +38,7 @@ el2 = Element("C")
 @test !isequal(el1,Element("Na"))
 # test BaseModule
 mqn = MQuantumNumber(0,0,0)
-for (mqn in MQuantumNumbers(LQuantumNumber("D"))) end
+for mqn in MQuantumNumbers(LQuantumNumber("D")) end
 @test mqn == MQuantumNumber(0,0,2)
 @test distance(Position(0,0,1),Position(1,0,0)) == sqrt(2)
 @test length(MQuantumNumbers(LQuantumNumber("P"))) == 3
@@ -148,7 +148,7 @@ info("$(now())  SpecialMatricesModule")
 
 ### display functions ###
 # These are simply here, so that the test coverage isn't limited by the display functions.
-# They do not however test for anything really, so do not trust them. If you do add a *real* 
+# They do not however test for anything really, so do not trust them. If you do add a *real*
 # test for a display function, please add it to the corresponding module block above instead
 # of here.
 info("$(now())  DISPLAY FUNCTIONS")

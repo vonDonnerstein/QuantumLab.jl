@@ -6,8 +6,8 @@ module LibInt2Module
   Creating shells with higher LQuantumNumber causes segfaults within the libint2.
   """
   const MAX_AM = 7
-  
-  
+
+
 export libInt2Initialize, libInt2Finalize
 export LibInt2Shell
 export LibInt2Engine, LibInt2EngineCoulomb, LibInt2EngineOverlap, LibInt2EngineKinetic, LibInt2EngineNuclearAttraction
@@ -33,10 +33,10 @@ if (libint2_available) # the normal case
   using ..BasisFunctionsModule
   using ..IntegralsModule
   using ..AtomModule
-  
-  
+
+
   ## Bitstypes
-  
+
   ## LibInt2Shell
   #  Type Declaration
   bitstype 64 LibInt2Shell64
@@ -46,7 +46,7 @@ if (libint2_available) # the normal case
   else
     typealias LibInt2Shell LibInt2Shell64
   end
-  
+
   #  Constructors
   """
       LibInt2Shell(origin::Vector{Float64}, lqn::Int, nprim::Int, exponents::Vector{Float64}, coefficients::Vector{Float64}; renorm::Bool=false)
@@ -58,8 +58,8 @@ if (libint2_available) # the normal case
   function LibInt2Shell(origin::Vector{Float64},lqn::Int,nprim::Int,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true)
     if lqn > MAX_AM
       error("libint2 has only been compiled to MAX_AM $MAX_AM.
-  	  Can't create LibInt2Shell with lqn larger than that ($lqn).
-  	  Consider recompiling to higher MAX_AM, or use `Shell`s instead of `LibInt2Shell`s.")
+      Can't create LibInt2Shell with lqn larger than that ($lqn).
+      Consider recompiling to higher MAX_AM, or use `Shell`s instead of `LibInt2Shell`s.")
     end
     if renorm==true
       return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
@@ -67,33 +67,33 @@ if (libint2_available) # the normal case
       return convert(LibInt2Shell,Shell(Position(origin...),LQuantumNumber(lqn),exponents,coefficients;renorm=false))
     end
   end
-  
+
   function LibInt2Shell(origin::Position,lqn::LQuantumNumber,exponents::Vector{Float64},coefficients::Vector{Float64}; renorm::Bool=true)
     orig = convert(Vector{Float64},origin)
     nprim = length(coefficients)
     LibInt2Shell(orig,lqn.exponent,nprim,exponents,coefficients;renorm=renorm)
   end
-  
+
   function convert(::Type{LibInt2Shell},sh::Shell)
     scaledcoefficients = Float64[]
     for (coeff,expon) in zip(sh.coefficients,sh.exponents)
       pgb = PrimitiveGaussianBasisFunction(origin,expon,MQuantumNumber(sh.lqn.exponent,0,0))
       push!(scaledcoefficients,coeff * sqrt(computeIntegralOverlap(pgb,pgb)))
     end
-  
+
     LibInt2Shell([sh.center.x,sh.center.y,sh.center.z],sh.lqn.exponent,length(sh.exponents),sh.exponents,scaledcoefficients)
   end
-  
+
   #  Destructor
   function destroy!(shell::LibInt2Shell)
     ccall((:_Z12destroyShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),shell)
   end
-  
+
   #  Further Functions
   function display(sh::LibInt2Shell)
     ccall((:_Z10printShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),sh)
   end
-  
+
   function lqn(l2sh::LibInt2Shell)
     # cmp. convert(::Type{Shell},::LibInt2Shell)
     sh_ptrptrptr = reinterpret(Ptr{Ptr{Ptr{Cdouble}}},l2sh)
@@ -101,7 +101,7 @@ if (libint2_available) # the normal case
     contract_ptr = reinterpret(Ptr{Cint},contract_ptrptr)
     return Int(unsafe_load(contract_ptr,1))
   end
-  
+
   function nprims(l2sh::LibInt2Shell)
     # cmp. convert(::Type{Shell},::LibInt2Shell)
     sh_ptrptr    = reinterpret(Ptr{Ptr{Cdouble}},l2sh)
@@ -109,17 +109,17 @@ if (libint2_available) # the normal case
     alphaEnd_ptr = unsafe_load(sh_ptrptr,2)
     return Int(div(alphaEnd_ptr-alpha_ptr,8))
   end
-  
+
   function nbf(l2sh::LibInt2Shell)
     div((lqn(l2sh)+1)^2+(lqn(l2sh)+1),2)
   end
-  
+
   function convert(::Type{Shell},l2sh::LibInt2Shell)
     # LibInt2Shell objects reside in memory as
     # class Shell {
     #   std::vector<real_t> alpha;
     #   std::vector<Contraction> contr;
-    #   std::array<real_t, 3> O;   		//!< this is inlined in memory
+    #   std::array<real_t, 3> O;        //!< this is inlined in memory
     #   std::vector<real_t> max_ln_coeff;
     # }
     # where
@@ -130,34 +130,34 @@ if (libint2_available) # the normal case
     # }
     # A std::vector is of the same size as 3 ptrs = 24 bytes on 64bit with gnu compiler.
     # The first pointer gives the start of the allocated space, the second pointer gives the pointer
-    # beyond the last vector element and the third pointer beyond the allocated space of the vector 
+    # beyond the last vector element and the third pointer beyond the allocated space of the vector
     # (cmp. std::vector.reserve()).
-  
+
     # I assume one contraction per shell -> no shared-sp
-  
+
     sh_ptrptrptr = reinterpret(Ptr{Ptr{Ptr{Cdouble}}},l2sh)
     sh_ptrptr    = reinterpret(Ptr{Ptr{Cdouble}},l2sh)
     sh_ptr       = reinterpret(Ptr{Cdouble},l2sh)
-  
+
     alpha_ptr = unsafe_load(sh_ptrptr,1)
     alphaEnd_ptr = unsafe_load(sh_ptrptr,2)
     primitivecount = div(alphaEnd_ptr-alpha_ptr,8)
-    expons = pointer_to_array(alpha_ptr,primitivecount)
-    
+    expons = unsafe_wrap(Array,alpha_ptr,primitivecount)
+
     center_ptr = sh_ptr + 24*2
-    center = Position(pointer_to_array(center_ptr,3)...)
-  
+    center = Position(unsafe_wrap(Array,center_ptr,3)...)
+
     contract_ptrptr = unsafe_load(sh_ptrptrptr,4)
     coeff_ptr = unsafe_load(contract_ptrptr,2) # the int and bool together take the space of one pointer
-    coeffs = pointer_to_array(coeff_ptr,primitivecount)
-  
+    coeffs = unsafe_wrap(Array,coeff_ptr,primitivecount)
+
     contract_ptr = reinterpret(Ptr{Cint},contract_ptrptr)
     lqn = LQuantumNumber(Int(unsafe_load(contract_ptr,1)))
-  
+
     return Shell(center,lqn,expons,coeffs;renorm=false)
   end
-  
-  
+
+
   ## LibInt2Engine
   #  Type Declaration
   bitstype 64 LibInt2Engine64
@@ -167,7 +167,7 @@ if (libint2_available) # the normal case
   else
     typealias LibInt2Engine LibInt2Engine64
   end
-  
+
   #  Constructors
   function LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
     reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
@@ -189,22 +189,22 @@ if (libint2_available) # the normal case
   function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
     reinterpret(LibInt2Engine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
-  
+
   #  Destructor
   function destroy!(engine::LibInt2Engine)
     ccall((:_Z13destroyEnginePN7libint26EngineE,"libint2jl.so"),Void,(LibInt2Engine,),engine)
   end
-  
-  
+
+
   ## library functionality
   function libInt2Initialize()
     ccall((:_Z12libint2startv,"libint2jl.so"),Void,())
   end
-  
+
   function libInt2Finalize()
     ccall((:_Z11libint2stopv,"libint2jl.so"),Void,())
   end
-  
+
   """
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
@@ -212,21 +212,22 @@ if (libint2_available) # the normal case
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
+
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
   end
-  
+
   function IntegralsModule.computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
     (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
     maxprims = max(length(μ.coefficients), length(ν.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn)
     engine = LibInt2EngineOverlap(maxprims,maxlqn)
-  
+
     result = copy(computeMatrixBlockOverlap(engine,μlib,νlib))
-    
+
     destroy!(engine)
     return result
   end
-  
+
   """
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
@@ -234,17 +235,17 @@ if (libint2_available) # the normal case
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
   end
-  
+
   function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell)
     (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
     maxprims = max(length(μ.coefficients), length(ν.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn)
     engine = LibInt2EngineKinetic(maxprims,maxlqn)
-  
+
     result = copy(computeMatrixBlockKinetic(engine,μlib,νlib))
-    
+
     destroy!(engine)
     return result
   end
@@ -256,17 +257,17 @@ if (libint2_available) # the normal case
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    return reshape(pointer_to_array(buf,μmqns*νmqns),(μmqns,νmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
   end
-  
+
   function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, atom::Atom)
     (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
     maxprims = max(length(μ.coefficients), length(ν.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn)
     engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,atom)
-  
+
     result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
-    
+
     destroy!(engine)
     return result
   end
@@ -276,13 +277,13 @@ if (libint2_available) # the normal case
     maxprims = max(length(μ.coefficients), length(ν.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn)
     engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,geo)
-  
+
     result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
-    
+
     destroy!(engine)
     return result
   end
-  
+
   """
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
@@ -292,21 +293,21 @@ if (libint2_available) # the normal case
     λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
     σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
     buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
-    return reshape(pointer_to_array(buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
   end
-  
+
   function computeTensorBlockElectronRepulsionIntegrals(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell)
     (μ, ν, λ, σ) = map(sh->convert(Shell,sh), (μlib, νlib, λlib, σlib))
     maxprims = max(length(μ.coefficients), length(ν.coefficients), length(λ.coefficients), length(σ.coefficients))
     maxlqn   = max(μ.lqn, ν.lqn, λ.lqn, σ.lqn)
     engine = LibInt2EngineCoulomb(maxprims,maxlqn)
-  
+
     result = copy(computeTensorBlockElectronRepulsionIntegrals(engine, μlib,νlib,λlib,σlib))
-  
+
     destroy!(engine)
     return result
   end
-  
+
   function computeBasisShellsLibInt2(basSet::BasisSet,geo::Geometry)
     shells = Vector{LibInt2Shell}()
     for atom in geo.atoms
@@ -332,7 +333,7 @@ else # if the libint2 is not available we have to stub the relevant functions
 end
 
 end # Module
-  
+
 
 
 

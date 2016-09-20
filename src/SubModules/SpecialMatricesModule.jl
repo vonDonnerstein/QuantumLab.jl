@@ -9,6 +9,7 @@ using TensorOperations
 using ..LibInt2Module
 using ..ShellModule
 import ..IntegralsModule.computeTensorBlockElectronRepulsionIntegrals
+import Base: normalize!
 
 #HELPERS
 function scatterMatrixBlocks2D(shells,totaldim::Integer,blockevaluator::Function,blocklength::Function)
@@ -188,9 +189,9 @@ function computeMatrixCoulomb(basis::GaussianBasis, density::Matrix)
 
   J = zeros(N,N)
   μIndex = 0
-  for (μ in basis.contractedBFs)
+  for μ in basis.contractedBFs
     μIndex+=1
-    for (νIndex in 1:μIndex)
+    for νIndex in 1:μIndex
       ν = basis.contractedBFs[νIndex]
       ERImatrix = [computeElectronRepulsionIntegral(μ,ν,λ,σ) for λ in basis.contractedBFs, σ in basis.contractedBFs]
       J[μIndex,νIndex] = trace(ERImatrix*density)
@@ -223,9 +224,9 @@ function computeMatrixExchange(basis::GaussianBasis, density::Matrix)
 
   K = zeros(N,N)
   μIndex = 0
-  for (μ in basis.contractedBFs)
+  for μ in basis.contractedBFs
     μIndex+=1
-    for (νIndex in 1:μIndex)
+    for νIndex in 1:μIndex
       ν = basis.contractedBFs[νIndex]
       ERImatrix = [computeElectronRepulsionIntegral(μ,λ,ν,σ) for λ in basis.contractedBFs, σ in basis.contractedBFs]
       K[μIndex,νIndex] = trace(ERImatrix*density)

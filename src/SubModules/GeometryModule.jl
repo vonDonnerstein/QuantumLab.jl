@@ -24,7 +24,7 @@ end
 angstrom2bohr(x::Real) = (return x/0.529177210)
 angstrom2bohr(pos::Position) = (return Position(angstrom2bohr(pos.x),angstrom2bohr(pos.y),angstrom2bohr(pos.z)))
 function angstrom2bohr!(geo::Geometry)
-  for (atom in geo.atoms)
+  for atom in geo.atoms
     atom.position = angstrom2bohr(atom.position)
   end
 end
@@ -40,11 +40,9 @@ function computeEnergyInteratomicRepulsion(
 end
 
 function computeEnergyInteratomicRepulsion(geo::Geometry)
-  result = 0.::Float64
-  for (A in 1:length(geo.atoms))
-    for (B in 1:A-1)
+  result = 0.0
+  for A in 1:length(geo.atoms), B in 1:A-1
       result += computeEnergyInteratomicRepulsion(geo.atoms[A],geo.atoms[B])
-    end
   end
   return result
 end

@@ -9,17 +9,17 @@ using Requests
 import Base.display
 
 type BasisSetExchangeEntry
-  url::UTF8String
-  name::UTF8String
-  availtype::UTF8String
-  elts::UTF8String
-  status::UTF8String
-  hasEcp::UTF8String
-  hasSpin::UTF8String
-  lastModifiedDate::UTF8String
-  contributionPI::UTF8String
-  contributorName::UTF8String
-  bsAbstract::UTF8String
+  url::String
+  name::String
+  availtype::String
+  elts::String
+  status::String
+  hasEcp::String
+  hasSpin::String
+  lastModifiedDate::String
+  contributionPI::String
+  contributorName::String
+  bsAbstract::String
 end
 
 function display(bseEntry::BasisSetExchangeEntry)
@@ -44,7 +44,7 @@ function obtainBasisSetExchangeEntries()
 end
 
 function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename::AbstractString, format::AbstractString="TX93")
-  requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true"; 
+  requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true";
 			data=Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "false"), allow_redirects=false)
   sessioncookie = requestresponse.cookies["JSESSIONID"].value
   finalresponse = post("https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11535052407933"; cookies = Dict("JSESSIONID" => sessioncookie))

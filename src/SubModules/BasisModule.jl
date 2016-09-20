@@ -1,7 +1,5 @@
 module BasisModule
 export GaussianBasis, computeBasis, computeBasisShells
-import Base.display
-import ..IntegralsModule.normalize!
 
 using ..BaseModule
 using ..BasisFunctionsModule
@@ -11,6 +9,7 @@ using ..AtomModule
 using ..IntegralsModule
 using ..ShellModule
 
+import Base.normalize!
 
 abstract Basis
 
@@ -18,8 +17,8 @@ abstract Basis
 A GaussianBasis is a Basis constructed purely from Gaussian type functions (see PrimitiveGaussianBasisFunction).
 The list of basis functions defines the basis. It is most easily constructed from a BasisSet and a Geometry by computeBasis().
 """
-type GaussianBasis <: Basis
-  contractedBFs::Array{ContractedGaussianBasisFunction,1}
+immutable GaussianBasis <: Basis
+  contractedBFs::Vector{ContractedGaussianBasisFunction}
 end
 
 function computeBasis(basSet::BasisSet,geo::Geometry)
@@ -42,9 +41,7 @@ function computeBasis(basSet::BasisSet,geo::Geometry)
   return bas
 end
 
-function normalize!(basis::GaussianBasis)
-  normalize!(basis.contractedBFs)
-end
+normalize!(basis::GaussianBasis) = normalize!(basis.contractedBFs)
 
 function display(basis::GaussianBasis)
   dump(typeof(basis))

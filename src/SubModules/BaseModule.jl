@@ -27,7 +27,7 @@ const floatregex = T"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
 
 convert(::Type{Vector{Float64}},p::Position) = [p.x,p.y,p.z]
 
-function distance(p::Position,q::Position) 
+function distance(p::Position,q::Position)
   pq = p - q
   return sqrt((pq.x)^2+(pq.y)^2+(pq.z)^2)
 end
@@ -42,7 +42,7 @@ immutable MQuantumNumber
   z::Int
 end
 
-lqnExponent = Dict{ASCIIString,Int}(
+lqnExponent = Dict{String,Int}(
   "S" => 	0,
   "P" => 	1,
   "D" => 	2,
@@ -53,7 +53,7 @@ lqnExponent = Dict{ASCIIString,Int}(
   "K" =>	7,
 )
 
-exponentLqn = Dict{Int,ASCIIString}(
+exponentLqn = Dict{Int,String}(
   0 => 	"S",
   1 => 	"P",
   2 => 	"D",
@@ -71,7 +71,7 @@ As is generally known the total MQuantumNumber in pure coordinates lies between 
 This means that the sum of the three cartesian components can at most b. LQuantumNumber.
 """
 immutable LQuantumNumber
-	symbol::ASCIIString
+	symbol::String
 	exponent::Int
 
 	LQuantumNumber(sym::AbstractString) = new(sym,lqnExponent[sym])

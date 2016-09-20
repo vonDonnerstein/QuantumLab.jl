@@ -8,7 +8,7 @@ using ..GeometryModule
 using ..IntegralsModule
 
 """
-Compute all matrices needed for the Resolution-of-the-Identity (RI) in 
+Compute all matrices needed for the Resolution-of-the-Identity (RI) in
 overlap metric formulation:
 
 *  B = (μ,ν|P), Sinv = (PQ)^(-1), C = (Q|R)
@@ -28,7 +28,7 @@ function computeMatricesResolutionOfTheIdentityOverlapMetric(
 end
 
 """
-Compute the matrix needed for the Resolution-of-the-Identity (RI) in 
+Compute the matrix needed for the Resolution-of-the-Identity (RI) in
 Coulomb metric formulation:
 
 *  B = (μ,ν|P) * (P|Q)^(-½)

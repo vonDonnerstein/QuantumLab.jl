@@ -91,7 +91,7 @@ function display{T<:Citation}(docuArray::Array{T,1})
 end
 
 """
-Taken from base/docs/Docs.jl, this function shows a summary of the fields, type and supertypes of a DataType. 
+Taken from base/docs/Docs.jl, this function shows a summary of the fields, type and supertypes of a DataType.
 In Docs.jl the function `typesummary` is only meant to be called when no other documentation can be found for it.
 If `typesummary` doesn't print "No documentation found" anymore in the future, then this function becomes obsolete.
 """
@@ -100,7 +100,7 @@ function summarize(f::DataType)
     """
     **Summary:**
     ```julia
-    $(f.abstract ? "abstract" : f.mutable ? "type" : "immutable") $f <: $(super(f))
+    $(f.abstract ? "abstract" : f.mutable ? "type" : "immutable") $f <: $(supertype(f))
     ```
     """
     ]
@@ -144,11 +144,11 @@ macro add_doc(newentry,obj)
   _obj = :($_curmod.$obj)
   _olddoc = Base.doc(eval(_obj))
   return quote
-    if isa($_olddoc, Vector)
-      Base.doc!($_obj,[$newentry,$_olddoc...])  # making sure we promote to the correct type
-    else
-      Base.doc!($_obj,[$newentry,$_olddoc])     # making sure we promote to the correct type
-    end
+    #if isa($_olddoc, Vector)
+    #  Base.Docs.doc!($_obj,[$newentry,$_olddoc...])  # making sure we promote to the correct type
+    #else
+    #  Base.Docs.doc!($_obj,[$newentry,$_olddoc])     # making sure we promote to the correct type
+    #end
   end
 end
 

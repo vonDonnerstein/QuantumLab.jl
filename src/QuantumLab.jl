@@ -1,5 +1,7 @@
 module QuantumLab
 
+import Base: normalize!
+
 lib_path = joinpath(dirname(@__FILE__),"..","deps","usr","lib")
 push!(Libdl.DL_LOAD_PATH,lib_path)
 try
@@ -9,18 +11,18 @@ catch e
   warn("Caught an error when trying to dlopen libint2-QuantumLab.so \n
            You can try to rebuild with Pkg.build(\"QuantumLab\"). \n
 	   Alternatively, you can set the symlink by hand if you know where the
-	   dynamic library is located. Until then we'll expect you can't access 
+	   dynamic library is located. Until then we'll expect you can't access
 	   libint2 and continue with a stub to get the code running anyways.
 	   This is typical behavior under Windows and leads to a drastic performance decrease.")
   global const libint2_available = false
 end
 
 
+using ProgressMeter
+using Reexport
 
 print(" + (ProgressMeter................")
-using ProgressMeter
 ProgressMeter.printover(STDOUT," + (Reexport...................")
-using Reexport
 ProgressMeter.printover(STDOUT,"")
 
 print(" + DocumentationModule.........")
@@ -35,7 +37,7 @@ println("Done.")
 
 print(" + AtomModule..................")
 include("SubModules/AtomModule.jl")
-@reexport using .AtomModule 
+@reexport using .AtomModule
 println("Done.")
 
 print(" + GeometryModule..............")

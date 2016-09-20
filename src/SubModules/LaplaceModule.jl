@@ -2,9 +2,9 @@
 The *LaplaceModule* contains all functionality to work with the Laplace transformation
 1/x ≈ ∑ₜweight[t] * exp(-x node[t]).
 The nodes and weights are contained within the *LaplacePoints* type. Hackbusch and coworkers
-have optimized and pretabulated these for different x-ranges according to minmax 
+have optimized and pretabulated these for different x-ranges according to minmax
 (Takatsuka, Ten-No, Hackbusch, JCP, 129 (2008), 044112).
-Their pretabulated files can be obtained with *downloadLaplacePointsHackbusch*. Use *readLaplacePointsHackbusch* to 
+Their pretabulated files can be obtained with *downloadLaplacePointsHackbusch*. Use *readLaplacePointsHackbusch* to
 generate a LaplacePoints object from such a file. After downloading one can also use *findLaplacePointsHackbuschPretableLarger*/*findLaplacePointsHackbuschPretableSmaller* to obtain the best guesses for a given range. The ideal Laplace
 problem considers x∈ [1,R]. For the transformation to the x∈ [A,B]-type Laplace problem utility functions are provided (*transformRangeToIdealLaplace*,*transformWeightFromIdealLaplace*,*transformNodeFromIdealLaplace*,*transformLaplacePointFromIdealLaplace*).
 """
@@ -151,8 +151,8 @@ and directory name (default:"hackbusch") to load the corresponding pretable file
 """ readLaplacePointsHackbusch
 
 """
-Returns the LaplacePoints for the smallest range larger than the requested one for which 
-pretabulated Laplace points can be found. If the requested range is larger than any pretabulated one, 
+Returns the LaplacePoints for the smallest range larger than the requested one for which
+pretabulated Laplace points can be found. If the requested range is larger than any pretabulated one,
 we expect the largest pretabulated one to be Rₖ, so the function issues a warning and
 returns the LaplacePoints for that range.
 """
@@ -169,8 +169,8 @@ function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Flo
 end
 
 """
-Returns the LaplacePoints for the largest range smaller than the requested one for which 
-pretabulated Laplace points can be found. 
+Returns the LaplacePoints for the largest range smaller than the requested one for which
+pretabulated Laplace points can be found.
 """
 function findLaplacePointsHackbuschPretableSmaller(numberOfPoints::Integer,R::Float64,dir::AbstractString="hackbusch")
   for r in reverse(hackbuschpretables[numberOfPoints])
@@ -186,9 +186,9 @@ For the ideal Laplace problem the values x must be known to be in the range [1,R
 If 1/x can in general be within [A,B], then all nodes and weights must be scaled with 1/A,
 so that x' := x/A lies within [1,B/A (=:R)].
 
-Consider: 1/x = ∑ w exp(-α x)  =>  A/x = ∑ A w exp(-α x)  
-                               =>  A/x = ∑ (A w) exp(-(A α) x/A)  
-			       =>  1/x' = ∑ w' exp(-α' x')
+Consider: 1/x = ∑ w exp(-α x)  =>  A/x = ∑ A w exp(-α x)
+                               =>  A/x = ∑ (A w) exp(-(A α) x/A)
+                   =>  1/x' = ∑ w' exp(-α' x')
 """
 function transformRangeToIdealLaplace(A::Float64,B::Float64)
   return (1,B/A)

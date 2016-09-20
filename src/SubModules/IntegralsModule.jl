@@ -1,5 +1,5 @@
 module IntegralsModule
-export computeIntegralOverlap, computeElectronRepulsionIntegral, computeTensorBlockElectronRepulsionIntegrals, computeIntegralKinetic, computeIntegralNuclearAttraction, computeIntegralThreeCenterOverlap, computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeMatrixBlockNuclearAttraction, normalize!
+export computeIntegralOverlap, computeElectronRepulsionIntegral, computeTensorBlockElectronRepulsionIntegrals, computeIntegralKinetic, computeIntegralNuclearAttraction, computeIntegralThreeCenterOverlap, computeMatrixBlockOverlap, computeMatrixBlockKinetic, computeMatrixBlockNuclearAttraction
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..AtomModule
@@ -7,6 +7,8 @@ using ..GeometryModule
 using ..DocumentationModule
 using ..ShellModule
 using ProgressMeter
+
+import Base.normalize!
 
 ProgressMeter.printover(STDOUT," + (GSL........................")
 using GSL
@@ -95,16 +97,16 @@ function GaussProductPolynomialFactor(
 
   #factors = PolynomialFactors(Array(Tuple{Float64,Int},pgb1.mqn.x+pgb2.mqn.x),Array(Tuple{Float64,Int},pgb1.mqn.y+pgb2.mqn.y),Array(Tuple{Float64,Int},pgb1.mqn.z+pgb2.mqn.z))
   factors = PolynomialFactors(Tuple{Float64,Int}[],Tuple{Float64,Int}[],Tuple{Float64,Int}[])
-  for (xyz in 1:3)
+  for xyz in 1:3
     l1 = getfield(pgb1.mqn,xyz)
     l2 = getfield(pgb2.mqn,xyz)
     sizehint!(getfield(factors,xyz),1+l1+l2)
     for k in 0:l1+l2
-      f = 0.::Float64
+      f = 0.0
       for q in max(-k,k-2l2):2:min(k,2l1-k)
-	i = (k+q) ÷ 2
-	j = (k-q) ÷ 2
-	f += binomial(l1,i) * binomial(l2,j) * getfield((P-A),xyz)^(l1-i) * getfield((P-B),xyz)^(l2-j)
+    i = (k+q) ÷ 2
+    j = (k-q) ÷ 2
+    f += binomial(l1,i) * binomial(l2,j) * getfield((P-A),xyz)^(l1-i) * getfield((P-B),xyz)^(l2-j)
       end
       #ij = [((k+q) ÷ 2,(k-q) ÷ 2) for q in max(-k,k-2l2):2:min(k,2l1-k)]
       #f = sum([binomial(l1,i) * binomial(l2,j) * (P-A).(xyz)^(l1-i) * (P-B).(xyz)^(l2-j) for(i,j) in ij])
@@ -149,7 +151,7 @@ function computeIntegralOverlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0.::Float64
+  integral = 0.0
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
       integral += coeff1*coeff2*computeIntegralOverlap(pgb1,pgb2)
@@ -163,9 +165,9 @@ function computeIntegralThreeCenterOverlap(
   pgb2::PrimitiveGaussianBasisFunction,
   pgb3::PrimitiveGaussianBasisFunction)
   #
-  Ix = 0.::Float64
-  Iy = 0.::Float64
-  Iz = 0.::Float64
+  Ix = 0.0
+  Iy = 0.0
+  Iz = 0.0
   (K12,center,exponent) = IntegralsModule.GaussProductFundamental(pgb1,pgb2)
   factors12 = IntegralsModule.GaussProductPolynomialFactor(pgb1,pgb2)
   #
@@ -173,26 +175,26 @@ function computeIntegralThreeCenterOverlap(
   pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
   (K,P,γ) = IntegralsModule.GaussProductFundamental(pgb12,pgb3)
   #
-  for (xyz in [:x,:y,:z])
-    for ((f,i) in factors12.(xyz))
+  for xyz in [:x,:y,:z]
+    for (f,i) in getfield(factors12, xyz)
       if (xyz == :x)
-	mqn = MQuantumNumber(i,0,0)
-	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+    mqn = MQuantumNumber(i,0,0)
+    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       elseif (xyz == :y)
-	mqn = MQuantumNumber(0,i,0)
-	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+    mqn = MQuantumNumber(0,i,0)
+    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       elseif (xyz == :z)
-	mqn = MQuantumNumber(0,0,i)
-	pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+    mqn = MQuantumNumber(0,0,i)
+    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       end
       factors = IntegralsModule.GaussProductPolynomialFactor(pgb12,pgb3)
-			if (xyz == :x)
-				Ix += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.x])
-			elseif (xyz == :y)
-				Iy += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.y])
-			elseif (xyz == :z)
-				Iz += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.z])
-			end
+            if (xyz == :x)
+                Ix += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.x])
+            elseif (xyz == :y)
+                Iy += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.y])
+            elseif (xyz == :z)
+                Iz += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.z])
+            end
     end
   end
   #
@@ -204,15 +206,13 @@ function computeIntegralThreeCenterOverlap(
   cgb2::ContractedGaussianBasisFunction,
   cgb3::ContractedGaussianBasisFunction)
   #
-  integral = 0.::Float64
-  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
-    for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      for (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
-	integral += coeff1*coeff2*coeff3*computeIntegralThreeCenterOverlap(pgb1,pgb2,pgb3)
-      end
-    end
+  integral = 0.0
+  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
+        (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs),
+        (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
+    integral += coeff1*coeff2*coeff3*computeIntegralThreeCenterOverlap(pgb1,pgb2,pgb3)
   end
-  return integral::Float64
+  return integral
 end
 
 function incrmqn(mqn::MQuantumNumber,xyz::Symbol,inc::Int)
@@ -230,9 +230,9 @@ function computeIntegralKinetic(
   #Ix = 1/2 l1 l2 <-1|-1> + 2 α1 α2 <+1|+1> - α1 l2 <+1|-1> - α2 l1 <-1|+1>
   #(acc. to Fundamentals of Mol. Integr. Eval. by Fermann, Valeev (eq. 4.1 + 4.13))
 
-  integral = 0.::Float64
+  integral = 0.0
 
-  for (xyz in (:x,:y,:z))
+  for xyz in (:x,:y,:z)
     pgb1decr = deepcopy(pgb1)
     pgb1decr.mqn = incrmqn(pgb1.mqn,xyz,-1)
     pgb1incr = deepcopy(pgb1)
@@ -243,8 +243,8 @@ function computeIntegralKinetic(
     pgb2incr = deepcopy(pgb2)
     pgb2incr.mqn = incrmqn(pgb2.mqn,xyz,1)
 
-    l1 = pgb1.mqn.(xyz)
-    l2 = pgb2.mqn.(xyz)
+    l1 = getfield(pgb1.mqn, xyz)
+    l2 = getfield(pgb2.mqn, xyz)
     α1 = pgb1.exponent
     α2 = pgb2.exponent
 
@@ -261,13 +261,13 @@ function computeIntegralKinetic(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0.::Float64
-  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
-    for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
-      integral += coeff1*coeff2*computeIntegralKinetic(pgb1,pgb2)
-    end
+  integral = 0.0
+  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
+      (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
+
+    integral += coeff1*coeff2*computeIntegralKinetic(pgb1,pgb2)
   end
-  return integral::Float64
+  return integral
 end
 
 function OverlapFundamental(
@@ -311,25 +311,23 @@ function computeIntegralNuclearAttraction(
   C = atom.position
 
   result = 0
-  for ((fx,l) in GaussProductPolynomialFactor(pgb1,pgb2).x)
-    for (r in 0:floor(Int,(l/2)))
-      for (i in 0:floor(Int,((l-2r)/2)))
-	Ax = ASummand(fx,pgb1.mqn.x,pgb2.mqn.x,pgb1.center.x,pgb2.center.x,(P-C).x,γ,l,r,i)
-	for ((fy,m) in GaussProductPolynomialFactor(pgb1,pgb2).y)
-	  for (s in 0:floor(Int,(m/2)))
-	    for (j in 0:floor(Int,((m-2s)/2)))
-	      Ay = ASummand(fy,pgb1.mqn.y,pgb2.mqn.y,pgb1.center.y,pgb2.center.y,(P-C).y,γ,m,s,j)
-	      for ((fz,n) in GaussProductPolynomialFactor(pgb1,pgb2).z)
-		for (t in 0:floor(Int,(n/2)))
-		  for (k in 0:floor(Int,((n-2t)/2)))
-		    Az = ASummand(fz,pgb1.mqn.z,pgb2.mqn.z,pgb1.center.z,pgb2.center.z,(P-C).z,γ,n,t,k)
-		    result += 2π/γ * K * Ax * Ay * Az * FIntegral(l+m+n-2*(r+s+t)-(i+j+k),γ*distance(P,C)^2)
-		  end
-		end
-	      end
-	    end
-	  end
-	end
+  for (fx,l) in GaussProductPolynomialFactor(pgb1,pgb2).x,
+      r in 0:floor(Int,(l/2)),
+      i in 0:floor(Int,((l-2r)/2))
+
+    Ax = ASummand(fx,pgb1.mqn.x,pgb2.mqn.x,pgb1.center.x,pgb2.center.x,(P-C).x,γ,l,r,i)
+    for (fy,m) in GaussProductPolynomialFactor(pgb1,pgb2).y,
+        s in 0:floor(Int,(m/2))m,
+        j in 0:floor(Int,((m-2s)/2))
+
+      Ay = ASummand(fy,pgb1.mqn.y,pgb2.mqn.y,pgb1.center.y,pgb2.center.y,(P-C).y,γ,m,s,j)
+
+      for (fz,n) in GaussProductPolynomialFactor(pgb1,pgb2).z,
+          t in 0:floor(Int,(n/2)),
+          k in 0:floor(Int,((n-2t)/2))
+
+        Az = ASummand(fz,pgb1.mqn.z,pgb2.mqn.z,pgb1.center.z,pgb2.center.z,(P-C).z,γ,n,t,k)
+        result += 2π/γ * K * Ax * Ay * Az * FIntegral(l+m+n-2*(r+s+t)-(i+j+k),γ*distance(P,C)^2)
       end
     end
   end
@@ -341,13 +339,13 @@ function computeIntegralNuclearAttraction(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction,
   atom::Atom)
-  integral = 0.::Float64
-  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
-    for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
+  integral = 0.0
+  for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
+      (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
+
       integral += coeff1*coeff2*computeIntegralNuclearAttraction(pgb1,pgb2,atom)
-    end
   end
-  return integral::Float64
+  return integral
 end
 
 
@@ -364,22 +362,23 @@ function θFactors(
   K,P,γ = IntegralsModule.GaussProductFundamental(μ,ν)
 
   factors = θfactors(Tuple{Float64,Int,Int}[],Tuple{Float64,Int,Int}[],Tuple{Float64,Int,Int}[])
-  for (xyz in 1:3)
+  for xyz in 1:3
     sizehint!(getfield(factors,xyz),floor(Int,(length(getfield(GaussProductPolynomialFactor(μ,ν),xyz))+1)*5/8))
-    for ((f,l) in getfield(IntegralsModule.GaussProductPolynomialFactor(μ,ν),xyz))
-      for (r in 0:floor(Int,(l/2)))
-	θ = f * (factorial(l)*γ^(r-l))/(factorial(r)*factorial(l-2r))
-	push!(getfield(factors,xyz),(θ,l,r))
-      end
+
+    for (f,l) in getfield(IntegralsModule.GaussProductPolynomialFactor(μ,ν),xyz),
+        r in 0:floor(Int,(l/2))
+
+        θ = f * (factorial(l)*γ^(r-l))/(factorial(r)*factorial(l-2r))
+        push!(getfield(factors,xyz),(θ,l,r))
     end
   end
   return factors
 end
 
 type Bfactors
-  x::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
-  y::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
-  z::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}	# B,l12,r12,i,l34,r34
+  x::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
+  y::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
+  z::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
 end
 
 function BFactors(
@@ -391,19 +390,17 @@ function BFactors(
   K1,P,γ1 = IntegralsModule.GaussProductFundamental(μ,ν)
   K2,Q,γ2 = IntegralsModule.GaussProductFundamental(λ,σ)
   δ = 1/(4γ1) + 1/(4γ2)
-  #p = (P-Q)	# this might be a typo in the book
+  #p = (P-Q)    # this might be a typo in the book
   p = (Q-P)
 
   factors = Bfactors([],[],[])
-  for (xyz in 1:3)
-    for ((θ12,l12,r12) in getfield(θFactors(μ,ν),xyz))
-      for ((θ34,l34,r34) in getfield(θFactors(λ,σ),xyz))
-	#for (i in 0:floor(Integer,((l12-2r12)/2)))    # this might be a typo in the book (otherwise e.g. ERI(s,s,px,px2) != ERI(px,px2,s,s) (where the 2 denotes a second center moved by 0.5 in x direction)
-	for (i in 0:floor(Int,((l12+l34-2r12-2r34)/2)))
-	  B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*p.(xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
-	  push!(getfield(factors,xyz),(B,l12,r12,i,l34,r34))
-	end
-      end
+  for xyz in 1:3,
+     (θ12,l12,r12) in getfield(θFactors(μ,ν),xyz),
+     (θ34,l34,r34) in getfield(θFactors(λ,σ),xyz)
+    #for (i in 0:floor(Integer,((l12-2r12)/2)))    # this might be a typo in the book (otherwise e.g. ERI(s,s,px,px2) != ERI(px,px2,s,s) (where the 2 denotes a second center moved by 0.5 in x direction)
+    for i in 0:floor(Int,((l12+l34-2r12-2r34)/2))
+      B = (-1)^l34 * θ12 * θ34 * ((-1)^i*(2δ)^(2(r12+r34))*factorial(l12+l34-2r12-2r34)*δ^i*getfield(p,xyz)^(l12+l34-2*(r12+r34+i)))/((4δ)^(l12+l34)*factorial(i)*factorial(l12+l34-2*(r12+r34+i)))
+      push!(getfield(factors,xyz),(B,l12,r12,i,l34,r34))
     end
   end
   return factors
@@ -433,15 +430,14 @@ function computeElectronRepulsionIntegral(
   Bfactors = BFactors(μ,ν,λ,σ)
   Ω = 2π^2/(γ1 * γ2) * sqrt(π/(γ1 + γ2)) * exp(-α1*α2*distance(A,B)^2/γ1 - α3*α4*distance(C,D)^2/γ2)
 
-  result = 0.::Float64
-  for ((Bx,l12,r12,i,l34,r34) in Bfactors.x)
-    for ((By,m12,s12,j,m34,s34) in Bfactors.y)
-      for ((Bz,n12,t12,k,n34,t34) in Bfactors.z)
-	V = (l12+l34+m12+m34+n12+n34) - 2*(r12+r34+s12+s34+t12+t34) - (i+j+k)
-	result += Ω * Bx * By * Bz * IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ))
-	#println("Bx*By*Bz*FIntegral[$V] = $Bx * $By * $Bz * $(IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ)))")
-      end
-    end
+  result = 0.0
+  for (Bx,l12,r12,i,l34,r34) in Bfactors.x,
+      (By,m12,s12,j,m34,s34) in Bfactors.y,
+      (Bz,n12,t12,k,n34,t34) in Bfactors.z
+
+    V = (l12+l34+m12+m34+n12+n34) - 2*(r12+r34+s12+s34+t12+t34) - (i+j+k)
+    result += Ω * Bx * By * Bz * IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ))
+    #println("Bx*By*Bz*FIntegral[$V] = $Bx * $By * $Bz * $(IntegralsModule.FIntegral(V,distance(P,Q)^2/(4δ)))")
   end
   return result
 end
@@ -452,17 +448,15 @@ function computeElectronRepulsionIntegral(
   λ::ContractedGaussianBasisFunction,
   σ::ContractedGaussianBasisFunction)
 
-  integral::Float64 = 0.
-  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs)
-    for (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs)
-      for (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs)
-	for (coeff4,pgb4) in zip(σ.coefficients,σ.primitiveBFs)
-	  integral += coeff1*coeff2*coeff3*coeff4*computeElectronRepulsionIntegral(pgb1,pgb2,pgb3,pgb4)
-	end
-      end
-    end
+  integral = 0.0
+  for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs),
+      (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs),
+      (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs),
+      (coeff4,pgb4) in zip(σ.coefficients,σ.primitiveBFs)
+
+      integral += coeff1*coeff2*coeff3*coeff4*computeElectronRepulsionIntegral(pgb1,pgb2,pgb3,pgb4)
   end
-  return integral::Float64
+  return integral
 end
 
 function computeTensorBlockElectronRepulsionIntegrals(

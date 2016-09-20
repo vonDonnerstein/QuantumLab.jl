@@ -117,7 +117,7 @@ function evaluateSCF(
   end
   return energies, totalEnergy, P
 end
-  
+
 function evaluateSCF(
   basis::GaussianBasis,
   geometry::Geometry,
@@ -155,7 +155,7 @@ function evaluateSCF(
 
   #too slow because trivial ERI recomputation in every step:
   evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
-  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity): 
+  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity):
   #bas = Basis([])
   #for sh in shells
   #  append!(bas,expandShell(sh))
