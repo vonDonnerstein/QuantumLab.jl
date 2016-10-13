@@ -93,7 +93,7 @@ const hackbuschpretables = Dict{Int64,Array{Int64,1}}(
  52=>[1e12; 3e12],
  53=>[4e11; 1e12:1e12:4e12]
 )
-@doc GenericCitation("http://www.mis.mpg.de/scicomp/EXP_SUM/1_x/") hackbuschpretables
+@add_doc GenericCitation("http://www.mis.mpg.de/scicomp/EXP_SUM/1_x/") hackbuschpretables
 
 """
 Evaluates to the name of the Laplace point file which corresponds to the given number of points and limit

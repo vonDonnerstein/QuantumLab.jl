@@ -139,16 +139,26 @@ Base.promote_rule(::Type{Documentation},::Type{JournalCitation}) 	= Documentatio
 Base.convert(::Type{Documentation},md::Base.Markdown.MD) = Documentation(md)
 Base.convert(::Type{Documentation},cite::Citation) = Documentation(cite)
 
+macro ignore_warnings(expr)
+  quote
+    STDERRorig = STDERR
+    redirect_stderr()
+    result = $expr
+    redirect_stderr(STDERRorig)
+    return result
+  end
+end
+
 macro add_doc(newentry,obj)
   _curmod = current_module()
   _obj = :($_curmod.$obj)
-  _olddoc = Base.doc(eval(_obj))
+  _olddoc = eval(:(@doc $_obj))
   return quote
-    #if isa($_olddoc, Vector)
-    #  Base.Docs.doc!($_obj,[$newentry,$_olddoc...])  # making sure we promote to the correct type
-    #else
-    #  Base.Docs.doc!($_obj,[$newentry,$_olddoc])     # making sure we promote to the correct type
-    #end
+    if isa($_olddoc, Vector)
+      @ignore_warnings @doc [$newentry,$_olddoc...] $_obj  # making sure we promote to the correct type
+    else
+      @ignore_warnings @doc [$newentry,$_olddoc] $_obj     # making sure we promote to the correct type
+    end
   end
 end
 
