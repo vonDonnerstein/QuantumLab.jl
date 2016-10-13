@@ -1,7 +1,5 @@
 module QuantumLab
 
-import Base: normalize!
-
 lib_path = joinpath(dirname(@__FILE__),"..","deps","usr","lib")
 push!(Libdl.DL_LOAD_PATH,lib_path)
 try
@@ -18,11 +16,11 @@ catch e
 end
 
 
-using ProgressMeter
-using Reexport
 
 print(" + (ProgressMeter................")
+using ProgressMeter
 ProgressMeter.printover(STDOUT," + (Reexport...................")
+using Reexport
 ProgressMeter.printover(STDOUT,"")
 
 print(" + DocumentationModule.........")

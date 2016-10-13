@@ -40,7 +40,7 @@ function computeEnergyInteratomicRepulsion(
 end
 
 function computeEnergyInteratomicRepulsion(geo::Geometry)
-  result = 0.0
+  result = 0.
   for A in 1:length(geo.atoms), B in 1:A-1
       result += computeEnergyInteratomicRepulsion(geo.atoms[A],geo.atoms[B])
   end

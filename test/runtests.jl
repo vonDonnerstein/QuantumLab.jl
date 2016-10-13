@@ -10,24 +10,24 @@ include("setup.jl")
 
 
 # test DocumentationModule
-#info("$(now())  TESTING:   DocumentationModule")
-#docModTester() = 1
-#@doc """
-#some markdown documentation
-#""" docModTester
-#@test typeof(@doc(docModTester)) == Base.Markdown.MD
-#@add_doc GenericCitation("generic citation") docModTester
-#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-#@add_doc BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060") docModTester
-#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-#@add_doc JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016) docModTester
-#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-#@add_doc Citation(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)) docModTester
-#@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
-#@test isa([Base.Markdown.parse("Hellau!"),BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060")],Vector{DocumentationModule.Documentation})
-#@test isa([Base.Markdown.parse("Hellau!"),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)],Vector{DocumentationModule.Documentation})
-#@test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
-#@test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+info("$(now())  TESTING:   DocumentationModule")
+docModTester() = 1
+@doc """
+some markdown documentation
+""" docModTester
+@test typeof(@doc(docModTester)) == Base.Markdown.MD
+@add_doc GenericCitation("generic citation") docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060") docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016) docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@add_doc Citation(JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)) docModTester
+@test typeof(@doc(docModTester)) == Vector{DocumentationModule.Documentation}
+@test isa([Base.Markdown.parse("Hellau!"),BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060")],Vector{DocumentationModule.Documentation})
+@test isa([Base.Markdown.parse("Hellau!"),JournalCitation(["M. Mustermann"],"J. Stup. Mistakes",1,12,2016)],Vector{DocumentationModule.Documentation})
+@test isa([Base.Markdown.parse("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
+@test isa([GenericCitation("Hellau!"),DocumentationModule.Documentation(BookCitation(["C. Darwin"], "On the Origin of Species", "978-0451529060"))],Vector{DocumentationModule.Documentation})
 
 info("$(now())  TESTING:   Basic Functionality")
 # test AtomModule

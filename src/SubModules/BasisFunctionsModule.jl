@@ -23,9 +23,9 @@ type ContractedGaussianBasisFunction
 end
 
 function display(cgbf::ContractedGaussianBasisFunction,indent="")
-  print(indent); dump(typeof(cgbf))
+  print(indent); println(typeof(cgbf))
   for idx in 1:length(cgbf.coefficients)
-    print(indent * "  $(cgbf.coefficients[idx]) × "); dump(typeof(cgbf.primitiveBFs[idx]))
+    print(indent * "  $(cgbf.coefficients[idx]) × "); println(typeof(cgbf.primitiveBFs[idx]))
     print(indent * "    center:   "); println(cgbf.primitiveBFs[idx].center)
     print(indent * "    exponent: "); println(cgbf.primitiveBFs[idx].exponent)
     print(indent * "    mqn:      "); println(cgbf.primitiveBFs[idx].mqn)
@@ -40,7 +40,7 @@ function evaluateFunction(x::Position,pgbf::PrimitiveGaussianBasisFunction)
 end
 
 function evaluateFunction(x::Position,cgbf::ContractedGaussianBasisFunction)
-  result = 0.0
+  result = 0.
   for (coeff,pgbf) in zip(cgbf.coefficients,cgbf.primitiveBFs)
     result += coeff * evaluateFunction(x,pgbf)
   end

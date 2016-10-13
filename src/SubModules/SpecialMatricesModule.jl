@@ -9,7 +9,6 @@ using TensorOperations
 using ..LibInt2Module
 using ..ShellModule
 import ..IntegralsModule.computeTensorBlockElectronRepulsionIntegrals
-import Base: normalize!
 
 #HELPERS
 function scatterMatrixBlocks2D(shells,totaldim::Integer,blockevaluator::Function,blocklength::Function)

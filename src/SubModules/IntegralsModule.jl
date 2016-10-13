@@ -102,7 +102,7 @@ function GaussProductPolynomialFactor(
     l2 = getfield(pgb2.mqn,xyz)
     sizehint!(getfield(factors,xyz),1+l1+l2)
     for k in 0:l1+l2
-      f = 0.0
+      f = 0.
       for q in max(-k,k-2l2):2:min(k,2l1-k)
     i = (k+q) ÷ 2
     j = (k-q) ÷ 2
@@ -151,7 +151,7 @@ function computeIntegralOverlap(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0.0
+  integral = 0.
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs)
     for (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
       integral += coeff1*coeff2*computeIntegralOverlap(pgb1,pgb2)
@@ -165,9 +165,9 @@ function computeIntegralThreeCenterOverlap(
   pgb2::PrimitiveGaussianBasisFunction,
   pgb3::PrimitiveGaussianBasisFunction)
   #
-  Ix = 0.0
-  Iy = 0.0
-  Iz = 0.0
+  Ix = 0.
+  Iy = 0.
+  Iz = 0.
   (K12,center,exponent) = IntegralsModule.GaussProductFundamental(pgb1,pgb2)
   factors12 = IntegralsModule.GaussProductPolynomialFactor(pgb1,pgb2)
   #
@@ -206,10 +206,10 @@ function computeIntegralThreeCenterOverlap(
   cgb2::ContractedGaussianBasisFunction,
   cgb3::ContractedGaussianBasisFunction)
   #
-  integral = 0.0
+  integral = 0.
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
-        (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs),
-        (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
+      (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs),
+      (coeff3,pgb3) in zip(cgb3.coefficients,cgb3.primitiveBFs)
     integral += coeff1*coeff2*coeff3*computeIntegralThreeCenterOverlap(pgb1,pgb2,pgb3)
   end
   return integral
@@ -230,7 +230,7 @@ function computeIntegralKinetic(
   #Ix = 1/2 l1 l2 <-1|-1> + 2 α1 α2 <+1|+1> - α1 l2 <+1|-1> - α2 l1 <-1|+1>
   #(acc. to Fundamentals of Mol. Integr. Eval. by Fermann, Valeev (eq. 4.1 + 4.13))
 
-  integral = 0.0
+  integral = 0.
 
   for xyz in (:x,:y,:z)
     pgb1decr = deepcopy(pgb1)
@@ -261,7 +261,7 @@ function computeIntegralKinetic(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction)
 
-  integral = 0.0
+  integral = 0.
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
       (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
 
@@ -339,7 +339,7 @@ function computeIntegralNuclearAttraction(
   cgb1::ContractedGaussianBasisFunction,
   cgb2::ContractedGaussianBasisFunction,
   atom::Atom)
-  integral = 0.0
+  integral = 0.
   for (coeff1,pgb1) in zip(cgb1.coefficients,cgb1.primitiveBFs),
       (coeff2,pgb2) in zip(cgb2.coefficients,cgb2.primitiveBFs)
 
@@ -430,7 +430,7 @@ function computeElectronRepulsionIntegral(
   Bfactors = BFactors(μ,ν,λ,σ)
   Ω = 2π^2/(γ1 * γ2) * sqrt(π/(γ1 + γ2)) * exp(-α1*α2*distance(A,B)^2/γ1 - α3*α4*distance(C,D)^2/γ2)
 
-  result = 0.0
+  result = 0.
   for (Bx,l12,r12,i,l34,r34) in Bfactors.x,
       (By,m12,s12,j,m34,s34) in Bfactors.y,
       (Bz,n12,t12,k,n34,t34) in Bfactors.z
@@ -448,7 +448,7 @@ function computeElectronRepulsionIntegral(
   λ::ContractedGaussianBasisFunction,
   σ::ContractedGaussianBasisFunction)
 
-  integral = 0.0
+  integral = 0.
   for (coeff1,pgb1) in zip(μ.coefficients,μ.primitiveBFs),
       (coeff2,pgb2) in zip(ν.coefficients,ν.primitiveBFs),
       (coeff3,pgb3) in zip(λ.coefficients,λ.primitiveBFs),
