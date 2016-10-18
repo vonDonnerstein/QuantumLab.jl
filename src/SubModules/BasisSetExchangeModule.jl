@@ -45,7 +45,7 @@ end
 
 function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename::AbstractString, format::AbstractString="TX93")
   requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true";
-			data=Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "false"), allow_redirects=false)
+			data=Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "true"), allow_redirects=false)
   sessioncookie = requestresponse.cookies["JSESSIONID"].value
   finalresponse = post("https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11535052407933"; cookies = Dict("JSESSIONID" => sessioncookie))
   basSetDef = replace(Requests.text(finalresponse),r".*<pre style.*>\n*(.*)</pre>.*"s,s"\1")
