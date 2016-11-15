@@ -1,5 +1,5 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial
+export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial, 𝐈, evaluateFunction, trlog
 import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
 immutable Position
@@ -113,5 +113,28 @@ function evaluateFunction(x::Position, f::Function)
 end
 
 doublefactorial(n::Int) = prod(n:-2:1)
+
+type 𝐈type
+  scalar::Float64
+end
+const 𝐈 = 𝐈type(1.)
++(𝐈t::𝐈type,m::Matrix) = 𝐈t.scalar*eye(m) + m
++(m::Matrix,𝐈t::𝐈type) = 𝐈t.scalar*eye(m) + m
+*(𝐈t::𝐈type,scalar::Real) = 𝐈type(𝐈t.scalar*scalar)
+*(scalar::Real,𝐈t::𝐈type) = 𝐈type(𝐈t.scalar*scalar)
+
+"""
+    trLog(m::Matrix)
+trace(logm(m::Matrix)) efficiently via Cholesky-decomposition.
+"""
+function trlog(m::Matrix)
+  L = chol(m)
+  result = 0.
+  for idx in 1:size(L)[1]
+    result += 2*log(L[idx,idx])
+  end
+  return result
+end
+
 
 end # module

@@ -25,10 +25,12 @@ sto3g = readBasisSetTX93("STO-3G.tx93")
 info("$(now())  $(indent)COMPUTING:   sto3g,h2o -> bas")
 bas = computeBasis(sto3g,h2o)
 
-info("$(now())  $(indent)COMPUTING:   bas -> matrixOverlap, matrixKinetic")
+info("$(now())  $(indent)COMPUTING:   bas,h2o -> matrixOverlap, matrixKinetic, matrixNuclearAttraction, ERIs")
 normalize!(bas)
 matrixOverlap = computeMatrixOverlap(bas)
 matrixKinetic = computeMatrixKinetic(bas)
+matrixNuclearAttraction = computeMatrixNuclearAttraction(bas,h2o)
+ERIs = computeTensorElectronRepulsionIntegrals(bas)	# TODO: should build this from libint2shells
 
 info("$(now())  $(indent)COMPUTING:   h2o -> matrixSADguess")
 matrixSADguess = computeDensityGuessSAD("HF","STO-3G",h2o)
@@ -39,3 +41,8 @@ shells_native = computeBasisShells(sto3g,h2o)
 
 info("$(now())  $(indent)COMPUTING:   (HartreeFock)  shells, h2o, matrixSADguess -> density")
 density = evaluateSCF(shells,h2o,mean(matrixSADguess),5,info=false,detailedinfo=false)[3]
+
+info("$(now())  $(indent)COMPUTING:   density, matrixKinetic, matrixNuclearAttraction, ERIs -> matrixFock")
+matrixFock = computeMatrixFock(density,matrixKinetic,matrixNuclearAttraction,ERIs)
+
+densityvirt = inv(matrixOverlap) - density

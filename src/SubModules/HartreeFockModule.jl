@@ -82,6 +82,8 @@ function evaluateSCFStep(
   return (moEnergies,P)
 end
 
+computeMatrixCoefficients(fock::Matrix, overlap::Matrix) = eigvecs(Symmetric(fock),Symmetric(overlap))
+
 function evaluateSCF(
   initialGuessDensity::Matrix,
   overlap::Matrix,

@@ -1,5 +1,5 @@
 module GeometryModule
-export Geometry, readGeometryXYZ, angstrom2bohr, angstrom2bohr!, computeEnergyInteratomicRepulsion
+export Geometry, readGeometryXYZ, bohr2angstrom, angstrom2bohr, angstrom2bohr!, computeEnergyInteratomicRepulsion
 
 using ..BaseModule
 using ..AtomModule
@@ -21,7 +21,8 @@ function readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
 	return geo
 end
 
-angstrom2bohr(x::Real) = (return x/0.529177210)
+angstrom2bohr(x::Real) = x/0.529177210
+bohr2angstrom(x::Real) = x*0.529177210
 angstrom2bohr(pos::Position) = (return Position(angstrom2bohr(pos.x),angstrom2bohr(pos.y),angstrom2bohr(pos.z)))
 function angstrom2bohr!(geo::Geometry)
   for atom in geo.atoms
