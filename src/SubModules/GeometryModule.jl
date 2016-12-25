@@ -1,5 +1,5 @@
 module GeometryModule
-export Geometry, readGeometryXYZ, bohr2angstrom, angstrom2bohr, angstrom2bohr!, computeEnergyInteratomicRepulsion
+export Geometry, readGeometryXYZ, bohr2angstrom, angstrom2bohr, angstrom2bohr!, computeEnergyInteratomicRepulsion, computeNumberElectrons
 
 using ..BaseModule
 using ..AtomModule
@@ -46,6 +46,10 @@ function computeEnergyInteratomicRepulsion(geo::Geometry)
       result += computeEnergyInteratomicRepulsion(geo.atoms[A],geo.atoms[B])
   end
   return result
+end
+
+function computeNumberElectrons(geo::Geometry,charge::Int=0)
+  return count(x->x.element.atomicNumber,geo.atoms) - charge
 end
 
 end #module
