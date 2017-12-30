@@ -178,23 +178,23 @@ function computeIntegralThreeCenterOverlap(
   for xyz in [:x,:y,:z]
     for (f,i) in getfield(factors12, xyz)
       if (xyz == :x)
-    mqn = MQuantumNumber(i,0,0)
-    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+        mqn = MQuantumNumber(i,0,0)
+        pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       elseif (xyz == :y)
-    mqn = MQuantumNumber(0,i,0)
-    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+        mqn = MQuantumNumber(0,i,0)
+        pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       elseif (xyz == :z)
-    mqn = MQuantumNumber(0,0,i)
-    pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
+        mqn = MQuantumNumber(0,0,i)
+        pgb12 = PrimitiveGaussianBasisFunction(center,exponent,mqn)
       end
       factors = IntegralsModule.GaussProductPolynomialFactor(pgb12,pgb3)
-            if (xyz == :x)
-                Ix += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.x])
-            elseif (xyz == :y)
-                Iy += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.y])
-            elseif (xyz == :z)
-                Iz += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.z])
-            end
+      if (xyz == :x)
+          Ix += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.x])
+      elseif (xyz == :y)
+          Iy += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.y])
+      elseif (xyz == :z)
+          Iz += sum([f*g*IntegralsModule.GaussianIntegral1D(j,γ) for (g,j) in factors.z])
+      end
     end
   end
   #

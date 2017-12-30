@@ -93,8 +93,8 @@ function evaluateSCF(
   exchange::Function,
   interatomicRepulsion::Float64,
   electronNumber::Integer;
-  detailedinfo::Bool=true,
   info::Bool=true,
+  detailedinfo::Bool=info,
   energyConvergenceCriterion::Float64 = 1e-8)
 
   P = initialGuessDensity
@@ -156,14 +156,14 @@ function evaluateSCF(
   Vnn = computeEnergyInteratomicRepulsion(geometry)
 
   #too slow because trivial ERI recomputation in every step:
-  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
-  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity):
-  #bas = Basis([])
-  #for sh in shells
-  #  append!(bas,expandShell(sh))
-  #end
-  #ERIs = computeTensorElectronRepulsionIntegrals(bas)
-  #evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
+  #evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
+  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity): 
+  bas = GaussianBasis([])
+  for sh in shells
+    append!(bas.contractedBFs,expandShell(sh))
+  end
+  ERIs = computeTensorElectronRepulsionIntegrals(bas)
+  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
 end
 
 function evaluateSCF(

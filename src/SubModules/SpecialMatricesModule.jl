@@ -47,7 +47,14 @@ function contractTensorBlocksWithMatrix_CoulombLike(shells,density,totaldim::Int
 	  lastrow_in_P += P_block_row_size
 	  P = density[lastcol_in_P-P_block_col_size+1:lastcol_in_P, lastrow_in_P-P_block_row_size+1:lastrow_in_P]
 	  tensor = tensorblockevaluator(sh1,sh2,sh3,sh4)
-	  @tensor block[μ,ν] := tensor[μ,ν,λ,σ] * P[λ,σ]
+	  #@tensor block[μ,ν] := tensor[μ,ν,λ,σ] * P[λ,σ]
+	  block = zeros(block_col_size,block_row_size)
+	  for μ in 1:block_col_size
+	    for ν in 1:block_row_size
+	      block[μ,ν] = dot(vec(tensor[μ,ν,:,:]),vec(P))
+	    end
+	  end
+	  #end tensor stuff
 	  result[lastcol-block_col_size+1:lastcol, lastrow-block_row_size+1:lastrow] += block
 	end
 	lastrow_in_P = 0
@@ -254,6 +261,14 @@ end
 
 #FOCK
 function computeMatrixFock(
+  matrixKinetic::Matrix,
+  matrixNuclearAttraction::Matrix,
+  matrixCoulomb::Matrix,
+  matrixExchange::Matrix)
+  return matrixKinetic + matrixNuclearAttraction + 2*matrixCoulomb-matrixExchange
+end
+
+function computeMatrixFock(
   basis::GaussianBasis,
   geometry::Geometry,
   density::Matrix,
@@ -263,7 +278,7 @@ function computeMatrixFock(
   V = computeMatrixNuclearAttraction(basis,geometry)
   J = computeMatrixCoulomb(basis,density)
   K = computeMatrixExchange(basis,density)
-  return T+V+2J-K
+  return computeMatrixFock(T,V,J,K)
 end
 
 function computeMatrixFock(
@@ -276,7 +291,7 @@ function computeMatrixFock(
   V = matrixNuclearAttraction
   J = computeMatrixCoulomb(electronRepulsionIntegralsColoumb,density)
   K = computeMatrixExchange(electronRepulsionIntegralsExchange,density)
-  return T+V+2J-K
+  return computeMatrixFock(T,V,J,K)
 end
 
 end

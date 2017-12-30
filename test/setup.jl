@@ -46,3 +46,12 @@ info("$(now())  $(indent)COMPUTING:   density, matrixKinetic, matrixNuclearAttra
 matrixFock = computeMatrixFock(density,matrixKinetic,matrixNuclearAttraction,ERIs)
 
 densityvirt = inv(matrixOverlap) - density
+
+info("$(now())  $(indent)COMPUTING:   shells, density -> S, T, J, K, Fock")
+S = computeMatrixOverlap(shells)
+T = computeMatrixKinetic(shells)
+J = computeMatrixCoulomb(shells,density)
+K = computeMatrixExchange(shells,density)
+V = computeMatrixNuclearAttraction(shells,h2o)
+fock = computeMatrixFock(T,V,J,K)
+moenergies = eigvals(Symmetric(fock),Symmetric(S))

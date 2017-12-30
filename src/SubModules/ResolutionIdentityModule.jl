@@ -48,6 +48,8 @@ function computeMatrixResolutionOfTheIdentityCoulombMetric(
   return reshape( Bpart*sqrtm(inv(C)) , (N,N,Naux) )
 end
 
+computeMatrixResolutionOfTheIdentity = computeMatrixResolutionOfTheIdentityCoulombMetric
+
 function computeTensorElectronRepulsionIntegralsRICoulomb(basis::GaussianBasis, basis_aux::GaussianBasis)
   B = computeMatrixResolutionOfTheIdentityCoulombMetric(basis,basis_aux)
   @tensor ERIs[μ,ν,λ,σ] := B[μ,ν,P] * B[λ,σ,P]

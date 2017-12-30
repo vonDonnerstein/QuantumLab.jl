@@ -7,8 +7,8 @@ lib_path = joinpath(dirname(@__FILE__),"usr","lib")
 			run(`grep --ignore-case --silent 'avx' /proc/cpuinfo`)
 			SIMD = "avx"
 			cd(joinpath(dirname(@__FILE__),"usr","lib"))
-			run(`ln -s libint2jl-$LIBINT_VERSION-$SIMD.so libint2jl.so`)
-			run(`ln -s libint2-$LIBINT_VERSION-$SIMD.so libint2-QuantumLab.so`)
+			run(`ln -sf libint2jl-$LIBINT_VERSION-$SIMD.so libint2jl.so`)
+			run(`ln -sf libint2-$LIBINT_VERSION-$SIMD.so libint2-QuantumLab.so`)
 		end
 	catch
 		warn("Your system (CPU) does not support AVX.\n
@@ -30,8 +30,8 @@ end
 				SIMD = "sse"
 			end
 			cd(joinpath(dirname(@__FILE__),"usr","lib"))
-			run(`ln -s libint2jl-$LIBINT_VERSION-$SIMD.dylib libint2jl.so`)
-			run(`ln -s libint2-$LIBINT_VERSION-$SIMD.dylib libint2-QuantumLab.so`)
+			run(`ln -sf libint2jl-$LIBINT_VERSION-$SIMD.dylib libint2jl.so`)
+			run(`ln -sf libint2-$LIBINT_VERSION-$SIMD.dylib libint2-QuantumLab.so`)
 		end
 	catch
 		warn("Your CPU does support neither SSE nor AVX
