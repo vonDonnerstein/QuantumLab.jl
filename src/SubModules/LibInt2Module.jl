@@ -39,12 +39,12 @@ if (libint2_available) # the normal case
 
   ## LibInt2Shell
   #  Type Declaration
-  bitstype 64 LibInt2Shell64
-  bitstype 32 LibInt2Shell32
-  if is(Int,Int32)
-    typealias LibInt2Shell LibInt2Shell32
+  primitive type LibInt2Shell64 64 end
+  primitive type LibInt2Shell32 32 end
+  if Int === Int32
+    const LibInt2Shell = LibInt2Shell32
   else
-    typealias LibInt2Shell LibInt2Shell64
+    const LibInt2Shell = LibInt2Shell64
   end
 
   #  Constructors
@@ -160,12 +160,12 @@ if (libint2_available) # the normal case
 
   ## LibInt2Engine
   #  Type Declaration
-  bitstype 64 LibInt2Engine64
-  bitstype 32 LibInt2Engine32
-  if is(Int,Int32)
-    typealias LibInt2Engine LibInt2Engine32
+  primitive type LibInt2Engine64 64 end
+  primitive type LibInt2Engine32 32 end
+  if Int === Int32
+    const LibInt2Engine = LibInt2Engine32
   else
-    typealias LibInt2Engine LibInt2Engine64
+    const LibInt2Engine = LibInt2Engine64
   end
 
   #  Constructors

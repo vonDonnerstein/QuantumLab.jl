@@ -5,7 +5,7 @@ import Base.convert
 import Base.promote_rule
 
 """Abstract class supertyping all objects that are entries of a bibliography (for documenting functions). Each subtype has its corresponding fields and defines its own display function."""
-abstract Citation
+abstract type Citation end
 
 """
 Documentation is a generic type to which all types which are to be used with `@doc` can be automatically converted.

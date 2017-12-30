@@ -12,7 +12,7 @@ using ..ShellModule
 import Base.display
 import Base.normalize!
 
-abstract Basis
+abstract type Basis end
 
 """
 A GaussianBasis is a Basis constructed purely from Gaussian type functions (see PrimitiveGaussianBasisFunction).
