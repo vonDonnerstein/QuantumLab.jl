@@ -8,7 +8,7 @@ git:
 julia:
   - release
   - nightly
-  - 0.5
+  - 0.6 # set manually to the version given in REQUIRE
 matrix:
   allow_failures:
     - julia: nightly
