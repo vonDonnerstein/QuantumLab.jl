@@ -5,13 +5,14 @@ The nodes and weights are contained within the *LaplacePoints* type. Hackbusch a
 have optimized and pretabulated these for different x-ranges according to minmax
 (Takatsuka, Ten-No, Hackbusch, JCP, 129 (2008), 044112).
 Their pretabulated files can be obtained with *downloadLaplacePointsHackbusch*. Use *readLaplacePointsHackbusch* to
-generate a LaplacePoints object from such a file. After downloading one can also use *findLaplacePointsHackbuschPretableLarger*/*findLaplacePointsHackbuschPretableSmaller* to obtain the best guesses for a given range. The ideal Laplace
+generate a LaplacePoints object from that file. After downloading, one can also use *findLaplacePointsHackbuschPretableLarger*/*findLaplacePointsHackbuschPretableSmaller* to obtain the best guesses for a given range. The ideal Laplace
 problem considers x∈ [1,R]. For the transformation to the x∈ [A,B]-type Laplace problem utility functions are provided (*transformRangeToIdealLaplace*,*transformWeightFromIdealLaplace*,*transformNodeFromIdealLaplace*,*transformLaplacePointFromIdealLaplace*).
 """
 module LaplaceModule
 export LaplacePoints, downloadLaplacePointsHackbusch, findLaplacePointsHackbuschPretableLarger, findLaplacePointsHackbuschPretableSmaller, transformRangeToIdealLaplace, transformNodeFromIdealLaplace, transformWeightFromIdealLaplace, transformLaplacePointFromIdealLaplace
 using ..DocumentationModule
 using ..BaseModule
+using ZipFile
 import Base.display
 import Base.==
 
@@ -35,120 +36,60 @@ function display(lp::LaplacePoints)
 end
 
 """
-A dictionary mapping the number of Laplace Points to the ranges for which Hackbusch and
-coworkers list pretabulated values on their webpage.
-"""
-const hackbuschpretables = Dict{Int64,Array{Int64,1}}(
-  1=>[2:10;],
-  2=>[2:10; 20:10:50],
-  3=>[2:10; 20:10:100; 200],
-  4=>[2:10; 20:10:100; 200:100:500],
-  5=>[2:10; 20:10:100; 200:100:1000; 2000],
-  6=>[2:10; 20:10:100; 200:100:1000; 2000; 3000],
-  7=>[2:10; 20:10:100; 200:100:1000; 2000:1000:7000],
-  8=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4; 2e4],
-  9=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4],
- 10=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4; 5e4; 1e5],
- 11=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4; 5e4; 1e5; 2e5],
- 12=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4; 5e4; 1e5:1e5:3e5],
- 13=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4; 5e4; 1e5:1e5:4e5],
- 14=>[      10:10:100; 200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:3e4; 5e4; 1e5:1e5:5e5; 7e5],
- 15=>[      10:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6; 2e6],
- 16=>[      10:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:3e6],
- 17=>[      20:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:4e6],
- 18=>[      40:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:5e6; 7e6],
- 19=>[      50:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:5e6; 7e6; 1e7],
- 20=>[      60:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:5e6; 7e6; 1e7; 2e7],
- 21=>[      90:10:100; 200:100:1000; 2000:1000:1e4; 2e4:1e4:5e4; 7e4; 1e5; 2e5; 5e5; 1e6:1e6:5e6; 7e6; 1e7:1e7:3e7],
- 22=>[             100:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:5e4; 7e4; 1e5:1e5:5e5; 7e5; 1e6:1e6:5e6; 7e6; 1e7:1e7:4e7],
- 23=>[             200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:5e4; 7e4; 1e5:1e5:5e5; 7e5; 1e6:1e6:5e6; 7e6; 1e7:1e7:5e7; 7e7],
- 24=>[             200:100:500; 700; 1000:1000:5000; 7000; 1e4:1e4:5e4; 7e4; 1e5:1e5:5e5; 7e5; 1e6:1e6:5e6; 7e6; 1e7:1e7:5e7; 7e7; 1e8],
- 25=>[             200:100:500; 700; 1000:1000:10000;       2e4; 5e4;        1e5; 2e5; 5e5;    1e6; 2e6; 5e6;    1e7; 5e7;         1e8; 2e8],
- 26=>[             400:100:1000;     2000:1000:10000;2e4:1e4:1e5;      2e5:1e5:5e5; 7e5;       1e6:1e6:5e6; 7e6; 1e7:1e7:5e7; 7e7; 1e8:1e8:3e8],
- 27=>[                                               1e4:1e4:1e5;      2e5:1e5:1e6;            2e6:1e6:1e7; 2e7:1e7:5e7; 7e7; 1e8:1e8:4e8],
- 28=>[                                                                                                                        1e8:1e8:4e8; 7e8],
- 29=>[7e8; 1e9],
- 30=>[7e8; 1e9; 2e9],
- 31=>[7e8; 1e9; 2e9],
- 32=>[7e8; 1e9:1e9:3e9],
- 33=>[7e8; 1e9:1e9:4e9],
- 34=>[7e8; 1e9:1e9:5e9; 7e9],
- 35=>[7e8; 1e9:1e9:3e9; 5e9; 1e10],
- 36=>[1e10; 2e10],
- 37=>[1e10; 2e10],
- 38=>[1e10; 3e10],
- 39=>[1e10; 2e10; 4e10],
- 40=>[1e10; 2e10; 5e10],
- 41=>[1e10; 2e10; 3e10; 7e10],
- 42=>[1e10; 2e10; 5e10; 1e11],
- 43=>[1e11; 2e11],
- 44=>[1e11; 2e11],
- 45=>[1e11; 3e11],
- 46=>[1e11; 2e11; 4e11],
- 47=>[1e11; 5e11],
- 48=>[1e11; 2e11; 3e11; 7e11],
- 49=>[1e11; 2e11; 3e11; 5e11; 1e12],
- 50=>[2e8:1e8:5e8; 7e8; 1e9:1e9:7e9; 1e10:1e10:5e10; 7e10; 1e11:1e11:5e11; 7e11; 1e12; 2e12],
- 51=>[1e12; 2e12],
- 52=>[1e12; 3e12],
- 53=>[4e11; 1e12:1e12:4e12]
-)
-@add_doc GenericCitation("http://www.mis.mpg.de/scicomp/EXP_SUM/1_x/") hackbuschpretables
-
-"""
 Evaluates to the name of the Laplace point file which corresponds to the given number of points and limit
-in Hackbusch nomenclature. See also downloadLaplacePointsHackbusch for how to obtain these files.
+in Hackbusch nomenclature. These files are contained in the zip-file obtained via downloadLaplacePointsHackbusch.
 """
 function computeFilenameHackbusch(numberOfPoints::Integer,R::Real)
   k = numberOfPoints
   kstr = @sprintf("k%02d",k)
-  Rstr = replace(@sprintf("_%.0E",R),r"\+0*(\d+)",s"\1")
+  Rstr = replace(replace(@sprintf(".%.0E",R),r"\+0*(\d+)",s"\1"),r"(\d+)E(\d+)",s"\1_\2")
   filename = "1_x$kstr$Rstr"
   return filename
 end
 
 """
-Download all files with pretabulated Laplace points to the given folder (default:"hackbusch")
+Extract the number of points (k) and the range (1,R) from the filename generated with computeFilenameHackbusch
 """
-function downloadLaplacePointsHackbusch(targetdir::AbstractString="hackbusch")
-  mkdir(targetdir)
-  for (k,Rlist) in hackbuschpretables
-    for R in Rlist
-      filename = computeFilenameHackbusch(k,R)
-      println(filename)
-      download("http://www.mis.mpg.de/scicomp/EXP_SUM/1_x/$filename","$targetdir/$filename")
-    end
-  end
+function computeFilenameHackbuschReverse(filename::AbstractString)
+  m = match(r"1_xk(\d+).(\d+)_(\d+)",filename)
+  k = parse(m.captures[1])
+  R = parse("$(m.captures[2])E$(m.captures[3])")
+  return (k,R)
 end
-@doc GenericCitation("http://www.mis.mpg.de/scicomp/EXP_SUM/1_x/") downloadLaplacePointsHackbusch
 
 """
-Generate a LaplacePoints object by reading in the specified file.
+Download a zip-file of pretabulated Laplace points to target location (default:"hackbusch")
 """
-function readLaplacePointsHackbusch(filename::AbstractString)
-  k = countlines(filename)/2
-  fd = open(filename)
+function downloadLaplacePointsHackbusch(target::AbstractString="hackbusch")
+  download("https://www.mis.mpg.de/scicomp/EXP_SUM/1_x/1_xData.zip",target)
+end
+@doc GenericCitation("https://www.mis.mpg.de/scicomp/EXP_SUM/1_x/") downloadLaplacePointsHackbusch
+
+"""
+Generate a LaplacePoints object by extracting from the pretable zip-file obtained with downloadLaplacePointsHackbusch.
+"""
+function readLaplacePointsHackbusch(numberOfPoints::Integer,R::Real,zipfile::AbstractString="hackbusch")
+  k = numberOfPoints
+  dir = ZipFile.Reader(zipfile)
+  file = ZipFile.ReadableFile
+  for f in dir.files
+    if f.name==computeFilenameHackbusch(k,R)
+      file = f
+    end
+  end
+
   result = LaplacePoints(Array{Float64,1}(),Array{Float64,1}())
   for line in 1:k
-    regmatch = match(Regex(" *(?P<weight>$floatregex) .*omega.*"),readline(fd))
+    regmatch = match(Regex(" *(?P<weight>$floatregex) .*omega.*"),readline(file))
     push!(result.weights,float(regmatch[:weight]))
   end
   for line in k+1:2k
-    regmatch = match(Regex(" *(?P<node>$floatregex) .*alpha.*"),readline(fd))
+    regmatch = match(Regex(" *(?P<node>$floatregex) .*alpha.*"),readline(file))
     push!(result.nodes,float(regmatch[:node]))
   end
-  close(fd)
+  close(file)
   return result
 end
-
-function readLaplacePointsHackbusch(numberOfPoints::Integer,R::Real,dir::AbstractString="hackbusch")
-  filename = computeFilenameHackbusch(numberOfPoints,R)
-  readLaplacePointsHackbusch("$dir/$filename")
-end
-@doc """
-Alternative to specifying the file directly one can also specify the numberOfPoints, upper limit,
-and directory name (default:"hackbusch") to load the corresponding pretable file..
-""" readLaplacePointsHackbusch
 
 """
 Returns the LaplacePoints for the smallest range larger than the requested one for which
@@ -156,29 +97,50 @@ pretabulated Laplace points can be found. If the requested range is larger than 
 we expect the largest pretabulated one to be Rₖ, so the function issues a warning and
 returns the LaplacePoints for that range.
 """
-function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Float64,dir::AbstractString="hackbusch")
-  for r in hackbuschpretables[numberOfPoints]
-    if R <= r
-      return (readLaplacePointsHackbusch(numberOfPoints,r,dir),r)
+function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Float64,zipfile::AbstractString="hackbusch")
+  dir = ZipFile.Reader(zipfile)
+  Rtight = Inf
+  Rmax = 0
+  for f in dir.files
+    if ismatch(r"1_xk(\d+).(\d+)_(\d+)",f.name)
+      k,range = computeFilenameHackbuschReverse(f.name)
+      if k == numberOfPoints
+	Rmax = (Rmax > range) ? Rmax : range;
+	Rtight = (R <= range < Rtight) ? range : Rtight;
+      end
     end
   end
-  # Expect R > Rₖ, so just return largest available table for the given number of points
-  warn("numberOfPoints not sufficiently large ?!")
-  r = hackbuschpretables[numberOfPoints][end]
-  return (readLaplacePointsHackbusch(numberOfPoints,r,dir),r)
+
+  if Rtight < Inf
+    return (readLaplacePointsHackbusch(numberOfPoints,Rtight,zipfile),Rtight)
+  else
+    # Expect R > Rₖ, so just return largest available table for the given number of points
+    warn("numberOfPoints not sufficiently large ?!")
+    return (readLaplacePointsHackbusch(numberOfPoints,Rmax,zipfile),Rmax)
+  end
 end
 
 """
 Returns the LaplacePoints for the largest range smaller than the requested one for which
 pretabulated Laplace points can be found.
 """
-function findLaplacePointsHackbuschPretableSmaller(numberOfPoints::Integer,R::Float64,dir::AbstractString="hackbusch")
-  for r in reverse(hackbuschpretables[numberOfPoints])
-    if R >= r
-      return (readLaplacePointsHackbusch(numberOfPoints,r,dir),r)
+function findLaplacePointsHackbuschPretableSmaller(numberOfPoints::Integer,R::Float64,zipfile::AbstractString="hackbusch")
+  dir = ZipFile.Reader(zipfile)
+  Rtight = 0.
+  for f in dir.files
+    if ismatch(r"1_xk(\d+).(\d+)_(\d+)",f.name)
+      k,range = computeFilenameHackbuschReverse(f.name)
+      if k == numberOfPoints
+	Rtight = (Rtight < range <= R) ? range : Rtight;
+      end
     end
   end
-  error("No pretabulated value for $numberOfPoints points and a Range of [1., $R] or smaller.")
+
+  if Rtight > 0
+    return (readLaplacePointsHackbusch(numberOfPoints,Rtight,zipfile),Rtight)
+  else
+    error("No pretabulated value for $numberOfPoints points and a Range of [1., $R] or smaller.")
+  end
 end
 
 """

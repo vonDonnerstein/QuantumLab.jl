@@ -4,3 +4,4 @@ GSL
 ProgressMeter
 TensorOperations
 Requests
+ZipFile

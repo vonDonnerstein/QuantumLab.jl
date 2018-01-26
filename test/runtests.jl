@@ -115,7 +115,7 @@ J = computeMatrixCoulomb(shells,density)
 
 # test LaplaceModule
 info("$(now())  TESTING:   LaplaceModule")
-if(!isdir("hackbusch_pretables"))
+if(!isfile("hackbusch_pretables"))
   downloadLaplacePointsHackbusch("hackbusch_pretables")
 end
 R = transformRangeToIdealLaplace(0.5,3.)[2]
