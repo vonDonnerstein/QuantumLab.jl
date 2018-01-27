@@ -11,13 +11,16 @@ end
 const origin = Position(0.,0.,0.)
 
 """
-True String: Taking the string as is without interpolation or escape interpretation.
-Necessary for regex interpolation, e.g.: Regex(T"\wo"*"rd") == r"\word" != Regex("\wo"*"rd") == r"word"
+    floatregex
+is the regex-string that matches any floating point number with or without scientific notation
+
+use it by combining it like
+```
+Regex(raw"5\+" * floatregex)
+```
+to match e.g. '5+3.7'
 """
-macro T_str(s)
-  s
-end
-const floatregex = T"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?"
+const floatregex = raw"[-+]?[0-9]*\.?[0-9]+([eE][-+]?[0-9]+)?" 
 
 *(c::Real,p::Position) = Position(c*p.x,c*p.y,c*p.z)
 *(p::Position,c::Real) = Position(c*p.x,c*p.y,c*p.z)
