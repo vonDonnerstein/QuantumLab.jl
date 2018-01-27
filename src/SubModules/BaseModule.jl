@@ -16,7 +16,7 @@ is the regex-string that matches any floating point number with or without scien
 
 use it by combining it like
 ```
-Regex(raw"5\+" * floatregex)
+Regex(raw"5\\+" * floatregex)
 ```
 to match e.g. '5+3.7'
 """
