@@ -142,7 +142,7 @@ Base.convert(::Type{Documentation},cite::Citation) = Documentation(cite)
 macro ignore_warnings(expr)
   quote
     STDERRorig = STDERR
-    redirect_stderr()
+    drop = redirect_stderr()
     result = $expr
     redirect_stderr(STDERRorig)
     return result
