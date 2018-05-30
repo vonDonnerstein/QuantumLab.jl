@@ -12,7 +12,7 @@
   libInt2Initialize() = return
   libInt2Finalize() = return
   # Shell
-  typealias LibInt2Shell Shell
+  const LibInt2Shell = Shell
   function Shell(center::Vector{Float64},lqn::Int, nprim::Int, exponents::Vector{Float64},coefficients::Vector{Float64};renorm::Bool=true)
     Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients;renorm=renorm)
   end

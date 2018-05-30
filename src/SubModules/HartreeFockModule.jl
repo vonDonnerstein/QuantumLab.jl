@@ -166,21 +166,23 @@ function evaluateSCF(
   evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
 end
 
-function evaluateSCF(
-  shells::Vector{LibInt2Shell},
-  geometry::Geometry,
-  initialGuessDensity::Matrix,
-  electronNumber::Integer;
-  detailedinfo::Bool=true,
-  info::Bool=true,
-  energyConvergenceCriterion::Float64 = 1e-8)
-
-  S = computeMatrixOverlap(shells)
-  T = computeMatrixKinetic(shells)
-  V = computeMatrixNuclearAttraction(shells,geometry)
-  Vnn = computeEnergyInteratomicRepulsion(geometry)
-
-  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
+if (LibInt2Shell != Shell)
+  function evaluateSCF(
+    shells::Vector{LibInt2Shell},
+    geometry::Geometry,
+    initialGuessDensity::Matrix,
+    electronNumber::Integer;
+    detailedinfo::Bool=true,
+    info::Bool=true,
+    energyConvergenceCriterion::Float64 = 1e-8)
+  
+    S = computeMatrixOverlap(shells)
+    T = computeMatrixKinetic(shells)
+    V = computeMatrixNuclearAttraction(shells,geometry)
+    Vnn = computeEnergyInteratomicRepulsion(geometry)
+  
+    evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
+  end
 end
 
 end # module

@@ -119,12 +119,14 @@ function computeMatrixOverlap(shells::Vector{Shell})
   return scatterMatrixBlocks2D(shells,totaldim,computeMatrixBlockOverlap,ShellModule.nbf)
 end
 
-function computeMatrixOverlap(shells::Vector{LibInt2Shell})
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineOverlap(maxprims,LQuantumNumber(maxlqn))
-  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockOverlap(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
-  destroy!(engine)
-  return result
+if (LibInt2Shell != Shell)
+  function computeMatrixOverlap(shells::Vector{LibInt2Shell})
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineOverlap(maxprims,LQuantumNumber(maxlqn))
+    result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockOverlap(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+    destroy!(engine)
+    return result
+  end
 end
 
 #KINETIC
@@ -137,12 +139,14 @@ function computeMatrixKinetic(shells::Vector{Shell})
   return scatterMatrixBlocks2D(shells,totaldim,computeMatrixBlockKinetic,ShellModule.nbf)
 end
 
-function computeMatrixKinetic(shells::Vector{LibInt2Shell})
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineKinetic(maxprims,LQuantumNumber(maxlqn))
-  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockKinetic(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
-  destroy!(engine)
-  return result
+if (LibInt2Shell != Shell)
+  function computeMatrixKinetic(shells::Vector{LibInt2Shell})
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineKinetic(maxprims,LQuantumNumber(maxlqn))
+    result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockKinetic(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+    destroy!(engine)
+    return result
+  end
 end
 
 #NUCLEARATTRACTION
@@ -164,20 +168,22 @@ function computeMatrixNuclearAttraction(shells::Vector{Shell},geo::Geometry)
   return result
 end
 
-function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},atom::Atom)
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),atom)
-  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
-  destroy!(engine)
-  return result
-end
+if (LibInt2Shell != Shell)
+  function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},atom::Atom)
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),atom)
+    result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+    destroy!(engine)
+    return result
+  end
 
-function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},geo::Geometry)
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),geo)
-  result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
-  destroy!(engine)
-  return result
+  function computeMatrixNuclearAttraction(shells::Vector{LibInt2Shell},geo::Geometry)
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineNuclearAttraction(maxprims,LQuantumNumber(maxlqn),geo)
+    result = scatterMatrixBlocks2D(shells,totaldim,(sh1,sh2)->computeMatrixBlockNuclearAttraction(engine,sh1,sh2),sh->div((lqn(sh)+1)^2+(lqn(sh)+1),2))
+    destroy!(engine)
+    return result
+  end
 end
 
 #ERIS
@@ -216,12 +222,14 @@ function computeMatrixCoulomb(shells::Vector{Shell}, density)
   contractTensorBlocksWithMatrix_CoulombLike(shells,density,totaldim,computeTensorBlockElectronRepulsionIntegrals,ShellModule.nbf)
 end
 
-function computeMatrixCoulomb(shells::Vector{LibInt2Shell}, density::Matrix)
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
-  result = contractTensorBlocksWithMatrix_CoulombLike(shells,density,totaldim,(μ,ν,λ,σ)->computeTensorBlockElectronRepulsionIntegrals(engine,μ,ν,λ,σ),LibInt2Module.nbf)
-  destroy!(engine)
-  return result
+if (LibInt2Shell != Shell)
+  function computeMatrixCoulomb(shells::Vector{LibInt2Shell}, density::Matrix)
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
+    result = contractTensorBlocksWithMatrix_CoulombLike(shells,density,totaldim,(μ,ν,λ,σ)->computeTensorBlockElectronRepulsionIntegrals(engine,μ,ν,λ,σ),LibInt2Module.nbf)
+    destroy!(engine)
+    return result
+  end
 end
 
 #EXCHANGE
@@ -251,12 +259,14 @@ function computeMatrixExchange(shells::Vector{Shell}, density)
   contractTensorBlocksWithMatrix_ExchangeLike(shells,density,totaldim,computeTensorBlockElectronRepulsionIntegrals,ShellModule.nbf)
 end
 
-function computeMatrixExchange(shells::Vector{LibInt2Shell}, density::Matrix)
-  totaldim, maxprims, maxlqn = computeDimensions(shells)
-  engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
-  result = contractTensorBlocksWithMatrix_ExchangeLike(shells,density,totaldim,(μ,ν,λ,σ)->computeTensorBlockElectronRepulsionIntegrals(engine,μ,ν,λ,σ),LibInt2Module.nbf)
-  destroy!(engine)
-  return result
+if (LibInt2Shell != Shell)
+  function computeMatrixExchange(shells::Vector{LibInt2Shell}, density::Matrix)
+    totaldim, maxprims, maxlqn = computeDimensions(shells)
+    engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
+    result = contractTensorBlocksWithMatrix_ExchangeLike(shells,density,totaldim,(μ,ν,λ,σ)->computeTensorBlockElectronRepulsionIntegrals(engine,μ,ν,λ,σ),LibInt2Module.nbf)
+    destroy!(engine)
+    return result
+  end
 end
 
 #FOCK
