@@ -34,7 +34,7 @@ end
 
 function obtainBasisSetExchangeEntries()
   retval = Array{BasisSetExchangeEntry,1}()
-  main = get("https://bse.pnl.gov/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main")
+  main = get("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main")
   for bsline in matchall(r"basisSets\[\d*\].*",Requests.text(main))
     regmatch = match(r"basisSet\(\"(?P<url>.*)\", \"(?P<name>.*)\", \"(?P<type>.*)\", \"\[(?P<elts>.*)\]\", \"(?P<status>.*)\", \"(?P<hasEcp>.*)\", \"(?P<hasSpin>.*)\", \"(?P<lastModifiedDate>.*)\", \"(?P<contributionPI>.*)\", \"(?P<contributorName>.*)\", \"(?P<bsAbstract>.*)\"\)",bsline)
     eltsList = replace(regmatch[:elts],",","")
@@ -44,10 +44,10 @@ function obtainBasisSetExchangeEntries()
 end
 
 function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename::AbstractString, format::AbstractString="TX93")
-  requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11535052407933/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true";
+  requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true";
 			data=Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "true"), allow_redirects=false)
   sessioncookie = requestresponse.cookies["JSESSIONID"].value
-  finalresponse = post("https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11535052407933"; cookies = Dict("JSESSIONID" => sessioncookie))
+  finalresponse = post("https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11543880926284"; cookies = Dict("JSESSIONID" => sessioncookie))
   basSetDef = replace(Requests.text(finalresponse),r".*<pre style.*>\n*(.*)</pre>.*"s,s"\1")
   outfd = open(filename, "w")
   write(outfd, basSetDef)
