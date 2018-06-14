@@ -1,12 +1,14 @@
 module HartreeFockModule
-export computeEnergyHartreeFock, evaluateSCF
+export computeEnergyHartreeFock, evaluateSCF, evaluateHartreeFock
 using ..BaseModule
 using ..BasisModule
+using ..BasisSetModule
 using ..GeometryModule
 using ..SpecialMatricesModule
 using ..IntegralsModule
 using ..ShellModule
 using ..LibInt2Module
+using ..InitialGuessModule
 
 function computeEnergyHartreeFock(
   density::Matrix,
@@ -83,6 +85,22 @@ end
 
 computeMatrixCoefficients(fock::Matrix, overlap::Matrix) = eigvecs(Symmetric(fock),Symmetric(overlap))
 
+"""
+    evaluateSCF(initialGuessDensity::Matrix, overlap::Matrix, kinetic::Matrix, nuclearAttraction::Matrix,
+                coulomb::Function, exchange::Function,
+                interatomicRepulsion::Float64, electronNumber::Integer)
+
+All evaluateSCF calls take the following optional named arguments:
+ - `info::Bool=true`,
+ - `detailedinfo::Bool=info`,
+ - `energyConvergenceCriterion::Float64 = 1e-8`
+
+This is the fundamental routine to evaluate the Self-consistent field cycle of
+Hartree-Fock theory and returns the converged (orbital energies, total energy,
+density). This function call requires each element in its most primitive form
+and is intended for use in unusual contexts or for performance reasons. For
+more usable versions see below.
+"""
 function evaluateSCF(
   initialGuessDensity::Matrix,
   overlap::Matrix,
@@ -121,10 +139,26 @@ function evaluateSCF(
   return energies, totalEnergy, P
 end
 
+"""
+    evaluateSCF(basis, geometry, initialGuess, electronNumber)
+    
+allows to evaluate the Self-consistent field cycle of Hartree-Fock theory in the most
+accessible way. Essentially, this function call combines its arguments in such a way
+that it can then call upon the more fundamental `evaluateSCF` that takes only primitive
+inputs. To this end, the arguments are very flexible:
+- `basis`: One of `Basis`, `BasisSet`, Vector{Shell}, Vector{LibInt2Shell}
+- `geo`: One of `Geometry`, `String` (the name of a file containing the geometry)
+- `initialGuess`: Either a `Matrix` that is used as initial density matrix, or an `InitialGuess` (ZeroGuess, SADGuess)
+- `electronNumber`: number of occupied closed shell orbitals (as the other forms are not yet implemented)
+
+This evaluateSCF method additionally introduces the following optional named arguments:
+- `computeTensorElectronRepulsionIntegralsCoulomb`: f: basis/shells/... -> ERIs (used for Coulomb part (and Exchange part if not overridden))
+- `computeTensorElectronRepulsionIntegralsExchange`: f: basis/shells/... -> ERIs (used for Exchange part)
+"""
 function evaluateSCF(
-  basis::GaussianBasis,
-  geometry::Geometry,
-  initialGuessDensity::Matrix,
+  basis::Union{GaussianBasis,Vector{Shell},Vector{LibInt2Shell},BasisSet},
+  geometry::Union{Geometry,String},
+  initialGuessDensity::Union{Matrix,InitialGuess},
   electronNumber::Integer;
   detailedinfo::Bool=true,
   info::Bool=true,
@@ -132,58 +166,42 @@ function evaluateSCF(
   computeTensorElectronRepulsionIntegralsCoulomb = computeTensorElectronRepulsionIntegrals,
   computeTensorElectronRepulsionIntegralsExchange = computeTensorElectronRepulsionIntegrals)
 
+  geometry = convert(Geometry,geometry)
+
+  input = basis
+  if isa(input,Vector{LibInt2Shell}) && (LibInt2Shell != Shell)
+    # keep working with LibInt2Shell
+  elseif isa(input,BasisSet) && (LibInt2Shell != Shell)
+    basis = computeBasisShellsLibInt2(input,geometry)
+  elseif isa(input,BasisSet) && (LibInt2Shell == Shell)
+    basis = computeBasis(input,geometry)
+  elseif isa(input,GaussianBasis)
+    # At the moment we simply use implicit Shell->Basis conversion which avoids ERI recomputation in every step and is therefore faster for the moment
+    # later we will want to switch over to working with Shells directly as shell-structure allows for sparsity
+    # evaluateSCF(Pinit, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
+    basis = convert(GaussianBasis,input)
+  end
+
+
   S = computeMatrixOverlap(basis)
   T = computeMatrixKinetic(basis)
   V = computeMatrixNuclearAttraction(basis,geometry)
-  Vnn = computeEnergyInteratomicRepulsion(geometry)
-  ERIsCoulomb = computeTensorElectronRepulsionIntegralsCoulomb(basis)
-  ERIsExchange = computeTensorElectronRepulsionIntegralsCoulomb==computeTensorElectronRepulsionIntegralsExchange ? ERIsCoulomb : computeTensorElectronRepulsionIntegralsExchange(basis)
-
-  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIsCoulomb,P), P->computeMatrixExchange(ERIsExchange,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
-end
-
-function evaluateSCF(
-  shells::Vector{Shell},
-  geometry::Geometry,
-  initialGuessDensity::Matrix,
-  electronNumber::Integer;
-  detailedinfo::Bool=true,
-  info::Bool=true,
-  energyConvergenceCriterion::Float64 = 1e-8)
-
-  S = computeMatrixOverlap(shells)
-  T = computeMatrixKinetic(shells)
-  V = computeMatrixNuclearAttraction(shells,geometry)
+  Pinit = InitialGuessModule.computeDensityMatrixGuess(initialGuessDensity,size(S)[1])
   Vnn = computeEnergyInteratomicRepulsion(geometry)
 
-  #too slow because trivial ERI recomputation in every step:
-  #evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
-  #this would be faster but doesn't allow any shell-structure reuse as we might later want (with sparsity): 
-  bas = GaussianBasis([])
-  for sh in shells
-    append!(bas.contractedBFs,expandShell(sh))
+  if (LibInt2Shell != Shell) && isa(basis,Vector{LibInt2Shell})
+    Xarg = basis
+    Carg = basis
+  else
+    ERIsCoulomb = computeTensorElectronRepulsionIntegralsCoulomb(basis)
+    ERIsExchange = computeTensorElectronRepulsionIntegralsCoulomb==computeTensorElectronRepulsionIntegralsExchange ? ERIsCoulomb : computeTensorElectronRepulsionIntegralsExchange(basis)
+    Xarg = ERIsExchange
+    Carg = ERIsCoulomb
   end
-  ERIs = computeTensorElectronRepulsionIntegrals(bas)
-  evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(ERIs,P), P->computeMatrixExchange(ERIs,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion)
+
+  evaluateSCF(Pinit, S, T, V, P->computeMatrixCoulomb(Carg,P), P->computeMatrixExchange(Xarg,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
 end
 
-if (LibInt2Shell != Shell)
-  function evaluateSCF(
-    shells::Vector{LibInt2Shell},
-    geometry::Geometry,
-    initialGuessDensity::Matrix,
-    electronNumber::Integer;
-    detailedinfo::Bool=true,
-    info::Bool=true,
-    energyConvergenceCriterion::Float64 = 1e-8)
-  
-    S = computeMatrixOverlap(shells)
-    T = computeMatrixKinetic(shells)
-    V = computeMatrixNuclearAttraction(shells,geometry)
-    Vnn = computeEnergyInteratomicRepulsion(geometry)
-  
-    evaluateSCF(initialGuessDensity, S, T, V, P->computeMatrixCoulomb(shells,P), P->computeMatrixExchange(shells,P), Vnn, electronNumber; energyConvergenceCriterion=energyConvergenceCriterion, info=info, detailedinfo=detailedinfo)
-  end
-end
+evaluateHartreeFock = evaluateSCF
 
 end # module

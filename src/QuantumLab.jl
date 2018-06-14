@@ -78,14 +78,14 @@ include("SubModules/SpecialMatricesModule.jl")
 @reexport using .SpecialMatricesModule
 println("Done.")
 
-print(" + HartreeFockModule...........")
-include("SubModules/HartreeFockModule.jl")
-@reexport using .HartreeFockModule
-println("Done.")
-
 print(" + InitialGuessModule..........")
 include("SubModules/InitialGuessModule.jl")
 @reexport using .InitialGuessModule
+println("Done.")
+
+print(" + HartreeFockModule...........")
+include("SubModules/HartreeFockModule.jl")
+@reexport using .HartreeFockModule
 println("Done.")
 
 print(" + BasisSetExchangeModule......")
