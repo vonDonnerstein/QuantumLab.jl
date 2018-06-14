@@ -11,6 +11,7 @@ using ..ShellModule
 
 import Base.display
 import Base.normalize!
+import Base.convert
 
 abstract type Basis end
 
@@ -68,5 +69,15 @@ function computeBasisShells(basSet::BasisSet,geo::Geometry)
   end
   return shells
 end
+
+convert(::Type{GaussianBasis},sh::Shell) = GaussianBasis(expandShell(sh::Shell))
+function convert(::Type{GaussianBasis},shells::Vector{Shell})
+  bas = GaussianBasis([])
+  for sh in shells
+    append!(bas.contractedBFs,expandShell(sh))
+  end
+  return bas
+end
+
 
 end # module

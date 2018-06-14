@@ -1,6 +1,23 @@
 module InitialGuessModule
-export computeDensityGuessSAD
+export computeDensityGuessSAD, InitialGuess, ZeroGuess, SADGuess
 using ..AtomModule
+
+abstract type InitialGuess end
+type ZeroGuess_ <: InitialGuess end
+ZeroGuess = ZeroGuess_()
+type SADGuess_ <: InitialGuess end
+SADGuess = SADGuess_()
+
+function computeDensityMatrixGuess(mat::Matrix,dim::Int64)
+  if (size(mat) != (dim,dim))
+    error("Guess matrix has wrong dimensions: $(size(mat)) (expected $((dim,dim)))")
+  end
+  return mat
+end
+
+function computeDensityMatrixGuess(::ZeroGuess_,dim::Int64)
+  return zeros(dim,dim)
+end
 
 type DensityGuessSAD
   α

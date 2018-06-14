@@ -5,8 +5,8 @@ human readable HTML output.
 module BasisSetExchangeModule
 
 export obtainBasisSetExchangeEntries, downloadBasisSetBasisSetExchange, computeBasisSetExchangeEntry, BasisSetExchangeEntry
-using Requests
-import Base.display
+using Requests, ..BasisSetModule
+import Base.display, ..BasisSetModule.BasisSet
 
 type BasisSetExchangeEntry
   url::String
@@ -54,10 +54,10 @@ function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename
   close(outfd)
 end
 
-function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetExchangeEntry,1})
+function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetExchangeEntry,1}; exactmatching::Bool=false)
   result = Void
   for entry in arr
-    if ismatch(Regex(name,"i"),entry.name)
+    if (!exactmatching && ismatch(Regex(name,"i"),entry.name) || name == entry.name)
       if result == Void
         result = entry
       elseif isa(result,BasisSetExchangeEntry)
@@ -71,6 +71,31 @@ function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetE
     error("$name is not contained within the given BasisSetExchangeEntry list.")
   end
   return result
+end
+
+"""
+    BasisSet(name)
+
+creates a BasisSet object from the specified file (possibly with a corresponding file extension).
+If no such file can be found the argument is interpreted as the name of a basis set and that basis
+set obtained from Basis Set Exchange.
+"""
+function BasisSet(name::AbstractString)
+  if isfile(name)
+    return readBasisSetTX93(name)
+  end
+
+  for ext in ("tx93", "TX93", "Tx93")
+    if isfile("$name.$ext")
+      return readBasisSetTX93("$name.$ext")
+    end
+  end
+
+  info("BasisSet file not found locally. Obtaining from BasisSetExchange...")
+  bseentries = obtainBasisSetExchangeEntries()
+  entry = computeBasisSetExchangeEntry(name,bseentries;exactmatching=true)
+  downloadBasisSetBasisSetExchange(entry,"$name.tx93","TX93")
+  return readBasisSetTX93("$name.tx93")
 end
 
 end # module

@@ -21,6 +21,18 @@ function readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
 	return geo
 end
 
+function Geometry(filename::AbstractString)
+  if isfile(filename)
+    return readGeometryXYZ(filename)
+  end
+  for ext in ("xyz", "XYZ")
+    if isfile("$filename.$ext")
+      return readGeometryXYZ("$filename.$ext")
+    end
+  end
+  error("Couldn't find file: $filename")
+end
+
 angstrom2bohr(x::Real) = x/0.529177210
 bohr2angstrom(x::Real) = x*0.529177210
 angstrom2bohr(pos::Position) = (return Position(angstrom2bohr(pos.x),angstrom2bohr(pos.y),angstrom2bohr(pos.z)))
