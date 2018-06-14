@@ -74,7 +74,6 @@ function evaluateSCFStep(
   electronNumber::Integer)
 
   eig = eigfact(Symmetric(fock),Symmetric(overlap)) # because Symmetric is faster and allows for sorted eigenvalues
-  C = eig.vectors
   moEnergies = eig.values
   Cocc = eig.vectors[:,1:electronNumber]
   P = Cocc * Cocc.'
@@ -97,18 +96,20 @@ function evaluateSCF(
   detailedinfo::Bool=info,
   energyConvergenceCriterion::Float64 = 1e-8)
 
-  P = initialGuessDensity
+  P::Matrix = initialGuessDensity
+  totalEnergy = computeEnergyHartreeFock(P,kinetic,nuclearAttraction,coulomb(P),exchange(P),interatomicRepulsion;info=false)
+  energies = Vector{Float64}()
+
   energyConverged = false
-  local totalEnergy = computeEnergyHartreeFock(P,kinetic,nuclearAttraction,coulomb(P),exchange(P),interatomicRepulsion;info=false)
-  local energies::Array{Float64,1}
-  local P::Matrix
   i = 0
+  J = coulomb(P)
+  K = exchange(P)
   while (!energyConverged)
     i+=1
-    J = coulomb(P)
-    K = exchange(P)
     F = kinetic+nuclearAttraction+2J-K
     energies,P = evaluateSCFStep(P,F,overlap,electronNumber)
+    J = coulomb(P) # By requiring J,K to contain the new density, the variational principle guarantees no energy below the exact energy is obtained
+    K = exchange(P) # think: E2 = P II P = tr(P*G[P]) != tr(P*G[P'])
     oldEnergy = totalEnergy
     totalEnergy = computeEnergyHartreeFock(P,kinetic,nuclearAttraction,J,K,interatomicRepulsion,info=detailedinfo)
     info && println("E[$i]: $totalEnergy")
