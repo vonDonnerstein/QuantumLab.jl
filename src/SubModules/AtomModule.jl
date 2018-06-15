@@ -143,5 +143,7 @@ type Atom
 	position::Position
 end
 
+import ..BaseModule.distance
+distance(at1::Atom,at2::Atom) = distance(at1.position,at2.position)
 
 end # module

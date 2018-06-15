@@ -26,18 +26,18 @@ end
 function computeBasis(basSet::BasisSet,geo::Geometry)
   bas=GaussianBasis([])
   for atom in geo.atoms
-		for contractedDefinition in basSet.definitions[atom.element]
-			for mqn in MQuantumNumbers(contractedDefinition.lQuantumNumber)
-				contractedBF = ContractedGaussianBasisFunction([],[])
-				for primitiveDefinition in contractedDefinition.primitives
-					exponent=primitiveDefinition.exponent
-					primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
-					norm = IntegralsModule.computeIntegralOverlap(primitiveBF,primitiveBF)
-					push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
-					push!(contractedBF.primitiveBFs,primitiveBF)
-				end
-				push!(bas.contractedBFs,contractedBF)
-			end
+    for contractedDefinition in basSet.definitions[atom.element]
+      for mqn in MQuantumNumbers(contractedDefinition.lQuantumNumber)
+	contractedBF = ContractedGaussianBasisFunction([],[])
+	for primitiveDefinition in contractedDefinition.primitives
+	  exponent=primitiveDefinition.exponent
+	  primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
+	  norm = IntegralsModule.computeIntegralOverlap(primitiveBF,primitiveBF)
+	  push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
+	  push!(contractedBF.primitiveBFs,primitiveBF)
+	end
+	push!(bas.contractedBFs,contractedBF)
+      end
     end
   end
   return bas
@@ -71,6 +71,7 @@ function computeBasisShells(basSet::BasisSet,geo::Geometry)
 end
 
 convert(::Type{GaussianBasis},sh::Shell) = GaussianBasis(expandShell(sh::Shell))
+
 function convert(::Type{GaussianBasis},shells::Vector{Shell})
   bas = GaussianBasis([])
   for sh in shells

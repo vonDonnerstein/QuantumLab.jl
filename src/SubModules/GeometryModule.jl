@@ -8,6 +8,12 @@ type Geometry
 	atoms::Array{Atom,1}
 end
 
+"""
+    readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
+
+reads an .xyz-Geometry file (acc. to the unofficial standard the coordinates 
+of which are interpreted as Angstrom) and yields a Geometry object in `unit`.
+"""
 function readGeometryXYZ(filename::AbstractString; unit::Symbol=:Bohr)
 	geo = Geometry([])
 	lines = open(readlines,filename)
