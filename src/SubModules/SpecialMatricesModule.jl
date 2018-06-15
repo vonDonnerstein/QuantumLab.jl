@@ -195,6 +195,25 @@ function computeTensorBlockElectronRepulsionIntegrals(μ::Shell,ν::Shell,λ::Sh
   [computeElectronRepulsionIntegral(μcgbf,νcgbf,λcgbf,σcgbf) for μcgbf in expandShell(μ), νcgbf in expandShell(ν), λcgbf in expandShell(λ), σcgbf in expandShell(σ)]
 end
 
+function computeTensorElectronRepulsionIntegrals(shells::Vector{LibInt2Shell})
+  totaldim, maxprims, maxlqn = computeDimensions(shells)
+  engine = LibInt2EngineCoulomb(maxprims,LQuantumNumber(maxlqn))
+  result = computeTensorElectronRepulsionIntegrals(shells,computeBlockERI=((μ,ν,λ,σ)->copy(computeTensorBlockElectronRepulsionIntegrals(engine,μ,ν,λ,σ))))
+  destroy!(engine)
+  return result
+end
+
+function computeTensorElectronRepulsionIntegrals(shells::Union{Vector{Shell},Vector{LibInt2Shell}}; computeBlockERI=computeTensorBlockElectronRepulsionIntegrals)
+  cat(4,
+      [cat(3,
+	   [cat(2,
+		[cat(1,
+		     [computeBlockERI(μsh,νsh,λsh,σsh) for μsh in shells]...) 
+		 for νsh in shells]...)
+	    for λsh in shells]...)
+       for σsh in shells]...)
+end
+
 #COULOMB
 function computeMatrixCoulomb(basis::GaussianBasis, density::Matrix)
   N = length(basis.contractedBFs)
