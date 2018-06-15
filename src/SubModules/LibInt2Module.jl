@@ -213,7 +213,7 @@ if (libint2_available) # the normal case
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
 
-    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
   end
 
   function IntegralsModule.computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
@@ -235,7 +235,7 @@ if (libint2_available) # the normal case
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
   end
 
   function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell)
@@ -257,7 +257,7 @@ if (libint2_available) # the normal case
     μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
     νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(μmqns,νmqns))
+    return reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
   end
 
   function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, atom::Atom)
@@ -294,6 +294,7 @@ if (libint2_available) # the normal case
     σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
     buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
     return reshape(unsafe_wrap(Array,buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns))
+    return permutedims(reshape(unsafe_wrap(Array,buf,μmqns*νmqns*λmqns*σmqns),(σmqns,λmqns,νmqns,μmqns)),(4,3,2,1)) # the innermost loop within LibInt2 is over the last shell and so on
   end
 
   function computeTensorBlockElectronRepulsionIntegrals(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell)
