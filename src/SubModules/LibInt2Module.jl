@@ -115,6 +115,18 @@ if (libint2_available) # the normal case
     div((lqn(l2sh)+1)^2+(lqn(l2sh)+1),2)
   end
 
+  function computeDimensions(shells::Vector{LibInt2Shell})
+    totaldim = 0
+    maxprims = 0
+    maxlqn = 0
+    for sh in shells
+      totaldim += div((lqn(sh)+1)^2+(lqn(sh)+1),2)
+      maxprims = maxprims < nprims(sh) ? nprims(sh) : maxprims
+      maxlqn = maxlqn < lqn(sh) ? lqn(sh) : maxlqn
+    end
+    return (totaldim, maxprims, LQuantumNumber(maxlqn))
+  end
+
   function convert(::Type{Shell},l2sh::LibInt2Shell)
     # LibInt2Shell objects reside in memory as
     # class Shell {
@@ -227,9 +239,7 @@ if (libint2_available) # the normal case
   end
 
   function IntegralsModule.computeMatrixBlockOverlap(μlib::LibInt2Shell,νlib::LibInt2Shell)
-    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
-    maxprims = max(length(μ.coefficients), length(ν.coefficients))
-    maxlqn   = max(μ.lqn, ν.lqn)
+    totaldim, maxprims, maxlqn = computeDimensions([μlib,νlib])
     engine = LibInt2EngineOverlap(maxprims,maxlqn)
 
     result = copy(computeMatrixBlockOverlap(engine,μlib,νlib))
@@ -251,9 +261,7 @@ if (libint2_available) # the normal case
   end
 
   function computeMatrixBlockKinetic(μlib::LibInt2Shell,νlib::LibInt2Shell)
-    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
-    maxprims = max(length(μ.coefficients), length(ν.coefficients))
-    maxlqn   = max(μ.lqn, ν.lqn)
+    totaldim, maxprims, maxlqn = computeDimensions([μlib,νlib])
     engine = LibInt2EngineKinetic(maxprims,maxlqn)
 
     result = copy(computeMatrixBlockKinetic(engine,μlib,νlib))
@@ -275,9 +283,7 @@ if (libint2_available) # the normal case
   end
 
   function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, atom::Atom)
-    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
-    maxprims = max(length(μ.coefficients), length(ν.coefficients))
-    maxlqn   = max(μ.lqn, ν.lqn)
+    totaldim, maxprims, maxlqn = computeDimensions([μlib,νlib])
     engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,atom)
 
     result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
@@ -287,9 +293,7 @@ if (libint2_available) # the normal case
   end
 
   function computeMatrixBlockNuclearAttraction(μlib::LibInt2Shell,νlib::LibInt2Shell, geo::Geometry)
-    (μ, ν) = map(sh->convert(Shell,sh), (μlib, νlib))
-    maxprims = max(length(μ.coefficients), length(ν.coefficients))
-    maxlqn   = max(μ.lqn, ν.lqn)
+    totaldim, maxprims, maxlqn = computeDimensions([μlib,νlib])
     engine = LibInt2EngineNuclearAttraction(maxprims,maxlqn,geo)
 
     result = copy(computeMatrixBlockNuclearAttraction(engine,μlib,νlib))
@@ -313,9 +317,7 @@ if (libint2_available) # the normal case
   end
 
   function computeTensorBlockElectronRepulsionIntegrals(μlib::LibInt2Shell, νlib::LibInt2Shell, λlib::LibInt2Shell, σlib::LibInt2Shell)
-    (μ, ν, λ, σ) = map(sh->convert(Shell,sh), (μlib, νlib, λlib, σlib))
-    maxprims = max(length(μ.coefficients), length(ν.coefficients), length(λ.coefficients), length(σ.coefficients))
-    maxlqn   = max(μ.lqn, ν.lqn, λ.lqn, σ.lqn)
+    totaldim, maxprims, maxlqn = computeDimensions([μlib,νlib,λlib,σlib])
     engine = LibInt2EngineCoulomb(maxprims,maxlqn)
 
     result = copy(computeTensorBlockElectronRepulsionIntegrals(engine, μlib,νlib,λlib,σlib))
