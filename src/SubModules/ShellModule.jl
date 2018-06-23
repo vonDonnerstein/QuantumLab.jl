@@ -31,17 +31,15 @@ type Shell <: AbstractShell
       nprim = length(exponents)
       # renorm primitive-by-primitive
       for p in 1:nprim
-    coefficients[p] *= sqrt( (2^L*(2*exponents[p])^(L+3/2)) / (π^(3/2)*doublefactorial(2*L-1)) )
+	coefficients[p] *= sqrt( (2^L*(2*exponents[p])^(L+3/2)) / (π^(3/2)*doublefactorial(2*L-1)) )
       end
       # normalize total shell
       norm = 0.
       for p in 1:nprim, q in 1:nprim
         norm += (doublefactorial(2*L-1)*π^(3/2)*coefficients[p]*coefficients[q])/
-            ((2^L)*(exponents[p]+exponents[q])^(L+3/2))
+	              ((2^L)*(exponents[p]+exponents[q])^(L+3/2))
       end
-      for p in 1:nprim
-        coefficients[p] /= sqrt(norm)
-      end
+      coefficients /= sqrt(norm)
     end
     new(center,lqn,exponents,coefficients)
   end
@@ -119,10 +117,8 @@ Compute a list of ContractedGaussianBasisFunctions which are described within th
 function expandShell(sh::Shell)
   result = ContractedGaussianBasisFunction[]
   for mqn in MQuantumNumbers(sh.lqn)
-    cgbf = ContractedGaussianBasisFunction(sh.coefficients,[])
-    for exp in sh.exponents
-      push!(cgbf.primitiveBFs,PrimitiveGaussianBasisFunction(sh.center,exp,mqn))
-    end
+    pgbfs = [PrimitiveGaussianBasisFunction(sh.center,exp,mqn) for exp in sh.exponents]
+    cgbf = ContractedGaussianBasisFunction(copy(sh.coefficients),pgbfs)
     push!(result,cgbf)
   end
   renormNonAxial!(result,[sh])
