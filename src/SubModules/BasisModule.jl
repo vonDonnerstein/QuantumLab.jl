@@ -10,7 +10,6 @@ using ..IntegralsModule
 using ..ShellModule
 
 import Base.display
-import Base.normalize!
 import Base.convert
 
 abstract type Basis end
@@ -23,27 +22,39 @@ immutable GaussianBasis <: Basis	# doesn't change much to the user as contracted
   contractedBFs::Vector{ContractedGaussianBasisFunction}
 end
 
-function computeBasis(basSet::BasisSet,geo::Geometry)
+function computeBasis_primitive(basSet::BasisSet,geo::Geometry)
   bas=GaussianBasis([])
   for atom in geo.atoms
-    for contractedDefinition in basSet.definitions[atom.element]
-      for mqn in MQuantumNumbers(contractedDefinition.lQuantumNumber)
-	contractedBF = ContractedGaussianBasisFunction([],[])
-	for primitiveDefinition in contractedDefinition.primitives
-	  exponent=primitiveDefinition.exponent
-	  primitiveBF = PrimitiveGaussianBasisFunction(atom.position,exponent,mqn)
-	  norm = IntegralsModule.computeIntegralOverlap(primitiveBF,primitiveBF)
-	  push!(contractedBF.coefficients,primitiveDefinition.prefactor/sqrt(norm))
-	  push!(contractedBF.primitiveBFs,primitiveBF)
-	end
-	push!(bas.contractedBFs,contractedBF)
+    contrDefinitions = basSet.definitions[atom.element]
+    for cdef in contrDefinitions
+      for mqn in MQuantumNumbers(cdef.lQuantumNumber)
+	coeffs = [pdef.prefactor for pdef in cdef.primitives]
+	pgbfs  = [PrimitiveGaussianBasisFunction(atom.position,pdef.exponent,mqn) for pdef in cdef.primitives]
+	push!(bas.contractedBFs,ContractedGaussianBasisFunction(coeffs,pgbfs))
       end
     end
   end
   return bas
 end
 
-normalize!(basis::GaussianBasis) = normalize!(basis.contractedBFs)
+function renormprimitives!(basis::GaussianBasis)
+  for cgbf in basis.contractedBFs
+    for p in eachindex(cgbf.primitiveBFs)
+      pgbf = cgbf.primitiveBFs[p]
+      primnorm = computeIntegralOverlap(pgbf,pgbf)
+      cgbf.coefficients[p] /= sqrt(primnorm)
+    end
+  end
+end
+
+function computeBasis(basSet::BasisSet,geo::Geometry,normalize::Bool=true)
+  bas = computeBasis_primitive(basSet,geo)
+  if normalize
+    renormprimitives!(bas)
+    normalize!.(bas.contractedBFs)
+  end
+  return bas
+end
 
 function display(basis::GaussianBasis)
   println(typeof(basis))

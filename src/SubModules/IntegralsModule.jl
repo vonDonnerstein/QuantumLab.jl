@@ -472,10 +472,4 @@ function normalize!(cgb::ContractedGaussianBasisFunction)
   scale!(cgb.coefficients,1/sqrt(N))
 end
 
-function normalize!(cgbs::Vector{ContractedGaussianBasisFunction})
-  for cgb in cgbs
-    normalize!(cgb)
-  end
-end
-
 end # module

@@ -26,7 +26,6 @@ info("$(now())  $(indent)COMPUTING:   sto3g,h2o -> bas")
 bas = computeBasis(sto3g,h2o)
 
 info("$(now())  $(indent)COMPUTING:   bas,h2o -> matrixOverlap, matrixKinetic, matrixNuclearAttraction, ERIs")
-normalize!(bas)
 matrixOverlap = computeMatrixOverlap(bas)
 matrixKinetic = computeMatrixKinetic(bas)
 matrixNuclearAttraction = computeMatrixNuclearAttraction(bas,h2o)
