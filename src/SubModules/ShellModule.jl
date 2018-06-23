@@ -1,10 +1,12 @@
 module ShellModule
-export Shell, expandShell
+export AbstractShell, Shell, expandShell
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisSetModule
 using ..GeometryModule
 import Base.display
+
+abstract type AbstractShell end
 
 """
     Shell(center::Position, lqn::LQuantumNumber, exponents::[Float], coefficients::[Float64]; renorm=true)
@@ -13,7 +15,7 @@ the px, py and pz orbital that are defined together by their center, exponents a
 instead of the individual basis functions allows for some performance gains in integral evaluation.
 If renorm is set to false, then the coefficients are read in "as is". With renorm set to true the coefficients are expected to be given as with a basis set file and normalized accordingly. This is the default in accordance with LibInt2Shell, where this is necessary due to performance reasons. (As such the normalization scaling is taken from the renorm() function in libint2/shell.h.
 """
-type Shell
+type Shell <: AbstractShell
   center::Position
   lqn::LQuantumNumber
   exponents::Vector{Float64}

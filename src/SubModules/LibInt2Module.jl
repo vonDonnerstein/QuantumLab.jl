@@ -39,8 +39,8 @@ if (libint2_available) # the normal case
 
   ## LibInt2Shell
   #  Type Declaration
-  primitive type LibInt2Shell64 64 end
-  primitive type LibInt2Shell32 32 end
+  primitive type LibInt2Shell64 <: AbstractShell 64 end
+  primitive type LibInt2Shell32 <: AbstractShell 32 end
   if Int === Int32
     const LibInt2Shell = LibInt2Shell32
   else
