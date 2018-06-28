@@ -1,5 +1,5 @@
 module BaseModule
-export Position, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial, 𝐈, evaluateFunction, trlog
+export Position, Ionization, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial, 𝐈, evaluateFunction, trlog
 import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
 immutable Position
@@ -33,6 +33,10 @@ convert(::Type{Vector{Float64}},p::Position) = [p.x,p.y,p.z]
 function distance(p::Position,q::Position)
   pq = p - q
   return sqrt((pq.x)^2+(pq.y)^2+(pq.z)^2)
+end
+
+immutable Ionization
+  charge::Int64
 end
 
 """

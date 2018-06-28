@@ -148,7 +148,7 @@ inputs. To this end, the arguments are very flexible:
 - `basis`: One of `Basis`, `BasisSet`, Vector{Shell}, Vector{LibInt2Shell}
 - `geo`: One of `Geometry`, `String` (the name of a file containing the geometry)
 - `initialGuess`: Either a `Matrix` that is used as initial density matrix, or an `InitialGuess` (ZeroGuess, SADGuess)
-- `electronNumber`: number of occupied closed shell orbitals (as the other forms are not yet implemented)
+- `electronNumber`: number of occupied closed shell orbitals (as the other forms are not yet implemented) or `Ionization` of the system
 
 This evaluateSCF method additionally introduces the following optional named arguments:
 - `computeTensorElectronRepulsionIntegralsCoulomb`: f: basis/shells/... -> ERIs (used for Coulomb part (and Exchange part if not overridden))
@@ -158,7 +158,7 @@ function evaluateSCF(
   basis::Union{GaussianBasis,Vector{Shell},Vector{LibInt2Shell},BasisSet},
   geometry::Union{Geometry,String},
   initialGuessDensity::Union{Matrix,InitialGuess},
-  electronNumber::Integer;
+  electronNumber::Union{Integer,Ionization}=Ionization(0);
   detailedinfo::Bool=true,
   info::Bool=true,
   energyConvergenceCriterion::Float64 = 1e-8,
@@ -181,6 +181,9 @@ function evaluateSCF(
     basis = convert(GaussianBasis,input)
   end
 
+  if isa(electronNumber,Ionization)
+    electronNumber::Int64 = computeNumberElectrons(geometry,electronNumber.charge)/2
+  end
 
   S = computeMatrixOverlap(basis)
   T = computeMatrixKinetic(basis)

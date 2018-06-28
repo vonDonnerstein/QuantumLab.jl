@@ -67,7 +67,7 @@ function computeEnergyInteratomicRepulsion(geo::Geometry)
 end
 
 function computeNumberElectrons(geo::Geometry,charge::Int=0)
-  return count(x->x.element.atomicNumber,geo.atoms) - charge
+  sum(at.element.atomicNumber for at in geo.atoms) - charge
 end
 
 end #module
