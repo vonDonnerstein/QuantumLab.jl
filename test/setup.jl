@@ -39,7 +39,7 @@ shells = computeBasisShellsLibInt2(sto3g,h2o)
 shells_native = computeBasisShells(sto3g,h2o)
 
 info("$(now())  $(indent)COMPUTING:   (HartreeFock)  shells, h2o, matrixSADguess -> density")
-density = evaluateSCF(shells,h2o,mean(matrixSADguess),5,info=false,detailedinfo=false)[3]
+density = evaluateSCF(shells,h2o,mean(matrixSADguess),info=false,detailedinfo=false)[3]
 
 info("$(now())  $(indent)COMPUTING:   density, matrixKinetic, matrixNuclearAttraction, ERIs -> matrixFock")
 matrixFock = computeMatrixFock(density,matrixKinetic,matrixNuclearAttraction,ERIs)

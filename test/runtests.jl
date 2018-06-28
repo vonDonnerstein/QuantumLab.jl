@@ -74,8 +74,8 @@ info("$(now())  TESTING:   InitialGuessModule")
 
 # test HartreeFockModule
 info("$(now())  TESTING:   HartreeFock (bas, h2o, density)")
-@test -74.96178985 ≈ (evaluateSCF(bas,h2o,density,5,info=false,detailedinfo=false)[2] + computeEnergyInteratomicRepulsion(h2o)) atol=1e-7 # checked against FermiONs++
-#@test_approx_eq -4.473355520007 mean(HartreeFockModule.evaluateSCFStep(bas,h2o,mean(matrixSADguess),matrixOverlap,5)[1])
+@test -74.96178985 ≈ (evaluateSCF(bas,h2o,density,info=false,detailedinfo=false)[2] + computeEnergyInteratomicRepulsion(h2o)) atol=1e-7 # checked against FermiONs++
+#@test_approx_eq -4.473355520007 mean(HartreeFockModule.evaluateSCFStep(bas,h2o,mean(matrixSADguess),matrixOverlap)[1])
 #@test_approx_eq_eps -74.96178985 (computeEnergyHartreeFock(bas,h2o,density) + computeEnergyInteratomicRepulsion(h2o)) 1e-7 # checked against FermiONs++
 
 # test Shells: ShellModule and LibInt2Module

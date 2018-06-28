@@ -70,7 +70,6 @@ function computeEnergyHartreeFock(
 end
 
 function evaluateSCFStep(
-  initialGuessDensity::Matrix,
   fock::Matrix,
   overlap::Matrix,
   electronNumber::Integer)
@@ -125,7 +124,7 @@ function evaluateSCF(
   while (!energyConverged)
     i+=1
     F = kinetic+nuclearAttraction+2J-K
-    energies,P = evaluateSCFStep(P,F,overlap,electronNumber)
+    energies,P = evaluateSCFStep(F,overlap,electronNumber)
     J = coulomb(P) # By requiring J,K to contain the new density, the variational principle guarantees no energy below the exact energy is obtained
     K = exchange(P) # think: E2 = P II P = tr(P*G[P]) != tr(P*G[P'])
     oldEnergy = totalEnergy
