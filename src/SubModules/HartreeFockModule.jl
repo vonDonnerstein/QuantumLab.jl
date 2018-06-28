@@ -165,7 +165,9 @@ function evaluateSCF(
   computeTensorElectronRepulsionIntegralsCoulomb = computeTensorElectronRepulsionIntegrals,
   computeTensorElectronRepulsionIntegralsExchange = computeTensorElectronRepulsionIntegrals)
 
-  geometry = convert(Geometry,geometry)
+  if isa(geometry,String)
+    geometry = Geometry(geometry)
+  end
 
   input = basis
   if isa(input,Vector{LibInt2Shell}) && (LibInt2Shell != Shell)
