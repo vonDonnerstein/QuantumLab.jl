@@ -29,7 +29,7 @@ info("$(now())  $(indent)COMPUTING:   bas,h2o -> matrixOverlap, matrixKinetic, m
 matrixOverlap = computeMatrixOverlap(bas)
 matrixKinetic = computeMatrixKinetic(bas)
 matrixNuclearAttraction = computeMatrixNuclearAttraction(bas,h2o)
-ERIs = computeTensorElectronRepulsionIntegrals(bas)	# TODO: should build this from libint2shells
+ERIs = computeTensorElectronRepulsionIntegrals(bas)
 
 info("$(now())  $(indent)COMPUTING:   h2o -> matrixSADguess")
 matrixSADguess = computeDensityGuessSAD("HF","STO-3G",h2o)

@@ -26,6 +26,7 @@ import ...QuantumLab.libint2_available
 if (libint2_available) # the normal case
   import Base.convert
   import Base.display
+  import ..ShellModule.nbf
   using TensorOperations
   using ..BaseModule
   using ..GeometryModule
@@ -111,16 +112,14 @@ if (libint2_available) # the normal case
     return Int(div(alphaEnd_ptr-alpha_ptr,8))
   end
 
-  function nbf(l2sh::LibInt2Shell)
-    div((lqn(l2sh)+1)^2+(lqn(l2sh)+1),2)
-  end
+  nbf(shell::LibInt2Shell) = BaseModule.numberMQNsCartesian(LQuantumNumber(lqn(shell)))
 
   function computeDimensions(shells::Vector{LibInt2Shell})
     totaldim = 0
     maxprims = 0
     maxlqn = 0
     for sh in shells
-      totaldim += div((lqn(sh)+1)^2+(lqn(sh)+1),2)
+      totaldim += nbf(sh)
       maxprims = maxprims < nprims(sh) ? nprims(sh) : maxprims
       maxlqn = maxlqn < lqn(sh) ? lqn(sh) : maxlqn
     end
@@ -230,10 +229,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function IntegralsModule.computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
-    νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -252,10 +249,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeMatrixBlockKinetic(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
-    νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -274,10 +269,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeMatrixBlockNuclearAttraction(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
-    νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
     buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,μmqns*νmqns),(νmqns,μmqns)).' # the inner loop within LibInt2 is over the second shell
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -306,12 +299,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeTensorBlockElectronRepulsionIntegrals(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell)
-    μmqns = div((lqn(μ)+1)^2+(lqn(μ)+1),2)
-    νmqns = div((lqn(ν)+1)^2+(lqn(ν)+1),2)
-    λmqns = div((lqn(λ)+1)^2+(lqn(λ)+1),2)
-    σmqns = div((lqn(σ)+1)^2+(lqn(σ)+1),2)
     buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
-    block = reshape(unsafe_wrap(Array,buf,μmqns*νmqns*λmqns*σmqns),(μmqns,νmqns,λmqns,σmqns)) # Apparently for ERIs the order is correct already (in contrast to the matrix functions
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)*nbf(λ)*nbf(σ)),(nbf(μ),nbf(ν),nbf(λ),nbf(σ))) # Apparently for ERIs the order is correct already (in contrast to the matrix functions
     ShellModule.renormNonAxial!(block,[μ],[ν],[λ],[σ])
     return block
   end

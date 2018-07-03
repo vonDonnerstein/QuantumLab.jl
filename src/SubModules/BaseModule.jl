@@ -86,6 +86,24 @@ immutable LQuantumNumber
 end
 
 """
+    numberMQNsCartesian(l::LQuantumNumber)
+returns the number of (cartesian, i.e. 'xxy' etc.) `MQuantumNumber`s with the given `LQuantumNumber`. This is equivalent to
+`length(MQuantumNumbers(lqn))`.
+"""
+function numberMQNsCartesian(lqn::LQuantumNumber)
+  l = lqn.exponent
+  div((l+1)^2+(l+1),2)
+end
+
+"""
+    numberMQNsPure(l::LQuantumNumber)
+returns the number of pure m-Quantum numbers with the given `LQuantumNumber`: -l <= m <= l.
+"""
+function numberMQNsPure(lqn::LQuantumNumber)
+  2*lqn.exponent + 1
+end
+
+"""
 MQuantumNumber**s** returns all MQuantumNumber objects corresponding to the LQuantumNumber object given to the constructor as an iterable collection.
 Order is for example xx,xy,xz,yy,yz,zz for LQuantumNumber = 2
 """

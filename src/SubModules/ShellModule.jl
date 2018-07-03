@@ -126,9 +126,8 @@ function expandShell(sh::Shell)
 end
 
 """
-compute the number of basisfunctions (cartesian) described by the shell
+    nbf(shell)
+computes the number of basisfunctions (cartesian) described by the shell.
 """
-function nbf(shell::Shell)
-  div((shell.lqn.exponent+1)^2+(shell.lqn.exponent+1),2)
-end
+nbf(shell::Shell) = BaseModule.numberMQNsCartesian(shell.lqn)
 end # module
