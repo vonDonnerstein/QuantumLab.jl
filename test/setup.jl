@@ -20,7 +20,7 @@ if (!isfile("STO-3G.tx93"))
 end
 
 info("$(now())  $(indent)READING:   STO-3G.tx93 -> sto3g::BasisSet")
-sto3g = readBasisSetTX93("STO-3G.tx93")
+sto3g = readTX93("STO-3G.tx93")
 
 info("$(now())  $(indent)COMPUTING:   sto3g,h2o -> bas")
 bas = computeBasis(sto3g,h2o)
