@@ -1,5 +1,5 @@
 module BasisSetModule
-export BasisSet, readTX93, readGaussian, readGAMESSUS, readNWChem, readDalton
+export BasisSet, readBasisSetTX93, readBasisSetGaussian, readBasisSetGAMESSUS, readBasisSetNWChem, readBasisSetDalton
 using ..BaseModule
 using ..AtomModule
 using StringParserPEG
@@ -18,134 +18,13 @@ immutable BasisSet
     definitions::Dict{Element,Array{ContractedGaussianBasisFunctionDefinition,1}}
 end
 
-# Element Dictionary : Full name to Symbol
- ElementSymbols = Dict{String,String}(
-"HYDROGEN" =>                 "H",
-"HELIUM" =>                  "He",
-"LITHIUM" =>                 "Li",
-"BERYLLIUM" =>               "Be",
-"BORON" =>                    "B",
-"CARBON" =>                   "C",
-"NITROGEN" =>                 "N",
-"OXYGEN" =>                   "O",
-"FLUORINE" =>                 "F",
-"NEON" =>                    "Ne",
-"SODIUM" =>                  "Na",
-"MAGNESIUM" =>               "Mg", 
-"ALUMINUM" =>                "Al",
-"ALUMINIUM" =>         "Al", 
-"SILICON" =>                 "Si", 
-"PHOSPHOROUS" =>               "P", 
-"SULFUR" =>                   "S", 
-"CHLORINE" =>                "Cl", 
-"ARGON" =>                   "Ar", 
-"POTASSIUM" =>                "K", 
-"CALCIUM" =>                 "Ca", 
-"SCANDIUM" =>                "Sc", 
-"TITANIUM" =>                "Ti", 
-"VANADIUM" =>                 "V", 
-"CHROMIUM" =>                "Cr", 
-"MANGANESE" =>               "Mn", 
-"IRON" =>                    "Fe", 
-"COBALT" =>                  "Co", 
-"NICKEL" =>                  "Ni", 
-"COPPER" =>                  "Cu", 
-"ZINC" =>                    "Zn", 
-"GALLIUM" =>                 "Ga", 
-"GERMANIUM" =>               "Ge", 
-"ARSENIC" =>                 "As", 
-"SELENIUM" =>                "Se", 
-"BROMINE" =>                 "Br", 
-"KRYPTON" =>                 "Kr", 
-"RUBIDIUM" =>                "Rb", 
-"STRONTIUM" =>               "Sr", 
-"YTTRIUM" =>                  "Y", 
-"ZIRCONIUM" =>               "Zr", 
-"NIOBIUM" =>                 "Nb", 
-"MOLYBDENUM" =>              "Mo", 
-"TECHNETIUM" =>              "Tc", 
-"RUTHENIUM" =>               "Ru", 
-"RHODIUM" =>                 "Rh", 
-"PALLADIUM" =>               "Pd", 
-"SILVER" =>                  "Ag", 
-"CADMIUM" =>                 "Cd", 
-"INDIUM" =>                  "In", 
-"TIN" =>                     "Sn", 
-"ANTIMONY" =>                "Sb", 
-"TELLURIUM" =>               "Te", 
-"IODINE" =>                   "I",
-"XENON" =>                   "Xe", 
-"CESIUM" =>                  "Cs", 
-"BARIUM" =>                  "Ba", 
-"LANTHANUM" =>               "La", 
-"CERIUM" =>                  "Ce", 
-"PRASEODYMIUM" =>            "Pr", 
-"NEODYMIUM" =>               "Nd", 
-"PROMETHIUM" =>              "Pm", 
-"SAMARIUM" =>                "Sm", 
-"EUROPIUM" =>                "Eu", 
-"GADOLINIUM" =>              "Gd", 
-"TERBIUM" =>                 "Tb", 
-"DYSPROSIUM" =>              "Dy", 
-"HOLMIUM" =>                 "Ho", 
-"ERBIUM" =>                  "Er", 
-"THULIUM" =>                 "Tm", 
-"YTTERBIUM" =>               "Yb", 
-"LUTETIUM" =>                "Lu", 
-"HAFNIUM" =>                 "Hf", 
-"TANTALUM" =>                "Ta", 
-"TUNGSTEN" =>                 "W", 
-"RHENIUM" =>                 "Re", 
-"OSMIUM" =>                  "Os", 
-"IRIDIUM" =>                 "Ir", 
-"PLATINUM" =>                "Pt", 
-"GOLD" =>                    "Au", 
-"MERCURY" =>                 "Hg", 
-"THALLIUM" =>                "Tl", 
-"LEAD" =>                    "Pb", 
-"BISMUTH" =>                 "Bi", 
-"POLONIUM" =>                "Po", 
-"ASTATINE" =>                "At", 
-"RADON" =>                   "Rn", 
-"FRANCIUM" =>                "Fr", 
-"RADIUM" =>                  "Ra", 
-"ACTINIUM" =>                "Ac", 
-"THORIUM" =>                 "Th", 
-"PROTACTINIUM" =>            "Pa", 
-"URANIUM" =>                  "U",
-"NEPTUNIUM" =>               "Np", 
-"PLUTONIUM" =>               "Pu", 
-"AMERICIUM" =>               "Am", 
-"CURIUM" =>                  "Cm", 
-"BERKELIUM" =>               "Bk", 
-"CALIFORNIUM" =>             "Cf", 
-"EINSTEINIUM" =>             "Es", 
-"FERMIUM" =>                 "Fm", 
-"MENDELEVIUM" =>             "Md", 
-"NOBELIUM" =>                "No", 
-"LAWRENCIUM" =>              "Lr", 
-"RUTHERFORDIUM" =>           "Rf", 
-"DUBNIUM" =>                 "Db", 
-"SEABORGIUM" =>              "Sg", 
-"BOHRIUM" =>                 "Bh", 
-"HASSIUM" =>                 "Hs", 
-"MEITNERIUM" =>              "Mt", 
-"DARMSTADTIUM" =>            "Ds", 
-"ROENTGENIUM" =>             "Rg", 
-"COPERNICIUM" =>             "Cn", 
-"NIHONIUM" =>                "Nh", 
-"FLEROVIUM" =>               "Fl", 
-"MOSCOVIUM" =>               "Mc", 
-"LIVERMORIUM" =>             "Lv", 
-"TENNESSINE" =>              "Ts", 
-"OGANESSON" =>               "Og", 
-)
 
 # Supplementary Functions for the PEG BasisSet Parsers
 
+# MergeDictionaries - used to construct one large dictionary from an array of dictionaries created for each element beforehand.
+function MergeDictionaries(children) 
+dicty = Dict() 
 
-function dict(children) 
-  dicty = Dict() 
 for i = 1:length(children) 
   dicty = merge(dicty,children[i]) 
 end 
@@ -153,9 +32,11 @@ end
 return dicty
 end
 
-function DictElements(children)
+# CreateDictionariesOfElement - used in the NWChem Parser in order to create a dictionary of contracted Gaussians for each element. These dictionaries are later merged by the MergeDictionaries function in one large dictionary.
+function CreateDictionariesOfElements(children)
 Elem = children[1][1]
 contracteds = Vector()
+
 for i=1:length(children)
  cont = BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[i][2],children[i][3][1])
  push!(contracteds,cont)
@@ -166,12 +47,13 @@ dictyElem = Dict(zip([Elem],[contracteds]))
 return dictyElem
 end
 
-function bases(children)
+# MergeContractedFunctions - used by the Gaussian Parser to create a vector of all the contracted Gaussians of one element. This is employed due to the Gaussian basis set file defining both S and P orbital functions in one line (SP).
+function MergeContractedFunctions(children)
 bases = Vector()
 for i=1:length(children)
-if typeof(children[i]) == QuantumLab.BasisSetModule.ContractedGaussianBasisFunctionDefinition
+if typeof(children[i]) == BasisSetModule.ContractedGaussianBasisFunctionDefinition
   push!(bases,children[i])
-elseif typeof(children[i]) == Array{QuantumLab.BasisSetModule.ContractedGaussianBasisFunctionDefinition,1}
+elseif typeof(children[i]) == Array{BasisSetModule.ContractedGaussianBasisFunctionDefinition,1}
   for j=1:length(children[i])
   push!(bases,children[i][j]) 
   end
@@ -181,6 +63,7 @@ end
 return bases
 end
 
+#SPOrbitals - Separates S and P orbital functions from the SP syntax used in the Gaussian Basis Set files.
 function SPOrbitals(children)
 OrbS = Vector()
 OrbP = Vector()
@@ -205,17 +88,20 @@ Primitives = vcat(OrbS,OrbP)
 return Primitives
 end
 
-function dictDalton(children) 
+#=
+function MergeDictionariesDalton(children) 
   dicty = Dict() 
+
 for i = 1:length(children)
   dicty = merge(dicty,children[i])
 end 
 
 return dicty
 end
+=#
 
-
-function basesDalton(children)
+#MergeContractedsDalton - creates a vector containing all contracted Gaussians of one element.
+function MergeContractedsDalton(children)
 bases = Vector()
 for i=1:length(children)
   for j=1:length(children[i])
@@ -226,8 +112,8 @@ end
 return bases
 end
 
-
-function CreateCorrectPrimitives(children)
+# CreateContractedFunctions - this function first creates a vector of vectors that contains the primitives of each contracted function of one element. These are then used to construct the contracted Gaussians.
+function CreateContractedFunctions(children)
 Primitives = Vector()
 A = zeros(length(children[2]),length(children[2][1]))
 for i = 1:length(children[2]) 
@@ -260,24 +146,13 @@ end
 return D
 end
 
-function LinearFactors(children)
 
-LinearFactor=0
-for i=1:length(children)
-  if children[i][1] == 0
-  continue
-  else 
-  LinearFactor=children[i][1]
-  end
-end
-return LinearFactor
-end
 ############################################################################################################################################
 # Main Functions
 
 # Dalton 
 
-function readDalton(filename::AbstractString)
+function readBasisSetDalton(filename::AbstractString)
 readBasisSetStringDalton = Grammar("""
 start => (-(comments) & -(databegin) & bases & ?(end)) {"start"}
 comments => *(*(comment) & newline) {"comments"}
@@ -293,7 +168,7 @@ primitive => (expon & -(space) & +( (lin & -(onlyspace)) {"linandzeros"}) {"rema
 QuantumNumber => ((opl)) {"convopl"}
 expon => (num) {"expon"}
 lin => (num) {"lin"}
-opl => ('s' {"S"} |'d' {"D"} | 'f' {"F"} | 'p' {"P"} | 'g' {"g"}) {"opl"}
+opl => ('s' {"S"} |'d' {"D"} | 'f' {"F"} | 'p' {"P"} | 'g' {"g"} | 'h' | 'i' | 'j' | 'k') {"opl"}
 end => -('!' & r([^&]+)r) 
 
 finalelement => (-(exclam) & -(space) & convertedelement & -(space) & -(orbitalcount) & -(space)) {"finalelement"}
@@ -328,10 +203,10 @@ toresult(node,children,::MatchRule{:convertedelement}) =  Element(ElementSymbols
 toresult(node,children,::MatchRule{:finalelement}) =  children[1]
 toresult(node,children,::MatchRule{:opl}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convopl}) = LQuantumNumber(uppercase(children[1]))
-toresult(node,children,::MatchRule{:bases})= dict(children)
+toresult(node,children,::MatchRule{:bases})= MergeDictionaries(children)
 toresult(node,children,::MatchRule{:base})= Dict(zip([children[1]],[children[2]]))
-toresult(node,children,::MatchRule{:sets}) =  basesDalton(children)
-toresult(node,children,::MatchRule{:set}) = CreateCorrectPrimitives(children)
+toresult(node,children,::MatchRule{:sets}) =  MergeContractedsDalton(children)
+toresult(node,children,::MatchRule{:set}) = CreateContractedFunctions(children)
 toresult(node,children,::MatchRule{:primitives}) = children
 toresult(node,children,::MatchRule{:primitive}) = push!(children[2],children[1])
 toresult(node,children,::MatchRule{:start}) = BasisSet(children[1])
@@ -349,7 +224,7 @@ end
 
 end
 
-function readGAMESSUS(filename::AbstractString)
+function readBasisSetGAMESSUS(filename::AbstractString)
 readBasisSetStringGAMESSUS = Grammar("""
 start => (-(comments) & -(databegin) & bases & ?(end)) {"start"}
 comments => *(*(comment) & newline) {"comments"}
@@ -365,7 +240,7 @@ primitive => (-(funnum) & -(space) & expon & -(space) & lin & -(space)) {"primit
 QuantumNumber => ((opl)) {"convopl"}
 expon => (num) {"expon"}
 lin => (num) {"lin"}
-opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"}) {"opl"}
+opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"} | 'H' | 'I' | 'J' | 'K') {"opl"}
 end => -('\$END' & r([^&]+)r) 
 
 funnum => (num)
@@ -395,16 +270,12 @@ toresult(node,children,::MatchRule{:element}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convertedelement}) =  Element(ElementSymbols[node.value]) 
 toresult(node,children,::MatchRule{:opl}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convopl}) = LQuantumNumber(children[1])
-toresult(node,children,::MatchRule{:bases})= dict(children)
+toresult(node,children,::MatchRule{:bases})= MergeDictionaries(children)
 toresult(node,children,::MatchRule{:base})= Dict(zip([children[1]],[children[2][1]]))
 toresult(node,children,::MatchRule{:sets}) = [children]
 toresult(node,children,::MatchRule{:set}) = BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[1],children[2][1])
 toresult(node,children,::MatchRule{:primitives}) = [children]
 toresult(node,children,::MatchRule{:primitive}) = BasisSetModule.PrimitiveGaussianBasisFunctionDefinition(children[1],children[2])
-#Dict(zip([children[1]],[BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[2],children[3][1])]))
-
-
-
 toresult(node,children,::MatchRule{:start}) = BasisSet(children[1])
 
 fileString = read(filename, String)
@@ -420,10 +291,10 @@ end
 end
 #TX93
 
-function readTX93(filename::AbstractString)
+function readBasisSetTX93(filename::AbstractString)
 
 readBasisSetStringTX93 = Grammar("""
-start => (-(comments) & bases) {"start"}
+start => (-(comments) & bases & ?(end))  {"start"}
 comments => *(*(comment) & newline)
 comment => -(exclam & (r([ a-zA-Z0-9\-\(\)\*\:\.\/\,\+]*)r) & ?(newline)) 
 bases => *(base) {"bases"}
@@ -437,9 +308,8 @@ primitive => (-(space) & expon & -(space) & lin & -(space)) {"primitive"}
 convopl => (opl) {"convopl"}
 expon => (num) {"expon"}
 lin => (num) {"lin"}
-opl => ('S' {"S"} | 'P' {"P"} | 'D' {"D"} | 'F' {"F"}) {"opl"}
-
-
+opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"} | 'H' | 'I' | 'J' | 'K') {"opl"}
+end => -(-(exclam) & r([^&]+)r) 
 
 num => (r([0-9\+\E\-]+)r & '.' & r([0-9\+\E\-]+)r | r([0-9\+\E\-]+)r |minus & r([0-9\+\E\-]+)r & '.' & r([0-9\+\E\-]+)r |minus & r([0-9\+\E\-]+)r) {"num"}
 minus => ('-')
@@ -457,7 +327,7 @@ toresult(node,children,::MatchRule{:element}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convertedelement}) =  Element(node.value) 
 toresult(node,children,::MatchRule{:opl}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convopl}) = LQuantumNumber(node.value)
-toresult(node,children,::MatchRule{:bases})= dict(children)
+toresult(node,children,::MatchRule{:bases})= MergeDictionaries(children)
 toresult(node,children,::MatchRule{:base})= Dict(zip([children[1]],[children[2][1]]))
 toresult(node,children,::MatchRule{:sets}) = [children]
 toresult(node,children,::MatchRule{:set}) = BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[1],children[2][1])
@@ -481,7 +351,7 @@ end
 
 #Gaussian
 
-function readGaussian(filename::AbstractString)
+function readBasisSetGaussian(filename::AbstractString)
 
 readBasisSetStringGaussian94 = Grammar("""
 start => (-(comments) & bases & ?(end)) {"start"}
@@ -498,8 +368,8 @@ primitive => (-(space) & expon & -(space) & lin & -(space)) {"primitive"}
 QuantumNumber => ((opl) & -(space) & -(NumberOfPrimitives) & -(space) & -(ScalingFactor) & -(space)) {"convopl"}
 expon => (num) {"expon"}
 lin => (num) {"lin"}
-opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"}) {"opl"}
-end => (-(sep) & -(space))
+opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"} | 'H' | 'I' | 'J' | 'K') {"opl"}
+end => -(-(sep) & r([^&]+)r) 
 
 SPSet => (-(SP) & SPPrimitives) {"SPSet"}
 SP => ((SPOrb) & -(space) & -(NumberOfPrimitives) & -(space) & -(ScalingFactor))
@@ -531,19 +401,15 @@ toresult(node,children,::MatchRule{:element}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convertedelement}) =  Element(node.value) 
 toresult(node,children,::MatchRule{:opl}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convopl}) = LQuantumNumber(children[1])
-toresult(node,children,::MatchRule{:bases})= dict(children)
+toresult(node,children,::MatchRule{:bases})= MergeDictionaries(children)
 toresult(node,children,::MatchRule{:base})= Dict(zip([children[1]],[children[2]]))
-toresult(node,children,::MatchRule{:sets}) = bases(children)
+toresult(node,children,::MatchRule{:sets}) = MergeContractedFunctions(children)
 toresult(node,children,::MatchRule{:set}) = BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[1],children[2][1])
 toresult(node,children,::MatchRule{:primitives}) = [children] 
 toresult(node,children,::MatchRule{:primitive}) = BasisSetModule.PrimitiveGaussianBasisFunctionDefinition(children[1],children[2])
 toresult(node,children,::MatchRule{:SPPrimitive}) = [BasisSetModule.PrimitiveGaussianBasisFunctionDefinition(children[1],children[2]),BasisSetModule.PrimitiveGaussianBasisFunctionDefinition(children[1],children[3])]
 toresult(node,children,::MatchRule{:SPPrimitives}) = SPOrbitals(children)
 toresult(node,children,::MatchRule{:SPSet}) = children[1]
-
-
-
-
 toresult(node,children,::MatchRule{:start}) = BasisSet(children[1])
 
 fileString = read(filename, String)
@@ -560,7 +426,7 @@ end
 
 #NWChem
 
-function readNWChem(filename::AbstractString)
+function readBasisSetNWChem(filename::AbstractString)
 
 readBasisSetStringNWChem = Grammar("""
 start => (-(comments) & printline & bases & ?(end)) {"start"}
@@ -578,7 +444,7 @@ primitive => (-(space) & expon & -(space) & lin & -(space)) {"primitive"}
 QuantumNumber => ((opl)) {"convopl"}
 expon => (num) {"expon"}
 lin => (num) {"lin"}
-opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"}) {"opl"}
+opl => ('S' {"S"} |'D' {"D"} | 'F' {"F"} | 'P' {"P"} | 'G' {"G"} | 'H' | 'I' | 'J' | 'K') {"opl"}
 end => ('END' & r([^&]+)r) 
 
 
@@ -607,16 +473,12 @@ toresult(node,children,::MatchRule{:element}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convertedelement}) =  Element(node.value) 
 toresult(node,children,::MatchRule{:opl}) =  string(""", node.value, """)
 toresult(node,children,::MatchRule{:convopl}) = LQuantumNumber(children[1])
-toresult(node,children,::MatchRule{:bases})= dict(children)
+toresult(node,children,::MatchRule{:bases})= MergeDictionaries(children)
 toresult(node,children,::MatchRule{:base})= children[1]
-toresult(node,children,::MatchRule{:sets}) = DictElements(children)
+toresult(node,children,::MatchRule{:sets}) = CreateDictionariesOfElements(children)
 toresult(node,children,::MatchRule{:set}) = children
 toresult(node,children,::MatchRule{:primitives}) = [children] 
 toresult(node,children,::MatchRule{:primitive}) = BasisSetModule.PrimitiveGaussianBasisFunctionDefinition(children[1],children[2])
-#Dict(zip([children[1]],[BasisSetModule.ContractedGaussianBasisFunctionDefinition(children[2],children[3][1])]))
-
-
-
 toresult(node,children,::MatchRule{:start}) = BasisSet(children[1])
 
 fileString = read(filename, String)
