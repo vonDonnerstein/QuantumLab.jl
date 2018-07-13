@@ -1,3 +1,4 @@
+module MatrixModule
 function readMatrix(filename::String,dimensions::Tuple{Integer,Integer}=(0,0))
   floats = reinterpret(Float64,read(filename))
 
@@ -73,4 +74,5 @@ function writePixmap(filename::String,matrix::Matrix)
       write(fn,"\"$(join(asciiart[line,:]))\",\n")
     end
   end
+end
 end

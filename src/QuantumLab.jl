@@ -33,6 +33,11 @@ include("SubModules/BaseModule.jl")
 @reexport using .BaseModule
 println("Done.")
 
+print(" + MatrixModule................")
+include("SubModules/MatrixModule.jl")
+@reexport using .MatrixModule
+println("Done.")
+
 print(" + AtomModule..................")
 include("SubModules/AtomModule.jl")
 @reexport using .AtomModule
