@@ -4,7 +4,9 @@ using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisSetModule
 using ..GeometryModule
+using ..MatrixModule
 import Base.display
+import ..MatrixModule.computePattern
 
 abstract type AbstractShell end
 
@@ -130,4 +132,72 @@ end
 computes the number of basisfunctions (cartesian) described by the shell.
 """
 nbf(shell::Shell) = BaseModule.numberMQNsCartesian(shell.lqn)
+
+"""
+    computePattern(basis)
+returns the matrix blocking pattern for a given basis
+"""
+function computePattern(basis::Array{ShellModule.Shell,1})
+    nbf::Array{Int64,1}     = []
+    pattern::Array{Tuple{Int64,Int64},1} = []
+    sum::Int64							 = 0
+
+    [push!(nbf,ShellModule.nbf(basis[i])) for i in 1:length(basis)]
+    δ::Array{Int64,1} = [nbf[i+1]-nbf[i] for i in 1:length(nbf)-1]
+    δ = vcat(0,δ)
+    [if(δ[i]<0) δ[i] = 0. end for i in 1:length(nbf)]
+    for i = 1:length(basis)
+        sum += 1
+		push!(pattern,(sum,sum+nbf[i]-1))
+        sum = pattern[end][2]
+    end
+	
+    return Array{Tuple{Int64,Int64},1}(pattern)
+end
+
+"""
+    computeIncreasedBlockSizePattern(basis)
+returns the matrix blocking pattern with a minimum block size of 100x100
+"""
+#TODO: Atome nicht in der Mitte zerschneiden
+function computeIncreasedBlockSizePattern(basis::Array{ShellModule.Shell,1})
+	nbf::Array{Int64,1} = []
+	[push!(nbf,ShellModule.nbf(basis[i])) for i in 1:length(basis)]
+	sum1::Int64 = 0
+	sum2::Int64 = 0	 
+	pattern::Array{Tuple{Int64,Int64},} = []
+	
+	for i = 1:length(nbf)
+		sum2 += nbf[i]
+		if sum2 > 100
+			push!(pattern,(sum1+1,sum1+sum2))
+			sum1 += sum2
+			sum2 = 0
+		elseif i == length(nbf)
+			push!(pattern,(sum1+1,sum1+sum2))
+		end
+	end
+	
+	return pattern
+end
+
+"""
+    BCSRSpM(M,basis,Bool)
+returns a matrix M in BCSRSpM format with blocking pattern from basis, if Bool = true 100x100 blocks are used	
+"""
+function BCSRSpM(M::Array{Float64,2},basis::Array{ShellModule.Shell,1},b::Bool)
+	if b == true
+		p = computeIncreasedBlockSizePattern(basis::Array{ShellModule.Shell,1})
+		pattern::Array{Tuple{Int64,Int64},1} = []
+		for i = 1:length(p)
+			push!(pattern,(p[i][1],p[i][2]))
+		end
+		return BCSRSpM(M::Array{Float64,2},pattern,pattern)
+	else
+		return BCSRSpM(M::Array{Float64,2},computePattern(basis::Array{ShellModule.Shell,1}),computePattern(basis::Array{ShellModule.Shell,1}))
+	end
+end
+	
 end # module
+
+

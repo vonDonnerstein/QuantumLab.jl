@@ -108,6 +108,4 @@ include("SubModules/ResolutionIdentityModule.jl")
 @reexport using .ResolutionIdentityModule
 println("Done.")
 
-
-
 end # module
