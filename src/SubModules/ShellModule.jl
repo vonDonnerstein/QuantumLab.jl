@@ -1,12 +1,14 @@
 module ShellModule
-export AbstractShell, Shell, expandShell
+export AbstractShell, Shell, expandShell, SparseMatrixBCSR, SparseMatrixBCSRSymmetric
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisSetModule
 using ..GeometryModule
 using ..MatrixModule
 import Base.display
-import ..MatrixModule.computePattern
+import ..MatrixModule.computeBlockingPattern
+import ..MatrixModule.SparseMatrixBCSR
+import ..MatrixModule.SparseMatrixBCSRSymmetric
 
 abstract type AbstractShell end
 
@@ -134,21 +136,21 @@ computes the number of basisfunctions (cartesian) described by the shell.
 nbf(shell::Shell) = BaseModule.numberMQNsCartesian(shell.lqn)
 
 """
-    computePattern(basis)
-returns the matrix blocking pattern for a given basis
+    computeBlockingPattern(shells)
+returns the matrix blocking pattern for given shells, e.g. in case of p orbitals a block consists of [p.x,p.y,p.z]
 """
-function computePattern(basis::Array{ShellModule.Shell,1})
-    nbf::Array{Int64,1}     = []
+function computeBlockingPattern(shells::Array{Shell,1})
+    n::Array{Int64,1}     = []
     pattern::Array{Tuple{Int64,Int64},1} = []
     sum::Int64							 = 0
 
-    [push!(nbf,ShellModule.nbf(basis[i])) for i in 1:length(basis)]
-    δ::Array{Int64,1} = [nbf[i+1]-nbf[i] for i in 1:length(nbf)-1]
+    [push!(n,nbf(shells[i])) for i in 1:length(shells)]
+    δ::Array{Int64,1} = [n[i+1]-n[i] for i in 1:length(n)-1]
     δ = vcat(0,δ)
-    [if(δ[i]<0) δ[i] = 0. end for i in 1:length(nbf)]
-    for i = 1:length(basis)
+    [if(δ[i]<0) δ[i] = 0. end for i in 1:length(n)]
+    for i = 1:length(shells)
         sum += 1
-		push!(pattern,(sum,sum+nbf[i]-1))
+		push!(pattern,(sum,sum+n[i]-1))
         sum = pattern[end][2]
     end
 	
@@ -156,24 +158,24 @@ function computePattern(basis::Array{ShellModule.Shell,1})
 end
 
 """
-    computeIncreasedBlockSizePattern(basis)
+    computeIncreasedBlockSizePattern(shells)
 returns the matrix blocking pattern with a minimum block size of 100x100
 """
 #TODO: Atome nicht in der Mitte zerschneiden
-function computeIncreasedBlockSizePattern(basis::Array{ShellModule.Shell,1})
-	nbf::Array{Int64,1} = []
-	[push!(nbf,ShellModule.nbf(basis[i])) for i in 1:length(basis)]
+function computeIncreasedBlockSizePattern(shells::Array{Shell,1})
+	n::Array{Int64,1} = []
+	[push!(n,nbf(shells[i])) for i in 1:length(shells)]
 	sum1::Int64 = 0
 	sum2::Int64 = 0	 
 	pattern::Array{Tuple{Int64,Int64},} = []
 	
-	for i = 1:length(nbf)
-		sum2 += nbf[i]
+	for i = 1:length(n)
+		sum2 += n[i]
 		if sum2 > 100
 			push!(pattern,(sum1+1,sum1+sum2))
 			sum1 += sum2
 			sum2 = 0
-		elseif i == length(nbf)
+		elseif i == length(n)
 			push!(pattern,(sum1+1,sum1+sum2))
 		end
 	end
@@ -182,22 +184,28 @@ function computeIncreasedBlockSizePattern(basis::Array{ShellModule.Shell,1})
 end
 
 """
-    BCSRSpM(M,basis,Bool)
-returns a matrix M in BCSRSpM format with blocking pattern from basis, if Bool = true 100x100 blocks are used	
+    SparseMatrixBCSR(M,shells,Bool)
+returns a matrix M in SparseMatrixBCSR format with blocking pattern from shells, if Bool = true 100x100 blocks are used	
 """
-function BCSRSpM(M::Array{Float64,2},basis::Array{ShellModule.Shell,1},b::Bool)
+function SparseMatrixBCSR(M::Array{Float64,2},shells::Array{Shell,1},b::Bool)
 	if b == true
-		p = computeIncreasedBlockSizePattern(basis::Array{ShellModule.Shell,1})
+		p = computeIncreasedBlockSizePattern(shells::Array{Shell,1})
 		pattern::Array{Tuple{Int64,Int64},1} = []
 		for i = 1:length(p)
 			push!(pattern,(p[i][1],p[i][2]))
 		end
-		return BCSRSpM(M::Array{Float64,2},pattern,pattern)
+		return SparseMatrixBCSR(M::Array{Float64,2},pattern,pattern)
 	else
-		return BCSRSpM(M::Array{Float64,2},computePattern(basis::Array{ShellModule.Shell,1}),computePattern(basis::Array{ShellModule.Shell,1}))
+		return SparseMatrixBCSR(M::Array{Float64,2},computeBlockingPattern(shells::Array{Shell,1}),computeBlockingPattern(shells::Array{Shell,1}))
 	end
 end
 	
-end # module
+"""
+    SparseMatrixBCSRSymmetric(M,shells)
+returns a matrix M in SparseMatrixBCSRSymmetric format with blocking pattern from shells
+"""
+function SparseMatrixBCSRSymmetric(M::Array{Float64,2},shells::Array{ShellModule.Shell,1})                                                                              
+	SparseMatrixBCSRSymmetric(M::Array{Float64,2},computeBlockingPattern(shells::Array{ShellModule.Shell,1}))
+end
 
-
+end #end of module
