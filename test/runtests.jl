@@ -141,10 +141,16 @@ tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
 info("$(now())  SpecialMatricesModule")
 @test -0.785008186026 ≈ mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) atol=1e-10                  #### !!!! ####
 
-
-
-
-
+# test MatrixModule
+info("$(now())  TESTING:   MatrixModule")
+shells = computeBasisShells(BasisSet("STO-3G"),Geometry("amylose4.xyz"))
+S = computeMatrixOverlap(shells)
+SpM = SparseMatrixBCSR(S,shells,true)
+SpM2 = SparseMatrixBCSRSymmetric(S,shells)
+@test norm(S*S-convertSpMToMBCSR(purgeSparseMatrix!(SpM,1e-10)*SpM)) < 1e-10
+@test norm(SpM*rand(MersenneTwister(420),137) - S*rand(MersenneTwister(420),137)) < 1e-10
+@test norm(SpM*S-S*S) < 1e-10
+@test norm(convertSpMToMBCSR(SpM)-S) < 1e-10
 
 ### display functions ###
 # These are simply here, so that the test coverage isn't limited by the display functions.
