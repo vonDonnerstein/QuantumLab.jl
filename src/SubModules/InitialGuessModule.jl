@@ -3,9 +3,9 @@ export computeDensityGuessSAD, InitialGuess, ZeroGuess, SADGuess
 using ..AtomModule
 
 abstract type InitialGuess end
-type ZeroGuess_ <: InitialGuess end
+struct ZeroGuess_ <: InitialGuess end
 ZeroGuess = ZeroGuess_()
-type SADGuess_ <: InitialGuess end
+struct SADGuess_ <: InitialGuess end
 SADGuess = SADGuess_()
 
 function computeDensityMatrixGuess(mat::Matrix,dim::Int64)
@@ -19,7 +19,7 @@ function computeDensityMatrixGuess(::ZeroGuess_,dim::Int64)
   return zeros(dim,dim)
 end
 
-type DensityGuessSAD
+mutable struct DensityGuessSAD
   α
   β
 end
@@ -96,8 +96,8 @@ function computeDensityGuessSAD(methodName, basisSetName, geometry)
   if methodName=="HF" || methodName=="HartreeFock"
     αDensities = densityGuessSADHartreeFock.α[basisSetName]
     βDensities = densityGuessSADHartreeFock.β[basisSetName]
-    αResult = cat([1,2],[αDensities[atom.element] for atom in geometry.atoms]...)
-    βResult = cat([1,2],[βDensities[atom.element] for atom in geometry.atoms]...)
+    αResult = cat([αDensities[atom.element] for atom in geometry.atoms]...; dims=(1,2))
+    βResult = cat([βDensities[atom.element] for atom in geometry.atoms]...; dims=(1,2))
     return (αResult, βResult)
   else
     error("No SAD guess implemented for method "*methodName)

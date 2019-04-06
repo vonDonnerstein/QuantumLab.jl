@@ -1,7 +1,9 @@
 julia 0.6           # set manually to the most current release version. keep consistent with .travis.yml
+Libdl
 Reexport
 GSL
 ProgressMeter
 TensorOperations
-Requests
+HTTP
 ZipFile
+SpecialFunctions

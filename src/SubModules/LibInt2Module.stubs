@@ -17,7 +17,7 @@
     Shell(Position(center...),LQuantumNumber(lqn),exponents,coefficients;renorm=renorm)
   end
   # Engine
-  type LibInt2Engine
+  struct LibInt2Engine
     geo::Geometry
     LibInt2Engine() = new()
     LibInt2Engine(geo::Geometry) = new(geo)

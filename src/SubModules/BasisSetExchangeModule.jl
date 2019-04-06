@@ -5,10 +5,12 @@ human readable HTML output.
 module BasisSetExchangeModule
 
 export obtainBasisSetExchangeEntries, downloadBasisSetBasisSetExchange, computeBasisSetExchangeEntry, BasisSetExchangeEntry
-using Requests, ..BasisSetModule
+using HTTP
+using Printf
+using ..BasisSetModule
 import Base.display, ..BasisSetModule.BasisSet
 
-type BasisSetExchangeEntry
+mutable struct BasisSetExchangeEntry
   url::String
   name::String
   availtype::String
@@ -34,31 +36,34 @@ end
 
 function obtainBasisSetExchangeEntries()
   retval = Array{BasisSetExchangeEntry,1}()
-  main = get("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main")
-  for bsline in matchall(r"basisSets\[\d*\].*",Requests.text(main))
+  main = HTTP.request("GET","https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main")
+  for m in eachmatch(r"basisSets\[\d*\].*",String(main.body))
+    bsline = m.match
     regmatch = match(r"basisSet\(\"(?P<url>.*)\", \"(?P<name>.*)\", \"(?P<type>.*)\", \"\[(?P<elts>.*)\]\", \"(?P<status>.*)\", \"(?P<hasEcp>.*)\", \"(?P<hasSpin>.*)\", \"(?P<lastModifiedDate>.*)\", \"(?P<contributionPI>.*)\", \"(?P<contributorName>.*)\", \"(?P<bsAbstract>.*)\"\)",bsline)
-    eltsList = replace(regmatch[:elts],",","")
+    eltsList = replace(regmatch[:elts],","=>"")
     push!(retval,BasisSetExchangeEntry(regmatch[:url],regmatch[:name],regmatch[:type],eltsList,regmatch[:status],regmatch[:hasEcp],regmatch[:hasSpin],regmatch[:lastModifiedDate],regmatch[:contributionPI],regmatch[:contributorName],regmatch[:bsAbstract]))
   end
   return retval
 end
 
 function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename::AbstractString, format::AbstractString="TX93")
-  requestresponse = post("https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true";
-			data=Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "true"), allow_redirects=false)
-  sessioncookie = requestresponse.cookies["JSESSIONID"].value
-  finalresponse = post("https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11543880926284"; cookies = Dict("JSESSIONID" => sessioncookie))
-  basSetDef = replace(Requests.text(finalresponse),r".*<pre style.*>\n*(.*)</pre>.*"s,s"\1")
+  requestresponse = HTTP.request("POST","https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true",
+				 ["Content-Type" => "application/x-www-form-urlencoded"],
+				 HTTP.URIs.escapeuri(Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "true")),
+				 redirect=false)
+  sessioncookie = String(match(r"JSESSIONID=(.*?);",Dict(requestresponse.headers)["Set-Cookie"])[1])
+  finalresponse = HTTP.request("POST","https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11543880926284"; cookies = Dict("JSESSIONID" => sessioncookie))
+  basSetDef = replace(String(finalresponse.body),r".*<pre style.*>\n*(.*)</pre>.*"s => s"\1")
   outfd = open(filename, "w")
   write(outfd, basSetDef)
   close(outfd)
 end
 
 function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetExchangeEntry,1}; exactmatching::Bool=false)
-  result = Void
+  result = Nothing
   for entry in arr
-    if (!exactmatching && ismatch(Regex(name,"i"),entry.name) || name == entry.name)
-      if result == Void
+    if (!exactmatching && occursin(Regex(name,"i"),entry.name) || name == entry.name)
+      if result == Nothing
         result = entry
       elseif isa(result,BasisSetExchangeEntry)
         result = [result,entry]
@@ -67,7 +72,7 @@ function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetE
       end
     end
   end
-  if result==Void
+  if result==Nothing
     error("$name is not contained within the given BasisSetExchangeEntry list.")
   end
   return result

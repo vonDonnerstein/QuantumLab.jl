@@ -1,5 +1,6 @@
 module HartreeFockModule
 export computeEnergyHartreeFock, evaluateSCF, evaluateHartreeFock
+using LinearAlgebra
 using ..BaseModule
 using ..BasisModule
 using ..BasisSetModule
@@ -21,16 +22,16 @@ function computeEnergyHartreeFock(
 
   P = density
   info && println("=================================")
-  eT = 2*trace(kinetic*P)
+  eT = 2*tr(kinetic*P)
   info && println("Kinetic Energy: $eT")
-  eV = 2*trace(nuclearAttraction*P)
+  eV = 2*tr(nuclearAttraction*P)
   info && println("Nuclear Attraction Energy: $eV")
   info && println("Sum 1-Electron Energy: $(eT+eV)")
   info && println("---------------------------------")
   # G = 2J-K
-  eJ = 2*trace(coulomb*P)
+  eJ = 2*tr(coulomb*P)
   info && println("Coulomb Energy: $eJ")
-  eK = -trace(exchange*P)
+  eK = -tr(exchange*P)
   info && println("Exchange Energy: $eK")
   info && println("Total Electronic Energy: $(eT+eV+eJ+eK)")
   info && println("Total Energy: $(eT+eV+eJ+eK+interatomicRepulsion)")
@@ -74,10 +75,10 @@ function evaluateSCFStep(
   overlap::Matrix,
   electronNumber::Integer)
 
-  eig = eigfact(Symmetric(fock),Symmetric(overlap)) # because Symmetric is faster and allows for sorted eigenvalues
+  eig = eigen(Symmetric(fock),Symmetric(overlap)) # because Symmetric is faster and allows for sorted eigenvalues
   moEnergies = eig.values
   Cocc = eig.vectors[:,1:electronNumber]
-  P = Cocc * Cocc.'
+  P = Cocc * Cocc'
 
   return (moEnergies,P)
 end

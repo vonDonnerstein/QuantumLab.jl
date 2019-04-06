@@ -2,7 +2,7 @@ LIBINT_VERSION = "2.2.0-beta1"
 lib_path = joinpath(dirname(@__FILE__),"usr","lib")
 
 
-@static if is_linux() 
+@static if Sys.islinux() 
 	try begin 
 			run(`grep --ignore-case --silent 'avx' /proc/cpuinfo`)
 			SIMD = "avx"
@@ -21,7 +21,7 @@ lib_path = joinpath(dirname(@__FILE__),"usr","lib")
 	end
 end
 
-@static if is_apple()
+@static if Sys.isapple()
 	try begin
 			run(pipeline(`sysctl machdep.cpu.features`,`grep --ignore-case  --silent 'avx\|sse'`))
 			SIMD = "avx"

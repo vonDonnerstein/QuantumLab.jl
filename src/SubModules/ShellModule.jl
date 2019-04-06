@@ -1,5 +1,7 @@
 module ShellModule
 export AbstractShell, Shell, expandShell
+using Printf
+using LinearAlgebra
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisSetModule
@@ -20,7 +22,7 @@ In a shell, there is no discrimination between MQuantumNumbers. This allows for 
 
 [Fermann,Valeev: Fundamentals of Molecular Integrals Evaluation, Eq. 2.25]
 """
-type Shell <: AbstractShell
+struct Shell <: AbstractShell
   center::Position
   lqn::LQuantumNumber
   exponents::Vector{Float64}
@@ -71,26 +73,26 @@ end
 function renormNonAxial!(cgbfs::Vector{ContractedGaussianBasisFunction},shells::Vector{<:AbstractShell})
   naxfacs = computeFactorsNonAxial(shells)
   for (cgbf,fac) in zip(cgbfs,naxfacs)
-    scale!(cgbf.coefficients,fac)
+    cgbf.coefficients *= fac
   end
 end
 
-function renormNonAxial!(mat::Matrix{Float64},shells::Vector{<:AbstractShell})
+function renormNonAxial!(mat::AbstractMatrix{Float64},shells::Vector{<:AbstractShell})
   naxfacs = computeFactorsNonAxial(shells)
-  scale!(naxfacs,mat)
-  scale!(mat,naxfacs)
+  lmul!(Diagonal(naxfacs),mat)
+  rmul!(mat,Diagonal(naxfacs))
 end
 
-function renormNonAxial!(mat::Matrix{Float64},shells1::Vector{<:AbstractShell},shells2::Vector{<:AbstractShell})
+function renormNonAxial!(mat::AbstractMatrix{Float64},shells1::Vector{<:AbstractShell},shells2::Vector{<:AbstractShell})
   naxfacs1 = computeFactorsNonAxial(shells1)
-  scale!(naxfacs1,mat)
+  lmul!(Diagonal(naxfacs1),mat)
   naxfacs2 = computeFactorsNonAxial(shells2)
-  scale!(mat,naxfacs2)
+  rmul!(mat,Diagonal(naxfacs2))
 end
 
-function renormNonAxial!(tensor::Array{Float64,N},shells::Vararg{Vector{<:AbstractShell},N}) where {N}
+function renormNonAxial!(tensor::AbstractArray{Float64,N},shells::Vararg{Vector{<:AbstractShell},N}) where {N}
   naxfacs = computeFactorsNonAxial.(shells)
-  for idx in CartesianRange(size(tensor))
+  for idx in CartesianIndices(size(tensor))
     for dim in 1:length(shells)
       tensor[idx] *= naxfacs[dim][idx.I[dim]]
     end

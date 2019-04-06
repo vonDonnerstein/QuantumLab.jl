@@ -7,15 +7,22 @@ using ..GeometryModule
 using ..DocumentationModule
 using ..ShellModule
 using ProgressMeter
+using SpecialFunctions
+using LinearAlgebra
 
-import Base.normalize!
+import LinearAlgebra.normalize!
 
-ProgressMeter.printover(STDOUT," + (GSL........................")
+ProgressMeter.printover(stdout," + (GSL........................")
 using GSL
-ProgressMeter.printover(STDOUT," + IntegralsModule.............")
+ProgressMeter.printover(stdout," + IntegralsModule.............")
 
 
 
+@doc ["""
+I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
+""",
+GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev ") 
+]
 function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
   m = mqn
   ζ = exponent
@@ -26,10 +33,6 @@ function GaussianIntegral1D_Valeev(mqn::Int,exponent::Float64)
     return (doublefactorial(m-1)*sqrt(π)) / ((2ζ)^(m/2)*sqrt(ζ))
   end
 end
-@doc """
-I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Fundament. of Mol. Integr. Eval. by Fermann, Valeev)
-""" GaussianIntegral1D_Valeev
-@add_doc GenericCitation("Fundament. of Mol. Integr. Eval. by Fermann, Valeev") GaussianIntegral1D_Valeev
 
 """
 I_x = Integrate[x^m Exp[-ζ x^2], {x,-∞,∞}] (acc. to Mathematica 9)
@@ -80,7 +83,7 @@ function GaussProductFundamental(
   return (K,P,γ)
 end
 
-type PolynomialFactors
+mutable struct PolynomialFactors
   x::Array{Tuple{Float64,Int},1} # Float64*x^Int
   y::Array{Tuple{Float64,Int},1} # Float64*y^Int
   z::Array{Tuple{Float64,Int},1} # Float64*z^Int
@@ -349,7 +352,7 @@ function computeIntegralNuclearAttraction(
 end
 
 
-type θfactors
+struct θfactors
   x::Array{Tuple{Float64,Int,Int},1} # θ,l,r
   y::Array{Tuple{Float64,Int,Int},1} # θ,l,r
   z::Array{Tuple{Float64,Int,Int},1} # θ,l,r
@@ -375,7 +378,7 @@ function θFactors(
   return factors
 end
 
-type Bfactors
+struct Bfactors
   x::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
   y::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
   z::Array{Tuple{Float64,Int,Int,Int,Int,Int},1}    # B,l12,r12,i,l34,r34
@@ -469,7 +472,7 @@ end
 
 function normalize!(cgb::ContractedGaussianBasisFunction)
   N = computeIntegralOverlap(cgb,cgb)
-  scale!(cgb.coefficients,1/sqrt(N))
+  cgb.coefficients *= 1/sqrt(N)
 end
 
 end # module

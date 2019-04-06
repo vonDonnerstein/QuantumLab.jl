@@ -3,17 +3,17 @@ export BasisSet, readBasisSetTX93
 using ..BaseModule
 using ..AtomModule
 
-immutable PrimitiveGaussianBasisFunctionDefinition
+struct PrimitiveGaussianBasisFunctionDefinition
     exponent::Float64
     prefactor::Float64
 end
 
-immutable ContractedGaussianBasisFunctionDefinition
+struct ContractedGaussianBasisFunctionDefinition
     lQuantumNumber::LQuantumNumber
     primitives::Array{PrimitiveGaussianBasisFunctionDefinition,1}
 end
 
-immutable BasisSet
+struct BasisSet
     definitions::Dict{Element,Array{ContractedGaussianBasisFunctionDefinition,1}}
 end
 
@@ -28,10 +28,10 @@ function readBasisSetTX93(filename::AbstractString)
   fd = open(filename)
   for line in eachline(fd)
     # comments
-    if ismatch(r"^(!|\s*$)",line) continue end              # skip
+    if occursin(r"^(!|\s*$)",line) continue end              # skip
 
     # new element
-    if ismatch(r"^FOR",line)
+    if occursin(r"^FOR",line)
       if(contractedDefinition.primitives != [])                 #   and not the first
     append!(basSet.definitions[elem],[contractedDefinition])                    #   finish contractedDefinition
     contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])    #   start new contractedDefinition
@@ -51,8 +51,8 @@ function readBasisSetTX93(filename::AbstractString)
       contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])  #   start new contractedDefinition
       end
       # always (add primitive to current contracted)
-      exponent = float(regmatch[:exp])
-      linfactor = float(regmatch[:lin])
+      exponent = parse(Float64,regmatch[:exp])
+      linfactor = parse(Float64,regmatch[:lin])
       append!(contractedDefinition.primitives,[PrimitiveGaussianBasisFunctionDefinition(exponent,linfactor)])
     end
   end

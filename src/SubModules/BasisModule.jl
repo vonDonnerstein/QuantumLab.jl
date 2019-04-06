@@ -8,6 +8,7 @@ using ..GeometryModule
 using ..AtomModule
 using ..IntegralsModule
 using ..ShellModule
+using LinearAlgebra
 
 import Base.display
 import Base.convert
@@ -18,7 +19,7 @@ abstract type Basis end
 A GaussianBasis is a Basis constructed purely from Gaussian type functions (see PrimitiveGaussianBasisFunction).
 The list of basis functions defines the basis. It is most easily constructed from a BasisSet and a Geometry by computeBasis().
 """
-immutable GaussianBasis <: Basis	# doesn't change much to the user as contractedBFs is mutable anyways
+struct GaussianBasis <: Basis	# doesn't change much to the user as contractedBFs is mutable anyways
   contractedBFs::Vector{ContractedGaussianBasisFunction}
 end
 

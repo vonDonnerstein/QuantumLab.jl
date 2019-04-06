@@ -1,5 +1,5 @@
 module LibInt2Module
-
+using Libdl
 
   """
   The maximal LQuantumNumber to which libint2 has been compiled. Compare :/deps/usr/src/Makefile: MAX_AM.
@@ -24,6 +24,24 @@ import ..ShellModule.computeFactorsNonAxial
 import ...QuantumLab.libint2_available
 
 if (libint2_available) # the normal case
+
+  import ...QuantumLab.lib_path
+  libint2jl = Ptr{Nothing}(0)
+  function __init__()
+    push!(Libdl.DL_LOAD_PATH,lib_path)
+    try
+      Libdl.dlopen("libint2-QuantumLab.so")
+      global libint2jl = Libdl.dlopen("libint2jl.so")
+      LibInt2Module.libInt2Initialize()
+    catch e
+      @warn "QuantumLab was compiled with libint2_QuantumLab.so. Maybe it has disappeared?"
+      error(e)
+    end
+  end
+
+  
+  
+  
   import Base.convert
   import Base.display
   import ..ShellModule.nbf
@@ -64,7 +82,7 @@ if (libint2_available) # the normal case
       Consider recompiling to higher MAX_AM, or use `Shell`s instead of `LibInt2Shell`s.")
     end
     if renorm==true
-      return reinterpret(LibInt2Shell,ccall((:_Z11createShellPdiiS_S_,"libint2jl.so"),Ptr{Void},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
+      return reinterpret(LibInt2Shell,ccall(dlsym(libint2jl,:_Z11createShellPdiiS_S_),Ptr{Nothing},(Ptr{Float64},Int,Int,Ptr{Float64},Ptr{Float64}),origin,lqn,nprim,exponents,coefficients))
     else
       return convert(LibInt2Shell,Shell(Position(origin...),LQuantumNumber(lqn),exponents,coefficients;renorm=false))
     end
@@ -88,12 +106,12 @@ if (libint2_available) # the normal case
 
   #  Destructor
   function destroy!(shell::LibInt2Shell)
-    ccall((:_Z12destroyShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),shell)
+    ccall(dlsym(libint2jl,:_Z12destroyShellPN7libint25ShellE),Nothing,(LibInt2Shell,),shell)
   end
 
   #  Further Functions
   function display(sh::LibInt2Shell)
-    ccall((:_Z10printShellPN7libint25ShellE,"libint2jl.so"),Void,(LibInt2Shell,),sh)
+    ccall(dlsym(libint2jl,:_Z10printShellPN7libint25ShellE),Nothing,(LibInt2Shell,),sh)
   end
 
   function lqn(l2sh::LibInt2Shell)
@@ -182,39 +200,39 @@ if (libint2_available) # the normal case
 
   #  Constructors
   function LibInt2EngineCoulomb(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-    reinterpret(LibInt2Engine,ccall((:_Z19createEngineCoulombii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+    reinterpret(LibInt2Engine,ccall(dlsym(libint2jl,:_Z19createEngineCoulombii),Ptr{Nothing},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
   function LibInt2EngineKinetic(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-    reinterpret(LibInt2Engine,ccall((:_Z19createEngineKineticii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+    reinterpret(LibInt2Engine,ccall(dlsym(libint2jl,:_Z19createEngineKineticii),Ptr{Nothing},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
   function LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,atom::Atom)
     l2atoms = [(atom.element.atomicNumber,atom.position.x,atom.position.y,atom.position.z)]
-    reinterpret(LibInt2Engine,ccall((:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi,"libint2jl.so"),Ptr{Void},(Cint,Cint,Ptr{Void},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
+    reinterpret(LibInt2Engine,ccall(dlsym(libint2jl,:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi),Ptr{Nothing},(Cint,Cint,Ptr{Nothing},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
   end
   function LibInt2EngineNuclearAttraction(maxNumberPrimitives::Int,maxLQN::LQuantumNumber,geo::Geometry)
     l2atoms = Vector{Tuple{Int,Float64,Float64,Float64}}()
     for atom in geo.atoms
       push!(l2atoms,Tuple{Int,Float64,Float64,Float64}((atom.element.atomicNumber,atom.position.x,atom.position.y,atom.position.z)))
     end
-    reinterpret(LibInt2Engine,ccall((:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi,"libint2jl.so"),Ptr{Void},(Cint,Cint,Ptr{Void},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
+    reinterpret(LibInt2Engine,ccall(dlsym(libint2jl,:_Z29createEngineNuclearAttractioniiPN7libint24AtomEi),Ptr{Nothing},(Cint,Cint,Ptr{Nothing},Cint),maxNumberPrimitives,maxLQN.exponent,l2atoms,length(l2atoms)))
   end
   function LibInt2EngineOverlap(maxNumberPrimitives::Int,maxLQN::LQuantumNumber)
-    reinterpret(LibInt2Engine,ccall((:_Z19createEngineOverlapii,"libint2jl.so"),Ptr{Void},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
+    reinterpret(LibInt2Engine,ccall(dlsym(libint2jl,:_Z19createEngineOverlapii),Ptr{Nothing},(Cint,Cint),maxNumberPrimitives,maxLQN.exponent))
   end
 
   #  Destructor
   function destroy!(engine::LibInt2Engine)
-    ccall((:_Z13destroyEnginePN7libint26EngineE,"libint2jl.so"),Void,(LibInt2Engine,),engine)
+    ccall(dlsym(libint2jl,:_Z13destroyEnginePN7libint26EngineE),Nothing,(LibInt2Engine,),engine)
   end
 
 
   ## library functionality
   function libInt2Initialize()
-    ccall((:_Z12libint2startv,"libint2jl.so"),Void,())
+    ccall(dlsym(libint2jl,:_Z12libint2startv),Nothing,())
   end
 
   function libInt2Finalize()
-    ccall((:_Z11libint2stopv,"libint2jl.so"),Void,())
+    ccall(dlsym(libint2jl,:_Z11libint2stopv),Nothing,())
   end
 
   function computeFactorsNonAxial(shells::Vector{LibInt2Shell})
@@ -229,8 +247,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function IntegralsModule.computeMatrixBlockOverlap(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
+    buf = ccall(dlsym(libint2jl,:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ)))' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -249,8 +267,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeMatrixBlockKinetic(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
+    buf = ccall(dlsym(libint2jl,:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ)))' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -269,8 +287,8 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeMatrixBlockNuclearAttraction(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell)
-    buf = ccall((:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
-    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ))).' # the inner loop within LibInt2 is over the second shell
+    buf = ccall(dlsym(libint2jl,:_Z13compute2cIntsPN7libint26EngineEPNS_5ShellES3_),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell), engine, μ,ν)
+    block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)),(nbf(ν),nbf(μ)))' # the inner loop within LibInt2 is over the second shell
     ShellModule.renormNonAxial!(block,[μ],[ν])
     return block
   end
@@ -299,7 +317,7 @@ if (libint2_available) # the normal case
   If a LibInt2Engine is specified, it is used without assertion if it is of the correct type.
   """
   function computeTensorBlockElectronRepulsionIntegrals(engine::LibInt2Engine, μ::LibInt2Shell, ν::LibInt2Shell, λ::LibInt2Shell, σ::LibInt2Shell)
-    buf = ccall((:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_,"libint2jl.so"),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
+    buf = ccall(dlsym(libint2jl,:_Z13compute4cIntsPN7libint26EngineEPNS_5ShellES3_S3_S3_),Ptr{Cdouble},(LibInt2Engine,LibInt2Shell,LibInt2Shell,LibInt2Shell,LibInt2Shell), engine, σ,λ,ν,μ)
     block = reshape(unsafe_wrap(Array,buf,nbf(μ)*nbf(ν)*nbf(λ)*nbf(σ)),(nbf(μ),nbf(ν),nbf(λ),nbf(σ))) # Apparently for ERIs the order is correct already (in contrast to the matrix functions
     ShellModule.renormNonAxial!(block,[μ],[ν],[λ],[σ])
     return block
@@ -345,4 +363,3 @@ end # Module
 
 
 
-LibInt2Module.libInt2Initialize()

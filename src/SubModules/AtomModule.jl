@@ -125,7 +125,7 @@ atomicNumbers = Dict{String,Int}(
   "Uuo" =>	118
 )
 
-immutable Element
+struct Element
 	symbol::String
 	atomicNumber::Int
 
@@ -138,7 +138,7 @@ end
 import Base.hash
 hash(el::Element) = hash(el.symbol,hash(el.atomicNumber))
 
-type Atom
+mutable struct Atom
 	element::Element
 	position::Position
 end

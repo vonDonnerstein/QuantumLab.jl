@@ -1,8 +1,8 @@
 module BaseModule
-export Position, Ionization, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial, 𝐈, evaluateFunction, trlog
+export Position, Ionization, LQuantumNumber, MQuantumNumber, MQuantumNumbers, distance, origin, floatregex, @T_str, doublefactorial, evaluateFunction, trlog
 import Base.*, Base.+, Base./, Base.-, Base.isless, Base.convert
 
-immutable Position
+struct Position
 	x::Float64
 	y::Float64
 	z::Float64
@@ -35,7 +35,7 @@ function distance(p::Position,q::Position)
   return sqrt((pq.x)^2+(pq.y)^2+(pq.z)^2)
 end
 
-immutable Ionization
+struct Ionization
   charge::Int64
 end
 
@@ -43,7 +43,7 @@ end
 MQuantumNumber describes a single orientation of an atomic orbital in cartesian space by denoting the exponent of x, y and z of the radial part
 E.g.:   a d_xy orbital can be described by MQuantumNumber(1,1,0)
 """
-immutable MQuantumNumber
+struct MQuantumNumber
   x::Int
   y::Int
   z::Int
@@ -77,7 +77,7 @@ The LQuantumNumber desribes whether a function is spherical (s, lqn=0), polarize
 As is generally known the total MQuantumNumber in pure coordinates lies between -lqn and +lqn.
 This means that the sum of the three cartesian components can at most b. LQuantumNumber.
 """
-immutable LQuantumNumber
+struct LQuantumNumber
 	symbol::String
 	exponent::Int
 
@@ -104,32 +104,22 @@ function numberMQNsPure(lqn::LQuantumNumber)
 end
 
 """
-MQuantumNumber**s** returns all MQuantumNumber objects corresponding to the LQuantumNumber object given to the constructor as an iterable collection.
+MQuantumNumber**s** returns the array of all MQuantumNumber objects corresponding to the LQuantumNumber.
 Order is for example xx,xy,xz,yy,yz,zz for LQuantumNumber = 2
 """
-immutable MQuantumNumbers
-  lqn::LQuantumNumber
-  mqnarray::Array{MQuantumNumber,1}
-  count::Int
-
-  function MQuantumNumbers(lqn::LQuantumNumber)
-    maxmqn = lqn.exponent
-    mqnarray=MQuantumNumber[]
-		for x in maxmqn:-1:0
-			for y in (maxmqn-x):-1:0
-				z = maxmqn-x-y
-				append!(mqnarray,[MQuantumNumber(x,y,z)])
-			end
-		end
-		count = ((maxmqn+1)^2+(maxmqn+1))/2
-		new(lqn,mqnarray,count)
-	end
+function MQuantumNumbers(lqn::LQuantumNumber)
+  maxmqn = lqn.exponent
+  mqnarray=Vector{MQuantumNumber}(undef,((maxmqn+1)^2+(maxmqn+1))÷2)
+  i = 0
+  for x in maxmqn:-1:0
+    for y in (maxmqn-x):-1:0
+      i += 1
+      z = maxmqn-x-y
+      mqnarray[i] = MQuantumNumber(x,y,z)
+    end
+  end
+  return mqnarray
 end
-Base.start(mqns::MQuantumNumbers) = 1
-Base.next(mqns::MQuantumNumbers,state) = (mqns.mqnarray[state],state+1)
-Base.done(mqns::MQuantumNumbers,state) = state > mqns.count
-Base.length(mqns::MQuantumNumbers) = mqns.count
-#Base.eltype(::Type{MQuantumNumbers}) = Int
 
 isless(lqn1::LQuantumNumber, lqn2::LQuantumNumber) = lqn1.exponent<lqn2.exponent
 
@@ -138,15 +128,6 @@ function evaluateFunction(x::Position, f::Function)
 end
 
 doublefactorial(n::Int) = prod(n:-2:1)
-
-type 𝐈type
-  scalar::Float64
-end
-const 𝐈 = 𝐈type(1.)
-+(𝐈t::𝐈type,m::Matrix) = 𝐈t.scalar*eye(m) + m
-+(m::Matrix,𝐈t::𝐈type) = 𝐈t.scalar*eye(m) + m
-*(𝐈t::𝐈type,scalar::Real) = 𝐈type(𝐈t.scalar*scalar)
-*(scalar::Real,𝐈t::𝐈type) = 𝐈type(𝐈t.scalar*scalar)
 
 """
     trLog(m::Matrix)

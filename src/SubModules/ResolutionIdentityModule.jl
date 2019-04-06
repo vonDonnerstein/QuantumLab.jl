@@ -1,6 +1,7 @@
 module ResolutionIdentityModule
 export computeTensorElectronRepulsionIntegralsRICoulomb, computeTensorElectronRepulsionIntegralsRIOverlap, computeMatrixExchangeRIK, computeMatrixResolutionOfTheIdentityCoulombMetric, computeMatricesResolutionOfTheIdentityOverlapMetric
 using TensorOperations
+using LinearAlgebra
 using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisModule
@@ -45,7 +46,7 @@ function computeMatrixResolutionOfTheIdentityCoulombMetric(
   N = length(basis.contractedBFs)
   Naux = length(basis_aux.contractedBFs)
   Bpart = reshape(Bpart,(N*N,Naux))
-  return reshape( Bpart*sqrtm(inv(C)) , (N,N,Naux) )
+  return reshape( Bpart*sqrt(inv(C)) , (N,N,Naux) )
 end
 
 computeMatrixResolutionOfTheIdentity = computeMatrixResolutionOfTheIdentityCoulombMetric
@@ -61,7 +62,7 @@ function computeTensorElectronRepulsionIntegralsRIOverlap(basis::GaussianBasis, 
   N = length(basis.contractedBFs)
   Naux = length(basis_aux.contractedBFs)
   B = reshape(B,(N*N,Naux))
-  ERIs = B * Ci * D * Ci * B.'
+  ERIs = B * Ci * D * Ci * B'
   return reshape(ERIs,(N,N,N,N))
 end
 

@@ -13,6 +13,7 @@ export LaplacePoints, downloadLaplacePointsHackbusch, findLaplacePointsHackbusch
 using ..DocumentationModule
 using ..BaseModule
 using ZipFile
+using Printf
 import Base.display
 import Base.==
 
@@ -21,13 +22,13 @@ LaplacePoints contain the collection of weights and corresponding nodes for the 
 according to
 1/x = ∫ exp(-xt) ≈ ∑ₜweight[t] * exp(-x node[t])
 """
-type LaplacePoints
+struct LaplacePoints
   weights::Array{Float64,1}
   nodes::Array{Float64,1}
 end
 
 function display(lp::LaplacePoints)
-  assert(length(lp.weights) == length(lp.nodes))
+  @assert length(lp.weights) == length(lp.nodes)
   println("  Exponential Factor         Weight")
   println("  ------------------         ------")
   for (node,weight) in zip(lp.nodes,lp.weights)
@@ -42,7 +43,7 @@ in Hackbusch nomenclature. These files are contained in the zip-file obtained vi
 function computeFilenameHackbusch(numberOfPoints::Integer,R::Real)
   k = numberOfPoints
   kstr = @sprintf("k%02d",k)
-  Rstr = replace(replace(@sprintf(".%.0E",R),r"\+0*(\d+)",s"\1"),r"(\d+)E(\d+)",s"\1_\2")
+  Rstr = replace(replace(@sprintf(".%.0E",R),r"\+0*(\d+)"=>s"\1"),r"(\d+)E(\d+)"=>s"\1_\2")
   filename = "1_x$kstr$Rstr"
   return filename
 end
@@ -52,8 +53,8 @@ Extract the number of points (k) and the range (1,R) from the filename generated
 """
 function computeFilenameHackbuschReverse(filename::AbstractString)
   m = match(r"1_xk(\d+).(\d+)_(\d+)",filename)
-  k = parse(m.captures[1])
-  R = parse("$(m.captures[2])E$(m.captures[3])")
+  k = parse(Int64,m.captures[1])
+  R = parse(Float64,"$(m.captures[2])E$(m.captures[3])")
   return (k,R)
 end
 
@@ -79,15 +80,17 @@ function readLaplacePointsHackbusch(numberOfPoints::Integer,R::Real,zipfile::Abs
   end
 
   result = LaplacePoints(Array{Float64,1}(),Array{Float64,1}())
+  lines = readlines(file)
   for line in 1:k
-    regmatch = match(Regex(" *(?P<weight>$floatregex) .*omega.*"),readline(file))
-    push!(result.weights,float(regmatch[:weight]))
+    regmatch = match(Regex(" *(?P<weight>$floatregex) .*omega.*"),lines[line])
+    push!(result.weights,parse(Float64,regmatch[:weight]))
   end
   for line in k+1:2k
-    regmatch = match(Regex(" *(?P<node>$floatregex) .*alpha.*"),readline(file))
-    push!(result.nodes,float(regmatch[:node]))
+    regmatch = match(Regex(" *(?P<node>$floatregex) .*alpha.*"),lines[line])
+    push!(result.nodes,parse(Float64,regmatch[:node]))
   end
   close(file)
+  close(dir)
   return result
 end
 
@@ -102,7 +105,7 @@ function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Flo
   Rtight = Inf
   Rmax = 0
   for f in dir.files
-    if ismatch(r"1_xk(\d+).(\d+)_(\d+)",f.name)
+    if occursin(r"1_xk(\d+).(\d+)_(\d+)",f.name)
       k,range = computeFilenameHackbuschReverse(f.name)
       if k == numberOfPoints
 	Rmax = (Rmax > range) ? Rmax : range;
@@ -115,7 +118,7 @@ function findLaplacePointsHackbuschPretableLarger(numberOfPoints::Integer,R::Flo
     return (readLaplacePointsHackbusch(numberOfPoints,Rtight,zipfile),Rtight)
   else
     # Expect R > Rₖ, so just return largest available table for the given number of points
-    warn("numberOfPoints not sufficiently large ?!")
+    @warn "numberOfPoints not sufficiently large ?!"
     return (readLaplacePointsHackbusch(numberOfPoints,Rmax,zipfile),Rmax)
   end
 end
@@ -128,7 +131,7 @@ function findLaplacePointsHackbuschPretableSmaller(numberOfPoints::Integer,R::Fl
   dir = ZipFile.Reader(zipfile)
   Rtight = 0.
   for f in dir.files
-    if ismatch(r"1_xk(\d+).(\d+)_(\d+)",f.name)
+    if occursin(r"1_xk(\d+).(\d+)_(\d+)",f.name)
       k,range = computeFilenameHackbuschReverse(f.name)
       if k == numberOfPoints
 	Rtight = (Rtight < range <= R) ? range : Rtight;
