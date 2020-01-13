@@ -2,13 +2,15 @@ language: julia
 os:
   - linux
   - osx
+  - windows
+julia:
+  - 1           # automatically the latest version to this major
+  - 1.0         # set manually to the version given in REQUIRE
+  - nightly
 sudo: required
+codecov: true
 git:
   depth: 3 
-julia:
-  - 1 # automatically the latest version to this major
-  - nightly
-  - 1.0 # set manually to the version given in REQUIRE
 matrix:
   allow_failures:
     - julia: nightly
@@ -16,8 +18,3 @@ notifications:
   email: false
   webhooks: https://www.travisbuddy.com
   on_success: never
-after_success:
-  - julia -e 'cd(Pkg.dir("QuantumLab")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder())'
-# uncomment the following lines to override the default test script
-#script:
-#  - julia --check-bounds=yes -e 'Pkg.clone(pwd(),"QuantumLab"); Pkg.build("QuantumLab"); Pkg.test("QuantumLab"; coverage=true)'
