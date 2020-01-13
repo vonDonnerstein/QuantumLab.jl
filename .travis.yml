@@ -6,9 +6,9 @@ sudo: required
 git:
   depth: 3 
 julia:
-  - release
+  - 1 # automatically the latest version to this major
   - nightly
-  - 0.6 # set manually to the version given in REQUIRE
+  - 1.0 # set manually to the version given in REQUIRE
 matrix:
   allow_failures:
     - julia: nightly
