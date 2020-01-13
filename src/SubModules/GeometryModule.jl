@@ -93,10 +93,16 @@ function computeMatrixInertiaTensor(geo)
   return [Ixx Ixy Ixz; Iyx Iyy Iyz; Izx Izy Izz]
 end
 
-function computeRotationalConstants(geo)
+function computeRotationalConstants(geo;unit=:MHz)
   I = computeMatrixInertiaTensor(geo) * 1822.89 # amu Bohr^2 * mₑ/amu (kg/mol==amu)
   B = 1 ./ (2*eigvals(I)) # 1/(mₑ Bohr^2)  (* 1 Hartree*s)^2  => Hartree^2/Hartree => Hartree
-  return B*2.1947e5 # Hartree -> cm-1
+  if unit==:hartree
+    return B
+  elseif unit==:cm1
+    return B*2.1947e5 # Hartree -> cm-1
+  elseif unit==:MHz
+    return B*2.1947e5*2.99792458e4 # Hartree -> cm-1 -> MHz
+  end
 end
 
 end #module

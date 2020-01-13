@@ -53,7 +53,7 @@ mqns = collect(MQuantumNumbers(LQuantumNumber("D")))
 @test h2o.atoms[2].element.symbol == "O"
 @test -1.4191843 ≈ readGeometryXYZ("h2o.xyz").atoms[3].position.x atol=1e-7
 # test GeometryModule
-@test [27.79661429800908, 14.82574643642686, 9.668764194951947] ≈ computeRotationalConstants(readGeometryXYZ("h2o.xyz")) # reasonable acc. to NIST: 27.87700,14.51200, 9.28500 cm-1 (but experimental geo is slightly different
+@test [27.79661429800908, 14.82574643642686, 9.668764194951947] ≈ computeRotationalConstants(readGeometryXYZ("h2o.xyz"),unit=:cm1) # reasonable acc. to NIST: 27.87700,14.51200, 9.28500 cm-1 (but experimental geo is slightly different
 # test readBasisSetTX93
 @test sto3g.definitions[Element("C")][1].lQuantumNumber.symbol == "S"
 @test sto3g.definitions[Element("C")][1].primitives[1].exponent == 71.616837
