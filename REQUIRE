@@ -1,8 +1,0 @@
-julia 1.1           # set manually to the most current release version. keep consistent with .travis.yml
-Reexport
-GSL
-ProgressMeter
-TensorOperations
-HTTP
-ZipFile
-SpecialFunctions
