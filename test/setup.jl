@@ -12,19 +12,8 @@ end
 INFO("$(indent)READING:   h2o.xyz -> h2o::Geometry ")
 h2o = readGeometryXYZ("h2o.xyz")
 
-# test BasisSetExchange
-# as this takes quite some time we primarily only want to do this during continuous integration (travis-ci) and when we haven-t checked this before
-if (!isfile("STO-3G.tx93"))
-  INFO("$(indent)OBTAINING:   STO-3G.tx93")
-  bseEntries = obtainBasisSetExchangeEntries()
-  display(bseEntries)
-  stoEntry   = computeBasisSetExchangeEntry("sto-3g",bseEntries)[3]
-  downloadBasisSetBasisSetExchange(stoEntry,"STO-3G.tx93")
-  @test_throws ErrorException computeBasisSetExchangeEntry("NotDefined",bseEntries)
-end
-
-INFO("$(indent)READING:   STO-3G.tx93 -> sto3g::BasisSet")
-sto3g = readBasisSetTX93("STO-3G.tx93")
+INFO("$(indent)OBTAINING:   BasisSetExchange -> sto3g::BasisSet")
+sto3g = BasisSet("sto-3g")
 
 INFO("$(indent)COMPUTING:   sto3g,h2o -> bas")
 bas = computeBasis(sto3g,h2o)

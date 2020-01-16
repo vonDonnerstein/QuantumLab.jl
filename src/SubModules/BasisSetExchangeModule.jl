@@ -3,13 +3,13 @@ Although the BSE exposes a special SOAP-based API for programmatic access to its
 human readable HTML output.
 """
 module BasisSetExchangeModule
+using ..BasisSetModule
 
-export obtainBasisSetExchangeEntries, downloadBasisSetBasisSetExchange, computeBasisSetExchangeEntry, BasisSetExchangeEntry
+export downloadBasisSetExchange, computeBasisSetsAvailable
+import ..BasisSetModule.BasisSet
 using HTTP
 using Printf
 using ZipFile
-using ..BasisSetModule
-import Base.display, ..BasisSetModule.BasisSet
 
 bseZip    = homedir()*"/pqs.zip"
 bseFormat = "pqs"
@@ -54,7 +54,9 @@ function computeBasisSetExchangeEntry(name::AbstractString; bseZip=bseZip)
       end
     end
   end
-  if length(result)>1
+  if length(result) == 0
+    error("No matching basis set entry found (searching for $name in $bseZip)")
+  elseif length(result)>1
     display(result)
     error("More than one matching entry found.")
   end
@@ -80,13 +82,16 @@ function BasisSet(name::AbstractString; bseZip=bseZip)
     end
   end
 
-  @info("BasisSet file $name not found. Obtaining from BasisSetExchange...")
+  @info("BasisSet file $name not found on disk. Obtaining from BasisSetExchange...")
   if !isfile(bseZip)
     downloadBasisSetExchange(bseZip=bseZip)
   end
   location   = computeBasisSetExchangeEntry(name)
-  str        = read(ZipFile.Reader(bseZip)[location], String)
-  return BasisSetTX93(str)
+  str = ""
+  open(bseZip) do bse # trying to get around ZipFile Issue #14
+    str      = read(ZipFile.Reader(bse)[location], String)
+  end
+  return BasisSetModule.BasisSetTX93(str)
 end
 
 end # module

@@ -4,6 +4,8 @@ export BasisSet, readBasisSetTX93
 using ..BaseModule
 using ..AtomModule
 import Base.show
+import Base.==
+import Base.≈
 using Printf
 
 struct PrimitiveGaussianBasisFunctionDefinition
@@ -11,6 +13,8 @@ struct PrimitiveGaussianBasisFunctionDefinition
     prefactor::Float64
 end
 show(io::IO,pgbf::PrimitiveGaussianBasisFunctionDefinition) = print(io,@sprintf("lin:%9.5f exp:%12.5f",pgbf.prefactor, pgbf.exponent))
+≈(pgbfdef1::PrimitiveGaussianBasisFunctionDefinition,pgbfdef2::PrimitiveGaussianBasisFunctionDefinition;kwargs...) = (≈(pgbfdef1.exponent,pgbfdef2.exponent;kwargs...) && ≈(pgbfdef1.prefactor,pgbfdef2.prefactor;kwargs...))
+≈(vec1::Vector{PrimitiveGaussianBasisFunctionDefinition},vec2::Vector{PrimitiveGaussianBasisFunctionDefinition};kwargs...) = all(.≈(vec1,vec2;kwargs...))
 
 struct ContractedGaussianBasisFunctionDefinition
     lQuantumNumber::LQuantumNumber
@@ -29,6 +33,10 @@ function show(io::IO,vec::Vector{ContractedGaussianBasisFunctionDefinition})
     show(io,cgbf)
   end
 end
+==(cgbfdef1::ContractedGaussianBasisFunctionDefinition,cgbfdef2::ContractedGaussianBasisFunctionDefinition) = (cgbfdef1.lQuantumNumber==cgbfdef2.lQuantumNumber && cgbfdef1.primitives == cgbfdef2.primitives)
+==(vec1::Vector{ContractedGaussianBasisFunctionDefinition},vec2::Vector{ContractedGaussianBasisFunctionDefinition}) = all(vec1 .== vec2)
+≈(cgbfdef1::ContractedGaussianBasisFunctionDefinition,cgbfdef2::ContractedGaussianBasisFunctionDefinition;kwargs...) = (cgbfdef1.lQuantumNumber==cgbfdef2.lQuantumNumber && all(.≈(cgbfdef1.primitives, cgbfdef2.primitives; kwargs...)))
+≈(vec1::Vector{ContractedGaussianBasisFunctionDefinition},vec2::Vector{ContractedGaussianBasisFunctionDefinition};kwargs...) = all(.≈(vec1, vec2;kwargs...))
 
 struct BasisSet
     definitions::Dict{Element,Array{ContractedGaussianBasisFunctionDefinition,1}}
@@ -39,6 +47,7 @@ function show(io::IO,basset::BasisSet)
     show(val)
   end
 end
+≈(bassset1::BasisSet,basset2::BasisSet;kwargs...) = keys(basset1.definitions)==keys(basset2.definitions) && all(≈(basset1.defintions[el],basset2.definitons[el];kwargs...) for el in keys(basset1.definitions))
 
 tx93 = Grammar("""
 	       start   => (basset & -(*(comment))) {liftchild}

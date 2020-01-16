@@ -56,7 +56,7 @@ mqns = collect(MQuantumNumbers(LQuantumNumber("D")))
 @test [27.79661429800908, 14.82574643642686, 9.668764194951947] ≈ computeRotationalConstants(readGeometryXYZ("h2o.xyz"),unit=:cm1) # reasonable acc. to NIST: 27.87700,14.51200, 9.28500 cm-1 (but experimental geo is slightly different
 # test readBasisSetTX93
 @test sto3g.definitions[Element("C")][1].lQuantumNumber.symbol == "S"
-@test sto3g.definitions[Element("C")][1].primitives[1].exponent == 71.616837
+@test sto3g.definitions[Element("C")][1].primitives[1].exponent ≈ 71.616837
 # test BasisModule
 @test -0.7332137 ≈ bas.contractedBFs[3].primitiveBFs[1].center.y atol=1e-7
 @test 0.35175381 ≈ BasisFunctionsModule.evaluateFunction(origin, bas.contractedBFs[3]) atol=1e-8
@@ -135,17 +135,17 @@ println("Expecting warning below:")
 
 # test RI-Module
 INFO("TESTING:   RIModule")
-@test 0.3950752513027109 ≈ mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1]))
+@test 0.3950752513027109 ≈ mean(computeMatrixExchangeRIK(bas,bas,matrixSADguess[1])) atol=1e-8
 tensorRICoulomb = computeTensorElectronRepulsionIntegralsRICoulomb(bas,bas)
-@test 0.0429373705056905 ≈ mean(tensorRICoulomb)
-@test 0.0012436634924295 ≈ tensorRICoulomb[1,3,4,5]
+@test 0.0429373705056905 ≈ mean(tensorRICoulomb) atol=1e-8
+@test 0.0012436634924295 ≈ tensorRICoulomb[1,3,4,5] atol=1e-9
 tensorRIOverlap = computeTensorElectronRepulsionIntegralsRIOverlap(bas,bas)
-@test 0.0144597945326691 ≈ tensorRIOverlap[1,3,4,5]
-@test 0.0537036598506078 ≈ mean(tensorRIOverlap)
+@test 0.0144597945326691 ≈ tensorRIOverlap[1,3,4,5] atol=1e-9
+@test 0.0537036598506078 ≈ mean(tensorRIOverlap) atol=1e-8
 
 # test SpecialMatricesModule
 INFO("TESTING:   SpecialMatricesModule")
-@test -0.785008186026 ≈ mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) atol=1e-10                  #### !!!! ####
+@test -0.785008186026 ≈ mean(computeMatrixFock(bas,h2o,matrixSADguess[1])) atol=1e-7
 
 
 
