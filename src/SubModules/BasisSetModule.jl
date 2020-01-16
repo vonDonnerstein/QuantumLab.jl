@@ -1,64 +1,106 @@
 module BasisSetModule
+using StringParserPEG
 export BasisSet, readBasisSetTX93
 using ..BaseModule
 using ..AtomModule
+import Base.show
+using Printf
 
 struct PrimitiveGaussianBasisFunctionDefinition
     exponent::Float64
     prefactor::Float64
 end
+show(io::IO,pgbf::PrimitiveGaussianBasisFunctionDefinition) = print(io,@sprintf("lin:%9.5f exp:%12.5f",pgbf.prefactor, pgbf.exponent))
 
 struct ContractedGaussianBasisFunctionDefinition
     lQuantumNumber::LQuantumNumber
     primitives::Array{PrimitiveGaussianBasisFunctionDefinition,1}
 end
+function show(io::IO,cgbf::ContractedGaussianBasisFunctionDefinition)
+  str  = cgbf.lQuantumNumber.symbol*"─ $(cgbf.primitives[1])\n"
+  for prim in cgbf.primitives[2:end-1]
+    str *= "│  $(prim)\n"
+  end
+  str *= "╰─ $(cgbf.primitives[end])\n"
+  print(io,str)
+end
+function show(io::IO,vec::Vector{ContractedGaussianBasisFunctionDefinition})
+  for cgbf in vec
+    show(io,cgbf)
+  end
+end
 
 struct BasisSet
     definitions::Dict{Element,Array{ContractedGaussianBasisFunctionDefinition,1}}
 end
+function show(io::IO,basset::BasisSet)
+  for (key,val) in basset.definitions
+    println(io,"$key => ")
+    show(val)
+  end
+end
 
+tx93 = Grammar("""
+	       start   => (basset & -(*(comment))) {liftchild}
+	       basset  => *((-(*(comment)) & elementgroup) {liftchild}) {"basset"}
+	       comment => ?(r(^!.*)r | space) & eol
+
+	       elementgroup  => (elementheader & CGBFs) {"entry"}
+	       elementheader => (-('FOR' & space) & element & -(?(space) & eol)) {liftchild}
+	       element       => r([A-Za-z]*)r {"element"}
+	       CGBFs	       => +(CGBF) {"cgbfs"}
+
+	       lqn => ('SPD' | 'SP' | 'L' | 'S' | 'P' | 'D' | 'F' | 'G' | 'H') {nodevalue}
+	       CGBF    => (lqn & +(PGBF)) {"cgbf"}
+	       PGBF    => (-(space) & float & +(-(space) & float) & -(?(space) & eol)) {"pgbf"}
+	       """,standardrules)
+
+fromTX93(node,children,::MatchRule{:pgbf}) = [children[1],[n.children[1] for n in children[2].children]]
+function QLcgbf(lins,exps,lqn,index=1)
+  ContractedGaussianBasisFunctionDefinition(
+     LQuantumNumber(lqn),
+     [PrimitiveGaussianBasisFunctionDefinition(exp,pre[index]) for (pre,exp) in zip(lins,exps)]
+  )
+end
+function fromTX93(node,children,::MatchRule{:cgbf})
+  lqn  = children[1]
+  exps = [p[1] for p in children[2].children]
+  lins = [p[2] for p in children[2].children]
+  if lqn == "SPD"
+    @assert length(lins[1]) == 3
+    sshell = QLcgbf(lins,exps,"S",1)
+    pshell = QLcgbf(lins,exps,"P",2)
+    dshell = QLcgbf(lins,exps,"D",3)
+    return [sshell,pshell,dshell]
+  elseif lqn == "SP" || lqn == "L"
+    @assert length(lins[1]) == 2
+    sshell = QLcgbf(lins,exps,"S",1)
+    pshell = QLcgbf(lins,exps,"P",2)
+    return [sshell,pshell]
+  elseif lqn in ["S","P","D","F","G","H"]
+    @assert length(lins[1]) == 1
+    shell = QLcgbf(lins,exps,lqn,1)
+    return [shell]
+  else
+    @error("Unexpected sharedsp lqn ($lqn)")
+  end
+end
+fromTX93(node,children,::MatchRule{:cgbfs}) = vcat(children...)
+fromTX93(node,children,::MatchRule{:element}) = Element(node.value)
+fromTX93(node,children,::MatchRule{:entry}) =(children[1] => children[2])
+fromTX93(node,children,::MatchRule{:basset}) = BasisSet(Dict(children...))
+
+function BasisSetTX93(str::AbstractString)
+  (ast,pos,err) = parse(tx93,str)
+  if err != nothing
+    @error err
+  end
+  return transform(fromTX93,ast)
+end
 
 function readBasisSetTX93(filename::AbstractString)
-  basSet = BasisSet(Dict())                                 # initialize return value
-
-  elem = Element("H")                                       # functionglobal elem
-  lqn = "S"                                         # functionglobal lqn
-  contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber("S"),[])  # functionglobal contractedDefinition
-
   fd = open(filename)
-  for line in eachline(fd)
-    # comments
-    if occursin(r"^(!|\s*$)",line) continue end              # skip
-
-    # new element
-    if occursin(r"^FOR",line)
-      if(contractedDefinition.primitives != [])                 #   and not the first
-    append!(basSet.definitions[elem],[contractedDefinition])                    #   finish contractedDefinition
-    contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])    #   start new contractedDefinition
-      end
-      elem = Element(match(r"^FOR\s*(\w*)",line).captures[1])           #   update elem
-      basSet.definitions[elem] = ContractedGaussianBasisFunctionDefinition[]    #   initialize elem-definitions empty
-
-    # definition line
-    else
-      regmatch = match(Regex(raw"(?P<lqn>\w*)?\s*(?P<exp>"*floatregex*raw")\s*(?P<lin>"*floatregex*raw")"),line)
-      # new contracted
-      if regmatch[:lqn] != ""                   # if new contracted
-    lqn = regmatch[:lqn]
-    if(contractedDefinition.primitives != [])               #    not a new element
-      append!(basSet.definitions[elem],[contractedDefinition])                  #   finish contractedDefinition
-    end
-      contractedDefinition = ContractedGaussianBasisFunctionDefinition(LQuantumNumber(lqn),[])  #   start new contractedDefinition
-      end
-      # always (add primitive to current contracted)
-      exponent = parse(Float64,regmatch[:exp])
-      linfactor = parse(Float64,regmatch[:lin])
-      append!(contractedDefinition.primitives,[PrimitiveGaussianBasisFunctionDefinition(exponent,linfactor)])
-    end
-  end
-  if(contractedDefinition.primitives != [])                 #   if still contracteds left
-    append!(basSet.definitions[elem],[contractedDefinition])        #   finish contractedDefinition
-  end
+  basSet = BasisSetTX93(read(fd,String))
   close(fd)
   return basSet
 end

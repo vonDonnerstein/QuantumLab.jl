@@ -7,75 +7,58 @@ module BasisSetExchangeModule
 export obtainBasisSetExchangeEntries, downloadBasisSetBasisSetExchange, computeBasisSetExchangeEntry, BasisSetExchangeEntry
 using HTTP
 using Printf
+using ZipFile
 using ..BasisSetModule
 import Base.display, ..BasisSetModule.BasisSet
 
-mutable struct BasisSetExchangeEntry
-  url::String
-  name::String
-  availtype::String
-  elts::String
-  status::String
-  hasEcp::String
-  hasSpin::String
-  lastModifiedDate::String
-  contributionPI::String
-  contributorName::String
-  bsAbstract::String
-end
+bseZip    = homedir()*"/pqs.zip"
+bseFormat = "pqs"
 
-function display(bseEntry::BasisSetExchangeEntry)
-  @printf("%40s    |    %s\n", bseEntry.name, bseEntry.bsAbstract)
-end
-
-function display(arr::Array{BasisSetExchangeEntry,1})
-  for entry in arr
-    display(entry)
+function Base.getindex(dir::ZipFile.Reader,fn::String)
+  for f in dir.files
+    if f.name == fn
+      return f
+    end
   end
+  @error "$fn not found."
 end
 
-function obtainBasisSetExchangeEntries()
-  retval = Array{BasisSetExchangeEntry,1}()
-  main = HTTP.request("GET","https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main")
-  for m in eachmatch(r"basisSets\[\d*\].*",String(main.body))
-    bsline = m.match
-    regmatch = match(r"basisSet\(\"(?P<url>.*)\", \"(?P<name>.*)\", \"(?P<type>.*)\", \"\[(?P<elts>.*)\]\", \"(?P<status>.*)\", \"(?P<hasEcp>.*)\", \"(?P<hasSpin>.*)\", \"(?P<lastModifiedDate>.*)\", \"(?P<contributionPI>.*)\", \"(?P<contributorName>.*)\", \"(?P<bsAbstract>.*)\"\)",bsline)
-    eltsList = replace(regmatch[:elts],","=>"")
-    push!(retval,BasisSetExchangeEntry(regmatch[:url],regmatch[:name],regmatch[:type],eltsList,regmatch[:status],regmatch[:hasEcp],regmatch[:hasSpin],regmatch[:lastModifiedDate],regmatch[:contributionPI],regmatch[:contributorName],regmatch[:bsAbstract]))
+function downloadBasisSetExchange(;bseFormat=bseFormat, bseZip=bseZip)
+  response = HTTP.request("GET","http://www.basissetexchange.org/download/current/$bseFormat/zip")
+  write(bseZip,response.body)
+  @assert isfile(bseZip)
+  println("Downloaded $bseFormat formatted basis sets to $bseZip.")
+end
+
+function computeBasisSetsAvailable(;bseZip=bseZip,bseFormat=bseFormat)
+  list = Dict{String,String}()
+  zip = ZipFile.Reader(bseZip)
+  for f in zip.files
+    if occursin(Regex("\\.$bseFormat\$"),f.name)
+      shortname = match(Regex(".*/([^\\.]*).*$bseFormat"), f.name).captures[1]
+      push!(list, shortname => f.name)
+    end
   end
-  return retval
+  return list
 end
 
-function downloadBasisSetBasisSetExchange(entry::BasisSetExchangeEntry, filename::AbstractString, format::AbstractString="TX93")
-  requestresponse = HTTP.request("POST","https://bse.pnl.gov:443/bse/portal/user/anon/js_peid/11543880926284/action/portlets.BasisSetAction/template/courier_content/panel/Main/eventSubmit_doDownload/true",
-				 ["Content-Type" => "application/x-www-form-urlencoded"],
-				 HTTP.URIs.escapeuri(Dict("bsurl" => entry.url, "bsname" => entry.name, "elts" => entry.elts, "format" => format, "minimize" => "true")),
-				 redirect=false)
-  sessioncookie = String(match(r"JSESSIONID=(.*?);",Dict(requestresponse.headers)["Set-Cookie"])[1])
-  finalresponse = HTTP.request("POST","https://bse.pnl.gov/bse/portal/user/anon/panel/Main/template/courier_content/js_peid/11543880926284"; cookies = Dict("JSESSIONID" => sessioncookie))
-  basSetDef = replace(String(finalresponse.body),r".*<pre style.*>\n*(.*)</pre>.*"s => s"\1")
-  outfd = open(filename, "w")
-  write(outfd, basSetDef)
-  close(outfd)
-end
-
-function computeBasisSetExchangeEntry(name::AbstractString, arr::Array{BasisSetExchangeEntry,1}; exactmatching::Bool=false)
-  result = Nothing
-  for entry in arr
-    if (!exactmatching && occursin(Regex(name,"i"),entry.name) || name == entry.name)
-      if result == Nothing
-        result = entry
-      elseif isa(result,BasisSetExchangeEntry)
-        result = [result,entry]
-      else #isa(result,Array{BasisSetExchangeEntry})
+function computeBasisSetExchangeEntry(name::AbstractString; bseZip=bseZip)
+  dict = computeBasisSetsAvailable(bseZip=bseZip)
+  if haskey(dict,name)
+    return dict[name]
+  else
+    result = String[]
+    for (shortname,entry) in dict
+      if (occursin(Regex(name,"i"),shortname))
         push!(result,entry)
       end
     end
   end
-  if result==Nothing
-    error("$name is not contained within the given BasisSetExchangeEntry list.")
+  if length(result)>1
+    display(result)
+    error("More than one matching entry found.")
   end
-  return result
+  return result[1]
 end
 
 """
@@ -85,7 +68,8 @@ creates a BasisSet object from the specified file (possibly with a corresponding
 If no such file can be found the argument is interpreted as the name of a basis set and that basis
 set obtained from Basis Set Exchange.
 """
-function BasisSet(name::AbstractString)
+function BasisSet(name::AbstractString; bseZip=bseZip)
+
   if isfile(name)
     return readBasisSetTX93(name)
   end
@@ -96,11 +80,13 @@ function BasisSet(name::AbstractString)
     end
   end
 
-  info("BasisSet file not found locally. Obtaining from BasisSetExchange...")
-  bseentries = obtainBasisSetExchangeEntries()
-  entry = computeBasisSetExchangeEntry(name,bseentries;exactmatching=true)
-  downloadBasisSetBasisSetExchange(entry,"$name.tx93","TX93")
-  return readBasisSetTX93("$name.tx93")
+  @info("BasisSet file $name not found. Obtaining from BasisSetExchange...")
+  if !isfile(bseZip)
+    downloadBasisSetExchange(bseZip=bseZip)
+  end
+  location   = computeBasisSetExchangeEntry(name)
+  str        = read(ZipFile.Reader(bseZip)[location], String)
+  return BasisSetTX93(str)
 end
 
 end # module
