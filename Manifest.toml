@@ -232,9 +232,7 @@ version = "0.3.3"
 
 [[StringParserPEG]]
 deps = ["InteractiveUtils", "Test"]
-git-tree-sha1 = "b9580c7aa1bd7a4f2e676ceb52cdf94adee12f98"
-repo-rev = "master"
-repo-url = "https://github.com/vonDonnerstein/StringParserPEG.jl"
+git-tree-sha1 = "cefc1d07621e38d3921c1539d53a95c0d3b23183"
 uuid = "b0c8ea40-1aeb-11ea-0927-b51424bf2dfe"
 version = "1.0.0"
 
