@@ -40,9 +40,9 @@ version = "5.0.1"
 
 [[CUDAnative]]
 deps = ["Adapt", "CEnum", "CUDAapi", "CUDAdrv", "DataStructures", "InteractiveUtils", "LLVM", "Libdl", "Printf", "TimerOutputs"]
-git-tree-sha1 = "3698d47fa07d91da59984a29ddc7533da3979f70"
+git-tree-sha1 = "ba0725f487fb4a6c63efad7890a659659b6a6754"
 uuid = "be33ccc6-a3ff-5ff2-a52e-74243cff1e17"
-version = "2.8.0"
+version = "2.8.1"
 
 [[Compat]]
 deps = ["Base64", "Dates", "DelimitedFiles", "Distributed", "InteractiveUtils", "LibGit2", "Libdl", "LinearAlgebra", "Markdown", "Mmap", "Pkg", "Printf", "REPL", "Random", "Serialization", "SharedArrays", "Sockets", "SparseArrays", "Statistics", "Test", "UUIDs", "Unicode"]
@@ -52,9 +52,9 @@ version = "2.2.0"
 
 [[CuArrays]]
 deps = ["AbstractFFTs", "Adapt", "CEnum", "CUDAapi", "CUDAdrv", "CUDAnative", "DataStructures", "GPUArrays", "Libdl", "LinearAlgebra", "MacroTools", "NNlib", "Printf", "Random", "Requires", "SparseArrays", "TimerOutputs"]
-git-tree-sha1 = "51fbe053dea29ed2513e02d38380007310cf4c4b"
+git-tree-sha1 = "4e536542c5c898b1bf43011b6187f3c97ebcc91e"
 uuid = "3a865a2d-5b23-5a0f-bc46-62713ec82fae"
-version = "1.6.0"
+version = "1.7.0"
 
 [[DataStructures]]
 deps = ["InteractiveUtils", "OrderedCollections"]
@@ -232,9 +232,7 @@ version = "0.3.3"
 
 [[StringParserPEG]]
 deps = ["InteractiveUtils", "Test"]
-git-tree-sha1 = "b9580c7aa1bd7a4f2e676ceb52cdf94adee12f98"
-repo-rev = "master"
-repo-url = "https://github.com/vonDonnerstein/StringParserPEG.jl"
+git-tree-sha1 = "cefc1d07621e38d3921c1539d53a95c0d3b23183"
 uuid = "b0c8ea40-1aeb-11ea-0927-b51424bf2dfe"
 version = "1.0.0"
 
