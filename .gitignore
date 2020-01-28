@@ -1,3 +1,5 @@
+deps/build.log
+
 # Code Coverage
 *.jl.cov
 *.jl.*.cov
