@@ -5,8 +5,20 @@ using ..BaseModule
 using ..AtomModule
 using LinearAlgebra
 
+using Printf
+using Markdown
+import Base.show
+
 struct Geometry
 	atoms::Array{Atom,1}
+end
+
+function show(io::IO,mime::MIME"text/plain",geo::Geometry)
+  show(io,mime,Markdown.parse("    \t      x                  y                  z")); print(io,"\n")
+  for at in geo.atoms
+    show(io,mime,Markdown.parse("**$(at.element.symbol)**")) 
+    print(io,@sprintf("\t% 18.10f % 18.10f % 18.10f\n",at.position.x,at.position.y,at.position.z))
+  end
 end
 
 """

@@ -32,7 +32,7 @@ julia> h2o = Geometry("test/h2o.xyz")
 ```
 Next, we need to choose the basis set. If we don't have a corresponding specification file at hand, QuantumLab will obtain one from basis set exchange (please make sure to comply with their terms of use if you use this feature).
 ```jl
-julia> sto3g = BasisSet("STO-3G")
+julia> sto3g = BasisSet("sto-3g")
 ```
 For the initial guess we can simply take the ZeroGuess and the "number of closed shell orbitals" of water is 5. So now we can
 ```jl

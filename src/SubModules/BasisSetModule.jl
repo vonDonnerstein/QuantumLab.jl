@@ -3,6 +3,7 @@ using StringParserPEG
 export BasisSet, readBasisSetTX93
 using ..BaseModule
 using ..AtomModule
+import Base.print
 import Base.show
 import Base.==
 import Base.≈
@@ -12,7 +13,8 @@ struct PrimitiveGaussianBasisFunctionDefinition
     exponent::Float64
     prefactor::Float64
 end
-show(io::IO,pgbf::PrimitiveGaussianBasisFunctionDefinition) = print(io,@sprintf("lin:%9.5f exp:%12.5f",pgbf.prefactor, pgbf.exponent))
+print(io::IO,pgbf::PrimitiveGaussianBasisFunctionDefinition) = print(io,@sprintf("lin:%9.5f exp:%12.5f",pgbf.prefactor, pgbf.exponent))
+show(io::IO,::MIME"text/plain",pgbf::PrimitiveGaussianBasisFunctionDefinition) = print(io,pgbf)
 ≈(pgbfdef1::PrimitiveGaussianBasisFunctionDefinition,pgbfdef2::PrimitiveGaussianBasisFunctionDefinition;kwargs...) = (≈(pgbfdef1.exponent,pgbfdef2.exponent;kwargs...) && ≈(pgbfdef1.prefactor,pgbfdef2.prefactor;kwargs...))
 ≈(vec1::Vector{PrimitiveGaussianBasisFunctionDefinition},vec2::Vector{PrimitiveGaussianBasisFunctionDefinition};kwargs...) = all(.≈(vec1,vec2;kwargs...))
 
@@ -20,7 +22,7 @@ struct ContractedGaussianBasisFunctionDefinition
     lQuantumNumber::LQuantumNumber
     primitives::Array{PrimitiveGaussianBasisFunctionDefinition,1}
 end
-function show(io::IO,cgbf::ContractedGaussianBasisFunctionDefinition)
+function show(io::IO,::MIME"text/plain",cgbf::ContractedGaussianBasisFunctionDefinition)
   str  = cgbf.lQuantumNumber.symbol*"─ $(cgbf.primitives[1])\n"
   for prim in cgbf.primitives[2:end-1]
     str *= "│  $(prim)\n"
@@ -28,9 +30,9 @@ function show(io::IO,cgbf::ContractedGaussianBasisFunctionDefinition)
   str *= "╰─ $(cgbf.primitives[end])\n"
   print(io,str)
 end
-function show(io::IO,vec::Vector{ContractedGaussianBasisFunctionDefinition})
+function show(io::IO,mime::MIME"text/plain",vec::Vector{ContractedGaussianBasisFunctionDefinition})
   for cgbf in vec
-    show(io,cgbf)
+    show(io,mime,cgbf)
   end
 end
 ==(cgbfdef1::ContractedGaussianBasisFunctionDefinition,cgbfdef2::ContractedGaussianBasisFunctionDefinition) = (cgbfdef1.lQuantumNumber==cgbfdef2.lQuantumNumber && cgbfdef1.primitives == cgbfdef2.primitives)
@@ -41,10 +43,10 @@ end
 struct BasisSet
     definitions::Dict{Element,Array{ContractedGaussianBasisFunctionDefinition,1}}
 end
-function show(io::IO,basset::BasisSet)
+function show(io::IO,mime::MIME"text/plain",basset::BasisSet)
   for (key,val) in basset.definitions
     println(io,"$key => ")
-    show(val)
+    show(io,mime,val)
   end
 end
 ≈(bassset1::BasisSet,basset2::BasisSet;kwargs...) = keys(basset1.definitions)==keys(basset2.definitions) && all(≈(basset1.defintions[el],basset2.definitons[el];kwargs...) for el in keys(basset1.definitions))

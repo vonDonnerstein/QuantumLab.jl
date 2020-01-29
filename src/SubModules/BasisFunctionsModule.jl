@@ -1,6 +1,6 @@
 module BasisFunctionsModule
 export PrimitiveGaussianBasisFunction, ContractedGaussianBasisFunction, identityPGF, identityCGF
-import Base.display
+import Base.show
 import QuantumLab.BaseModule.evaluateFunction
 using ..BaseModule
 
@@ -22,13 +22,13 @@ mutable struct ContractedGaussianBasisFunction
   primitiveBFs::Vector{PrimitiveGaussianBasisFunction}
 end
 
-function display(cgbf::ContractedGaussianBasisFunction,indent="")
-  print(indent); println(typeof(cgbf))
+function show(io::IO,::MIME"text/plain",cgbf::ContractedGaussianBasisFunction,indent="")
+  print(io,indent); println(io,typeof(cgbf))
   for idx in 1:length(cgbf.coefficients)
-    print(indent * "  $(cgbf.coefficients[idx]) × "); println(typeof(cgbf.primitiveBFs[idx]))
-    print(indent * "    center:   "); println(cgbf.primitiveBFs[idx].center)
-    print(indent * "    exponent: "); println(cgbf.primitiveBFs[idx].exponent)
-    print(indent * "    mqn:      "); println(cgbf.primitiveBFs[idx].mqn)
+    print(io,indent * "  $(cgbf.coefficients[idx]) × "); println(io,typeof(cgbf.primitiveBFs[idx]))
+    print(io,indent * "    center:   "); println(io,cgbf.primitiveBFs[idx].center)
+    print(io,indent * "    exponent: "); println(io,cgbf.primitiveBFs[idx].exponent)
+    print(io,indent * "    mqn:      "); println(io,cgbf.primitiveBFs[idx].mqn)
   end
 end
 

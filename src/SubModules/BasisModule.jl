@@ -10,7 +10,7 @@ using ..IntegralsModule
 using ..ShellModule
 using LinearAlgebra
 
-import Base.display
+import Base.show
 import Base.convert
 
 abstract type Basis end
@@ -57,15 +57,15 @@ function computeBasis(basSet::BasisSet,geo::Geometry,normalize::Bool=true)
   return bas
 end
 
-function display(basis::GaussianBasis)
-  println(typeof(basis))
+function show(io::IO,mime::MIME"text/plain",basis::GaussianBasis)
+  println(io,typeof(basis))
   indent = "  "
 
-  println(indent * "contractedBFs: ")
+  println(io,indent * "contractedBFs: ")
   indent = indent * "  "
 
   for cgbf in basis.contractedBFs
-    display(cgbf,indent)
+    show(io,mime,cgbf,indent)
   end
 end
 

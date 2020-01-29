@@ -14,7 +14,7 @@ using ..DocumentationModule
 using ..BaseModule
 using ZipFile
 using Printf
-import Base.display
+import Base.show
 import Base.==
 
 """
@@ -27,12 +27,12 @@ struct LaplacePoints
   nodes::Array{Float64,1}
 end
 
-function display(lp::LaplacePoints)
+function show(io::IO,::MIME"text/plain",lp::LaplacePoints)
   @assert length(lp.weights) == length(lp.nodes)
-  println("  Exponential Factor         Weight")
-  println("  ------------------         ------")
+  println(io,"  Exponential Factor         Weight")
+  println(io,"  ------------------         ------")
   for (node,weight) in zip(lp.nodes,lp.weights)
-    @printf("  %.16f         %f\n",node,weight)
+    print(io,@sprintf("  %.16f         %f\n",node,weight))
   end
 end
 

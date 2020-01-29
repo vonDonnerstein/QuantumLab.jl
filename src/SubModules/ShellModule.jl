@@ -6,7 +6,7 @@ using ..BaseModule
 using ..BasisFunctionsModule
 using ..BasisSetModule
 using ..GeometryModule
-import Base.display
+import Base.show
 
 abstract type AbstractShell end
 
@@ -99,18 +99,18 @@ function renormNonAxial!(tensor::AbstractArray{Float64,N},shells::Vararg{Vector{
   end
 end
 
-function display(sh::Shell)
-  println("$(sh.lqn.symbol)-Shell   @    $(sh.center)")
-  print("  Exponents:    ")
+function show(io::IO,::MIME"text/plain",sh::Shell)
+  println(io,"$(sh.lqn.symbol)-Shell   @    $(sh.center)")
+  print(io,"  Exponents:    ")
   for exp in sh.exponents
-    @printf("  %f",exp)
+    print(io,@sprintf("  %f",exp))
   end
-  println("")
-  print("  Coefficients: ")
+  print(io,"\n")
+  print(io,"  Coefficients: ")
   for coeff in sh.coefficients
-    @printf("  %f",coeff)
+    print(io,@sprintf("  %f",coeff))
   end
-  println("")
+  print(io,"\n")
 end
 
 """

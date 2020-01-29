@@ -1,12 +1,12 @@
 module DocumentationModule
 export Citation, JournalCitation, BookCitation, GenericCitation, summarize
-import Base.display
+import Base.show
 import Base.convert
 import Base.promote_rule
 using Markdown
 using InteractiveUtils
 
-"""Abstract class supertyping all objects that are entries of a bibliography (for documenting functions). Each subtype has its corresponding fields and defines its own display function."""
+"""Abstract class supertyping all objects that are entries of a bibliography (for documenting functions). Each subtype has its corresponding fields and defines its own show function."""
 abstract type Citation end
 
 """
@@ -26,8 +26,9 @@ mutable struct JournalCitation <: Citation
   year::UInt
 end
 
-function display(cite::JournalCitation)
-  display(Markdown.parse(""" - $(join(cite.authors,", ")), $(cite.journalabbr) **$(cite.vol)**, *$(cite.page)* ($(cite.year))"""))
+function show(io::IO,mime::MIME"text/plain",cite::JournalCitation)
+  show(io,mime,Markdown.parse(""" - $(join(cite.authors,", ")), $(cite.journalabbr) **$(cite.vol)**, *$(cite.page)* ($(cite.year))"""))
+  print(io,"\n")
 end
 
 """Citation class for complete Books. Refer to BookSectionCitation for more specific parts of a book."""
@@ -37,8 +38,9 @@ mutable struct BookCitation <: Citation
   ISBN::AbstractString
 end
 
-function display(cite::BookCitation)
-  display(Markdown.parse(""" - $(join(cite.authors,", ")): *$(cite.title)* (ISBN $(cite.ISBN))"""))
+function show(io::IO,mime::MIME"text/plain",cite::BookCitation)
+  show(io,mime,Markdown.parse(""" - $(join(cite.authors,", ")): *$(cite.title)* (ISBN $(cite.ISBN))"""))
+  print(io,"\n")
 end
 
 """Citation class for anything that can not be described by any of the other subclasses of Citation. Make sure none of the others fits the purpose before using this one."""
@@ -46,49 +48,54 @@ struct GenericCitation <: Citation
   string::AbstractString
 end
 
-function display(cite::GenericCitation)
-  display(Markdown.parse(""" - $(cite.string)"""))
+function show(io::IO,mime::MIME"text/plain",cite::GenericCitation)
+  show(io,mime,Markdown.parse(""" - $(cite.string)"""))
+  print(io,"\n")
 end
 
-function display(docuArray::Array{Documentation,1})
+function show(io::IO,mime::MIME"text/plain",docuArray::Array{Documentation,1})
   local cites = Array{Citation,1}()
-  display(Markdown.parse("""
+  show(io,mime,Markdown.parse("""
   # Documentation
   """))
+  print(io,"\n")
   for document in docuArray
     docu = document.doc
     if typeof(docu)==Markdown.MD
-      display(docu)
+      show(io,mime,docu)
     elseif isa(docu,Citation)
       push!(cites,docu)
     end
   end
 
-  print('\n')
+  print(io,"\n\n")
 
-  display(Markdown.parse("""
+  show(io,mime,Markdown.parse("""
   # Citations:
   """))
+  print(io,"\n")
   for citekey in cites
-    display(citekey)
+    show(io,mime,citekey)
   end
 end
 
-function display(docuArray::Array{Citation,1})
-  display(Markdown.parse("""
+function show(io::IO,mime::MIME"text/plain",docuArray::Array{Citation,1})
+  show(io,mime,Markdown.parse("""
   # Citations:
   """))
+  print(io,"\n")
   for citekey in docuArray
-    display(citekey)
+    show(io,mime,citekey)
   end
 end
 
-function display(docuArray::Array{T,1}) where T<:Citation
-  display(Markdown.parse("""
+function show(io::IO,mime::MIME"text/plain",docuArray::Array{T,1}) where T<:Citation
+  show(io,mime,Markdown.parse("""
   # Citations:
   """))
+  print(io,"\n")
   for citekey in docuArray
-    display(citekey)
+    show(io,mime,citekey)
   end
 end
 

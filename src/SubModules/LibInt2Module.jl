@@ -43,7 +43,7 @@ if (libint2_available) # the normal case
   
   
   import Base.convert
-  import Base.display
+  import Base.show
   import ..ShellModule.nbf
   using TensorOperations
   using ..BaseModule
@@ -110,7 +110,7 @@ if (libint2_available) # the normal case
   end
 
   #  Further Functions
-  function display(sh::LibInt2Shell)
+  function show(io::IO,::MIME"text/plain",sh::LibInt2Shell)
     ccall(dlsym(libint2jl,:_Z10printShellPN7libint25ShellE),Nothing,(LibInt2Shell,),sh)
   end
 
