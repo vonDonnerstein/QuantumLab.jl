@@ -7,7 +7,6 @@ using ..GeometryModule
 using ..DocumentationModule
 using ..ShellModule
 using ProgressMeter
-using SpecialFunctions
 using LinearAlgebra
 
 import LinearAlgebra.normalize!
@@ -45,7 +44,7 @@ function GaussianIntegral1D_Mathematica(mqn::Int,exponent::Float64)
     return 0
   else
     t=(m+1)/2
-    return ζ^(-t) * gamma(t)
+    return ζ^(-t) * GSL.sf_gamma(t)
   end
 end
 
