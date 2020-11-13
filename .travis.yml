@@ -5,7 +5,6 @@ os:
   - windows
 julia:
   - 1           # automatically the latest version to this major
-  - 1.0         # set manually to the version given in REQUIRE
   - nightly
 sudo: required
 codecov: true
