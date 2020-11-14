@@ -19,7 +19,7 @@ TensorOperations = "6aa20fa7-93e2-5fca-9bc0-fbd0db3c71a2"
 ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
-GSL = "0.6"
+GSL = "0.6, 1.0"
 HTTP = "0.8"
 ProgressMeter = "1.2"
 Reexport = "0.2"
