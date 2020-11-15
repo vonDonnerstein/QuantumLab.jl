@@ -112,10 +112,16 @@ uuid = "61eb1bfa-7361-4325-ad38-22787b887f55"
 version = "0.2.0"
 
 [[GSL]]
-deps = ["BinaryProvider", "Libdl", "Markdown"]
-git-tree-sha1 = "5412051557d2c0d5a76f8d4b6a9b849123fac892"
+deps = ["GSL_jll", "Libdl", "Markdown"]
+git-tree-sha1 = "44457ebe445acec09dfb9a7afe60af2289ff9997"
 uuid = "92c85e6c-cbff-5e0c-80f7-495c94daaecd"
-version = "0.6.0"
+version = "1.0.0"
+
+[[GSL_jll]]
+deps = ["Libdl", "Pkg"]
+git-tree-sha1 = "5bfc132c5162c415be2f49737b95c858f0b70a4c"
+uuid = "1b77fbbe-d8ee-58f0-85f9-836ddc23a7a4"
+version = "2.6.0+3"
 
 [[HTTP]]
 deps = ["Base64", "Dates", "IniFile", "MbedTLS", "Sockets", "URIs"]
