@@ -20,7 +20,7 @@ ZipFile = "a5390f91-8eb1-5f08-bee0-b1d1ffed6cea"
 
 [compat]
 GSL = "0.6, 1.0"
-HTTP = "0.8"
+HTTP = "0.8, 0.9"
 ProgressMeter = "1.2"
 Reexport = "0.2"
 StringParserPEG = "1.1"
